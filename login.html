@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login — Pro Povo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
+  <link rel="stylesheet" href="home.css" />
+  <link rel="stylesheet" href="login.css" />
+</head>
+<body class="login-page">
+
+  <!-- TOPO INSTITUCIONAL -->
+  <div class="gov-bar">
+    <span><i class="ti ti-shield-check"></i> Plataforma cidadã independente · Pro Povo</span>
+  </div>
+
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <div class="navbar-left">
+      <div class="empresa-logo">
+        <img src="./Images/LogoProPovo.png" alt="Logo da empresa" id="logo-empresa" />
+      </div>
+      <div class="navbar-divider"></div>
+      <div class="logo">
+        <div class="logo-text-group">
+          <span class="logo-title">Pro Povo</span>
+          <span class="logo-sub">Fale com sua cidade</span>
+        </div>
+      </div>
+    </div>
+    <div class="nav-links">
+      <a href="index.html" class="nav-link">Início</a>
+      <a href="#" class="nav-link">Relatos</a>
+      <a href="#" class="nav-link">Mapa</a>
+      <a href="#" class="nav-link">Como funciona</a>
+    </div>
+    <div class="nav-btns">
+      <a href="index.html"><button class="btn-outline">Voltar ao início</button></a>
+    </div>
+    <button class="hamburger" id="hamburger" aria-label="Abrir menu">
+      <i class="ti ti-menu-2"></i>
+    </button>
+  </nav>
+
+  <!-- MOBILE MENU -->
+  <div class="mobile-menu" id="mobile-menu">
+    <a href="index.html" class="mobile-link"><i class="ti ti-home"></i> Início</a>
+    <a href="#" class="mobile-link"><i class="ti ti-list"></i> Relatos</a>
+    <a href="#" class="mobile-link"><i class="ti ti-map-2"></i> Mapa</a>
+  </div>
+
+  <!-- CONTEÚDO -->
+  <div class="login-wrapper">
+
+    <!-- LADO ESQUERDO -->
+    <div class="login-left">
+      <div class="login-brand">
+        <!-- ESPAÇO DA LOGO: troque o src pela sua imagem -->
+        <div class="brand-logo-area">
+          <img src="logo-empresa.png" alt="Logo da empresa" class="brand-logo" />
+        </div>
+        <h2 class="brand-title">Pro Povo</h2>
+        <p class="brand-desc">A plataforma que conecta cidadãos à prefeitura para resolver os problemas da sua cidade.</p>
+      </div>
+
+      <div class="brand-features">
+        <div class="feature-item">
+          <div class="feature-icon"><i class="ti ti-speakerphone"></i></div>
+          <div class="feature-text">
+            <strong>Relate problemas</strong>
+            <span>Registre e envie para a prefeitura</span>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon"><i class="ti ti-thumb-up"></i></div>
+          <div class="feature-text">
+            <strong>Vote nos urgentes</strong>
+            <span>Mostre o que mais afeta sua comunidade</span>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon"><i class="ti ti-bell"></i></div>
+          <div class="feature-text">
+            <strong>Acompanhe resoluções</strong>
+            <span>Receba notificações de cada atualização</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LADO DIREITO: FORMULÁRIO -->
+    <div class="login-right">
+      <div class="login-card">
+
+        <!-- ABAS -->
+        <div class="login-tabs">
+          <button class="tab-btn active" id="tab-entrar" data-tab="entrar">Entrar</button>
+          <button class="tab-btn" id="tab-cadastro" data-tab="cadastro">Criar conta</button>
+        </div>
+
+        <!-- FORM LOGIN -->
+        <div class="tab-content active" id="form-entrar">
+          <p class="form-intro">Acesse sua conta para relatar e acompanhar problemas na sua cidade.</p>
+
+          <div class="form-group">
+            <label class="form-label">E-mail <span class="required">*</span></label>
+            <div class="input-icon-wrap">
+              <i class="ti ti-mail input-icon"></i>
+              <input type="email" class="form-input with-icon" id="login-email" placeholder="seu@email.com" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Senha <span class="required">*</span></label>
+            <div class="input-icon-wrap">
+              <i class="ti ti-lock input-icon"></i>
+              <input type="password" class="form-input with-icon" id="login-senha" placeholder="Sua senha" />
+              <button class="toggle-senha" id="toggle-senha" type="button" aria-label="Mostrar senha">
+                <i class="ti ti-eye"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <label class="checkbox-label">
+              <input type="checkbox" id="lembrar" />
+              <span>Lembrar de mim</span>
+            </label>
+            <a href="#" class="forgot-link">Esqueci minha senha</a>
+          </div>
+
+          <button class="btn-login" id="btn-login">
+            <i class="ti ti-login"></i> Entrar
+          </button>
+
+          <div class="divider"><span>ou</span></div>
+
+          <button class="btn-social">
+            <i class="ti ti-brand-google"></i> Entrar com Google
+          </button>
+        </div>
+
+        <!-- FORM CADASTRO -->
+        <div class="tab-content" id="form-cadastro">
+          <p class="form-intro">Crie sua conta gratuita e comece a participar da sua cidade.</p>
+
+          <div class="form-group">
+            <label class="form-label">Nome completo <span class="required">*</span></label>
+            <div class="input-icon-wrap">
+              <i class="ti ti-user input-icon"></i>
+              <input type="text" class="form-input with-icon" id="cad-nome" placeholder="Seu nome" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">E-mail <span class="required">*</span></label>
+            <div class="input-icon-wrap">
+              <i class="ti ti-mail input-icon"></i>
+              <input type="email" class="form-input with-icon" id="cad-email" placeholder="seu@email.com" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Cidade <span class="required">*</span></label>
+            <div class="input-icon-wrap">
+              <i class="ti ti-map-pin input-icon"></i>
+              <input type="text" class="form-input with-icon" id="cad-cidade" placeholder="Ex: Campina Grande — PB" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Senha <span class="required">*</span></label>
+            <div class="input-icon-wrap">
+              <i class="ti ti-lock input-icon"></i>
+              <input type="password" class="form-input with-icon" id="cad-senha" placeholder="Mínimo 8 caracteres" />
+              <button class="toggle-senha" id="toggle-cad-senha" type="button" aria-label="Mostrar senha">
+                <i class="ti ti-eye"></i>
+              </button>
+            </div>
+            <div class="senha-forca" id="senha-forca">
+              <div class="forca-barra"><div class="forca-fill" id="forca-fill"></div></div>
+              <span class="forca-texto" id="forca-texto"></span>
+            </div>
+          </div>
+
+          <label class="checkbox-label" style="margin-bottom: 16px;">
+            <input type="checkbox" id="aceito-termos" />
+            <span>Li e aceito os <a href="#" class="forgot-link">Termos de uso</a> e a <a href="#" class="forgot-link">Política de privacidade</a></span>
+          </label>
+
+          <button class="btn-login" id="btn-cadastrar">
+            <i class="ti ti-user-plus"></i> Criar minha conta
+          </button>
+
+          <div class="divider"><span>ou</span></div>
+
+          <button class="btn-social">
+            <i class="ti ti-brand-google"></i> Cadastrar com Google
+          </button>
+        </div>
+
+      </div>
+
+      <p class="login-footer-note">
+        <i class="ti ti-lock"></i> Seus dados estão protegidos e não são compartilhados com terceiros.
+      </p>
+    </div>
+
+  </div>
+
+  <!-- TOAST -->
+  <div class="toast" id="toast"></div>
+
+  <script type="module" src="login.js"></script>
+</body>
+</html>

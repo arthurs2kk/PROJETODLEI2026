@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pro Povo — Fale com sua cidade</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
+  <link rel="stylesheet" href="home.css" />
+</head>
+<body>
+
+  <!-- TOPO INSTITUCIONAL -->
+  <div class="gov-bar">
+    <span><i class="ti ti-shield-check"></i> Plataforma cidadã independente · Pro Povo</span>
+  </div>
+
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <div class="navbar-left">
+      <!-- LOGO DA SUA EMPRESA: substitua o src pela sua imagem -->
+      <div class="empresa-logo">
+        <img src="/Images/LogoProPovo.png" alt="Logo Pro Povo">
+      </div>
+      <div class="navbar-divider"></div>
+
+      </div>
+    </div>
+
+    <div class="nav-links">
+      <a href="#" class="nav-link active">Início</a>
+      <a href="#" class="nav-link">Relatos</a>
+      <a href="#" class="nav-link">Mapa</a>
+      <a href="#" class="nav-link">Como funciona</a>
+    </div>
+
+    <div class="nav-btns">
+      <button class="btn-outline" id="btn-entrar">Entrar</button>
+      <button class="btn-primary" id="btn-cadastrar">Criar conta</button>
+    </div>
+
+    <button class="hamburger" id="hamburger" aria-label="Abrir menu">
+      <i class="ti ti-menu-2"></i>
+    </button>
+  </nav>
+
+  <!-- MENU MOBILE -->
+  <div class="mobile-menu" id="mobile-menu">
+    <a href="#" class="mobile-link"><i class="ti ti-home"></i> Início</a>
+    <a href="#" class="mobile-link"><i class="ti ti-list"></i> Relatos</a>
+    <a href="#" class="mobile-link"><i class="ti ti-map-2"></i> Mapa</a>
+    <a href="#" class="mobile-link"><i class="ti ti-help-circle"></i> Como funciona</a>
+    <div class="mobile-divider"></div>
+    <button class="btn-outline w100">Entrar</button>
+    <button class="btn-primary w100">Criar conta</button>
+  </div>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-inner">
+      <div class="hero-text">
+        <div class="hero-eyebrow">
+          <i class="ti ti-speakerphone"></i>
+          Sua voz chega à prefeitura
+        </div>
+        <h1 class="hero-title">Encontrou um problema<br>na sua cidade?</h1>
+        <p class="hero-desc">
+          Tire uma foto, descreva o problema e envie. A prefeitura recebe, a comunidade vota e você acompanha a resolução.
+        </p>
+        <div class="hero-actions">
+          <button class="btn-cta" id="btn-relatar">
+            <i class="ti ti-plus"></i> Relatar um problema
+          </button>
+          <button class="btn-secondary-hero">
+            <i class="ti ti-map-2"></i> Ver mapa da cidade
+          </button>
+        </div>
+      </div>
+
+      <div class="hero-stats-box">
+        <div class="stats-title">Sua cidade em números</div>
+        <div class="stat-row">
+          <div class="stat-icon blue"><i class="ti ti-file-description"></i></div>
+          <div class="stat-info">
+            <span class="stat-num" data-target="1247">0</span>
+            <span class="stat-label">Problemas relatados</span>
+          </div>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-row">
+          <div class="stat-icon green"><i class="ti ti-circle-check"></i></div>
+          <div class="stat-info">
+            <span class="stat-num" data-target="318">0</span>
+            <span class="stat-label">Já resolvidos</span>
+          </div>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-row">
+          <div class="stat-icon yellow"><i class="ti ti-clock"></i></div>
+          <div class="stat-info">
+            <span class="stat-num" data-target="89">0</span>
+            <span class="stat-label">Em andamento</span>
+          </div>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-row">
+          <div class="stat-icon navy"><i class="ti ti-users"></i></div>
+          <div class="stat-info">
+            <span class="stat-num" data-target="5490">0</span>
+            <span class="stat-label">Cidadãos cadastrados</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- COMO FUNCIONA -->
+  <section class="how-it-works">
+    <div class="how-inner">
+      <h2 class="section-title">Como funciona?</h2>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-icon"><i class="ti ti-camera"></i></div>
+          <div class="step-text">
+            <strong>Registre</strong>
+            <span>Descreva o problema e, se puder, tire uma foto</span>
+          </div>
+        </div>
+        <div class="step-arrow"><i class="ti ti-chevron-right"></i></div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-icon"><i class="ti ti-thumb-up"></i></div>
+          <div class="step-text">
+            <strong>Vote</strong>
+            <span>A comunidade vota nos problemas mais urgentes</span>
+          </div>
+        </div>
+        <div class="step-arrow"><i class="ti ti-chevron-right"></i></div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-icon"><i class="ti ti-building"></i></div>
+          <div class="step-text">
+            <strong>Prefeitura age</strong>
+            <span>O órgão responsável recebe e atualiza o status</span>
+          </div>
+        </div>
+        <div class="step-arrow"><i class="ti ti-chevron-right"></i></div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-icon"><i class="ti ti-bell"></i></div>
+          <div class="step-text">
+            <strong>Você é avisado</strong>
+            <span>Receba notificação quando o problema for resolvido</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEED PRINCIPAL -->
+  <div class="main-wrapper">
+
+    <aside class="sidebar">
+      <div class="sidebar-box">
+        <button class="btn-cta btn-relatar-side" id="btn-relatar-side">
+          <i class="ti ti-plus"></i> Relatar problema
+        </button>
+      </div>
+
+      <div class="sidebar-box">
+        <div class="sidebar-label">Filtrar por categoria</div>
+        <div class="filter-list" id="cat-filters">
+          <button class="filter-btn active" data-cat="todos"><i class="ti ti-layout-grid"></i> Todos <span class="fcount">1.247</span></button>
+          <button class="filter-btn" data-cat="buraco"><i class="ti ti-road"></i> Buracos <span class="fcount">412</span></button>
+          <button class="filter-btn" data-cat="iluminacao"><i class="ti ti-bulb"></i> Iluminação <span class="fcount">289</span></button>
+          <button class="filter-btn" data-cat="lixo"><i class="ti ti-trash"></i> Lixo / Entulho <span class="fcount">201</span></button>
+          <button class="filter-btn" data-cat="agua"><i class="ti ti-droplet"></i> Água / Esgoto <span class="fcount">178</span></button>
+          <button class="filter-btn" data-cat="areas"><i class="ti ti-trees"></i> Áreas verdes <span class="fcount">96</span></button>
+          <button class="filter-btn" data-cat="outros"><i class="ti ti-dots"></i> Outros <span class="fcount">71</span></button>
+        </div>
+      </div>
+
+      <div class="sidebar-box">
+        <div class="sidebar-label">Filtrar por status</div>
+        <div class="filter-list" id="status-filters">
+          <button class="filter-btn active" data-status="todos"><i class="ti ti-circle-dot"></i> Todos</button>
+          <button class="filter-btn" data-status="aberto"><i class="ti ti-circle-x"></i> Aberto</button>
+          <button class="filter-btn" data-status="andamento"><i class="ti ti-clock"></i> Em andamento</button>
+          <button class="filter-btn" data-status="resolvido"><i class="ti ti-circle-check"></i> Resolvido</button>
+        </div>
+      </div>
+    </aside>
+
+    <main class="feed">
+      <div class="feed-header">
+        <div>
+          <h2 class="feed-title">Problemas relatados</h2>
+          <p class="feed-sub" id="feed-count">Mostrando 3 relatos</p>
+        </div>
+        <select class="sort-select" id="sort-select">
+          <option value="votos">Ordenar: Mais votados</option>
+          <option value="recentes">Ordenar: Mais recentes</option>
+        </select>
+      </div>
+
+      <div id="cards-list">
+
+        <article class="card" data-cat="buraco" data-status="andamento" data-votos="143" data-id="1">
+          <div class="card-side buraco-side"><i class="ti ti-road-off"></i></div>
+          <div class="card-body">
+            <div class="card-tags">
+              <span class="badge badge-buraco"><i class="ti ti-road"></i> Buraco</span>
+              <span class="status status-andamento"><i class="ti ti-clock"></i> Em andamento</span>
+            </div>
+            <h3 class="card-title">Buraco enorme na Rua das Flores, próximo ao mercado central</h3>
+            <p class="card-desc">Buraco de aproximadamente 1 metro de diâmetro, oferece risco a pedestres e veículos.</p>
+            <div class="card-meta">
+              <span><i class="ti ti-map-pin"></i> Centro</span>
+              <span><i class="ti ti-clock"></i> Há 2 dias</span>
+              <span><i class="ti ti-user"></i> João S.</span>
+            </div>
+            <div class="card-footer">
+              <button class="vote-btn voted" data-id="1">
+                <i class="ti ti-thumb-up"></i> <span class="vcount">143</span> pessoas apoiam
+              </button>
+              <button class="detail-btn">Ver detalhes <i class="ti ti-arrow-right"></i></button>
+            </div>
+          </div>
+        </article>
+
+        <article class="card" data-cat="iluminacao" data-status="aberto" data-votos="87" data-id="2">
+          <div class="card-side ilum-side"><i class="ti ti-bulb-off"></i></div>
+          <div class="card-body">
+            <div class="card-tags">
+              <span class="badge badge-ilum"><i class="ti ti-bulb"></i> Iluminação</span>
+              <span class="status status-aberto"><i class="ti ti-circle-x"></i> Aberto</span>
+            </div>
+            <h3 class="card-title">Poste apagado há mais de 3 semanas na Av. Brasil</h3>
+            <p class="card-desc">A falta de iluminação deixa a rua perigosa durante a noite, especialmente para idosos.</p>
+            <div class="card-meta">
+              <span><i class="ti ti-map-pin"></i> Bairro Novo</span>
+              <span><i class="ti ti-clock"></i> Há 5 dias</span>
+              <span><i class="ti ti-user"></i> Maria L.</span>
+            </div>
+            <div class="card-footer">
+              <button class="vote-btn" data-id="2">
+                <i class="ti ti-thumb-up"></i> <span class="vcount">87</span> pessoas apoiam
+              </button>
+              <button class="detail-btn">Ver detalhes <i class="ti ti-arrow-right"></i></button>
+            </div>
+          </div>
+        </article>
+
+        <article class="card" data-cat="lixo" data-status="resolvido" data-votos="64" data-id="3">
+          <div class="card-side lixo-side"><i class="ti ti-trash-x"></i></div>
+          <div class="card-body">
+            <div class="card-tags">
+              <span class="badge badge-lixo"><i class="ti ti-trash"></i> Lixo</span>
+              <span class="status status-resolvido"><i class="ti ti-circle-check"></i> Resolvido</span>
+            </div>
+            <h3 class="card-title">Lixo acumulado no Parque Municipal sem coleta há 10 dias</h3>
+            <p class="card-desc">Grande volume de lixo e entulho acumulado na entrada do parque, causando mau cheiro.</p>
+            <div class="card-meta">
+              <span><i class="ti ti-map-pin"></i> Parque Municipal</span>
+              <span><i class="ti ti-clock"></i> Há 1 semana</span>
+              <span><i class="ti ti-user"></i> Carlos M.</span>
+            </div>
+            <div class="card-footer">
+              <button class="vote-btn" data-id="3">
+                <i class="ti ti-thumb-up"></i> <span class="vcount">64</span> pessoas apoiam
+              </button>
+              <button class="detail-btn">Ver detalhes <i class="ti ti-arrow-right"></i></button>
+            </div>
+          </div>
+        </article>
+
+      </div>
+
+      <div class="empty-state" id="empty-state" style="display:none">
+        <i class="ti ti-mood-empty"></i>
+        <p>Nenhum relato encontrado com esses filtros.</p>
+        <button class="btn-outline" id="btn-limpar">Limpar filtros</button>
+      </div>
+    </main>
+  </div>
+
+  <!-- MODAL -->
+  <div class="modal-overlay" id="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <div class="modal-icon"><i class="ti ti-speakerphone"></i></div>
+          <h2 class="modal-title">Novo relato</h2>
+        </div>
+        <button class="modal-close" id="modal-close"><i class="ti ti-x"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Título do problema <span class="required">*</span></label>
+          <input type="text" class="form-input" id="f-titulo" placeholder="Ex: Buraco na calçada da Rua XV" maxlength="100" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Categoria <span class="required">*</span></label>
+          <select class="form-input" id="f-cat">
+            <option value="">— Selecione —</option>
+            <option>Buraco / Via danificada</option>
+            <option>Iluminação pública</option>
+            <option>Lixo / Entulho</option>
+            <option>Água / Esgoto</option>
+            <option>Áreas verdes</option>
+            <option>Outros</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Descrição <span class="required">*</span></label>
+          <textarea class="form-input form-textarea" id="f-desc" placeholder="Descreva o problema com o máximo de detalhes possível..."></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Endereço / Localização <span class="required">*</span></label>
+          <input type="text" class="form-input" id="f-local" placeholder="Ex: Rua das Flores, 123 — bairro Centro" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Foto do problema <span class="optional">(opcional)</span></label>
+          <div class="upload-area" id="upload-area">
+            <i class="ti ti-photo"></i>
+            <strong>Clique para adicionar uma foto</strong>
+            <span>JPG, PNG ou HEIC · máx. 10 MB</span>
+            <input type="file" id="f-foto" accept="image/*" style="display:none" />
+          </div>
+        </div>
+        <p class="form-note"><i class="ti ti-lock"></i> Seus dados são protegidos e usados apenas para contato sobre este relato.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-outline" id="btn-cancelar">Cancelar</button>
+        <button class="btn-primary" id="btn-enviar"><i class="ti ti-send"></i> Enviar relato</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div class="toast" id="toast"></div>
+
+  <script src="home.js"></script>
+</body>
+</html>
