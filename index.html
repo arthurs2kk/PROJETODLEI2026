@@ -22,10 +22,17 @@
     <div class="navbar-left">
       <!-- LOGO DA SUA EMPRESA: substitua o src pela sua imagem -->
       <div class="empresa-logo">
-        <img src="/Images/LogoProPovo.png" alt="Logo Pro Povo">
+        <img src="images/LogoProPovo.png" alt="Logo da empresa" id="logo-empresa" />
       </div>
       <div class="navbar-divider"></div>
-
+      <div class="logo">
+        <div class="logo-icon">
+          <i class="ti ti-building-community"></i>
+        </div>
+        <div class="logo-text-group">
+          <span class="logo-title">Pro Povo</span>
+          <span class="logo-sub">Fale com sua cidade</span>
+        </div>
       </div>
     </div>
 
@@ -84,7 +91,7 @@
         <div class="stat-row">
           <div class="stat-icon blue"><i class="ti ti-file-description"></i></div>
           <div class="stat-info">
-            <span class="stat-num" data-target="1247">0</span>
+            <span class="stat-num" id="stat-relatos">0</span>
             <span class="stat-label">Problemas relatados</span>
           </div>
         </div>
@@ -92,7 +99,7 @@
         <div class="stat-row">
           <div class="stat-icon green"><i class="ti ti-circle-check"></i></div>
           <div class="stat-info">
-            <span class="stat-num" data-target="318">0</span>
+            <span class="stat-num" id="stat-resolvidos">0</span>
             <span class="stat-label">Já resolvidos</span>
           </div>
         </div>
@@ -100,7 +107,7 @@
         <div class="stat-row">
           <div class="stat-icon yellow"><i class="ti ti-clock"></i></div>
           <div class="stat-info">
-            <span class="stat-num" data-target="89">0</span>
+            <span class="stat-num" id="stat-andamento">0</span>
             <span class="stat-label">Em andamento</span>
           </div>
         </div>
@@ -343,6 +350,6 @@
   <!-- TOAST -->
   <div class="toast" id="toast"></div>
 
-  <script src="home.js"></script>
+  <script type="module" src="home.js"></script>
 </body>
 </html>
