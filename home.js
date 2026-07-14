@@ -144,8 +144,8 @@ async function renderCards() {
   if (state.status !== 'todos') relatos = relatos.filter(r => r.status === state.status);
 
   // Ordenação
-  if (state.sort === 'votos')    relatos.sort((a, b) => b.votos - a.votos);
-  if (state.sort === 'recentes') relatos.sort((a, b) => b.dataCriacao - a.dataCriacao);
+  relatos.sort((a, b) => b.votos - a.votos);
+  relatos = relatos.slice(0, 5);
 
   document.getElementById('feed-count').textContent =
     `Mostrando ${relatos.length} relato${relatos.length !== 1 ? 's' : ''}`;

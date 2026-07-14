@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Acesso restrito — Pro Povo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
+  <link rel="stylesheet" href="home.css" />
+  <link rel="stylesheet" href="AdmLogin.css" />
+  <link rel="icon" type="image/png" href="Images/flavinconProPovo.png">
+</head>
+<body class="admin-login-page">
+
+  <div class="gov-bar admin-gov-bar">
+    <span><i class="ti ti-lock"></i> Área restrita · Acesso exclusivo para funcionários públicos autorizados</span>
+  </div>
+
+  <div class="admin-wrapper">
+    <div class="admin-card">
+
+      <div class="admin-header">
+        <!-- LOGO DA SUA EMPRESA: troque o src pela sua imagem -->
+        <div class="admin-logo-area">
+          <img src="Images/LogoProPovo.png" alt="Logo da empresa" class="admin-logo" />
+        </div>
+        <h1 class="admin-title">Painel da Prefeitura</h1>
+        <p class="admin-subtitle">Pro Povo — Acesso restrito a funcionários autorizados</p>
+        <span class="admin-badge"><i class="ti ti-shield-lock"></i> Área restrita</span>
+      </div>
+
+      <div class="admin-body">
+        <div class="form-group">
+          <label class="form-label">E-mail institucional <span class="required">*</span></label>
+          <div class="input-icon-wrap">
+            <i class="ti ti-mail input-icon"></i>
+            <input type="email" class="form-input with-icon" id="admin-email" placeholder="seunome@prefeitura.gov.br" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Senha <span class="required">*</span></label>
+          <div class="input-icon-wrap">
+            <i class="ti ti-lock input-icon"></i>
+            <input type="password" class="form-input with-icon" id="admin-senha" placeholder="Sua senha" />
+            <button class="toggle-senha" id="toggle-admin-senha" type="button" aria-label="Mostrar senha">
+              <i class="ti ti-eye"></i>
+            </button>
+          </div>
+        </div>
+
+        <button class="btn-login admin-btn" id="btn-admin-login">
+          <i class="ti ti-shield-lock"></i> Acessar painel
+        </button>
+      </div>
+
+      <div class="admin-footer-note">
+        <i class="ti ti-info-circle"></i>
+        Esse acesso é exclusivo para funcionários cadastrados pela administração. Cidadãos devem usar a <a href="login.html">tela de login comum</a>.
+      </div>
+    </div>
+
+    <a href="index.html" class="admin-voltar"><i class="ti ti-arrow-left"></i> Voltar ao site</a>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script type="module" src="AdmLogin.js"></script>
+</body>
+</html>

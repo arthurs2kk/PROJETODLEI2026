@@ -40,7 +40,7 @@
   border: 2px dashed var(--borda);
   border-radius: var(--radius-lg);
   padding: 12px 20px;
-  transition: border-color 0.2s;
+  
 }
 
 .brand-logo-area:has(img[src]:not([src="logo-empresa.png"])) {
@@ -58,15 +58,14 @@
 }
 
 /* placeholder enquanto sem logo */
-.brand-logo[src="../Images/LogoProPovo.png"] {
+.brand-logo[src="logo-empresa.png"] {
   display: none;
 }
 
-.brand-logo-area:has(.brand-logo[src="../Images/LogoProPovo.png"])::after {
+.brand-logo-area:has(.brand-logo[src="logo-empresa.png"])::after {
   content: 'Sua logo aqui';
   font-size: 13px;
   font-weight: 600;
-  color: var(--cinza-3);
   font-family: var(--font);
   letter-spacing: 0.03em;
 }

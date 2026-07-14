@@ -1,0 +1,155 @@
+.admin-login-page {
+  background: var(--cinza-1);
+  min-height: 100vh;
+}
+
+/* Barra do topo com a cor institucional do site (não mais cinza) */
+.admin-gov-bar {
+  background: var(--azul-escuro);
+}
+
+.admin-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  min-height: calc(100vh - 40px);
+  padding: 32px 24px;
+}
+
+.admin-card {
+  background: var(--branco);
+  border: 1px solid var(--borda);
+  border-top: 5px solid var(--azul);
+  border-radius: var(--radius-lg);
+  width: 100%;
+  max-width: 440px;
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+}
+
+.admin-header {
+  text-align: center;
+  padding: 36px 28px 24px;
+  background: linear-gradient(180deg, var(--azul-claro) 0%, var(--branco) 100%);
+  border-bottom: 1px solid var(--borda);
+}
+
+.admin-logo-area {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 64px;
+  width: 100%;
+  margin: 0 auto 16px;
+}
+
+.admin-logo {
+  height: 250%;
+  max-width: 300px;
+  width: auto;
+  object-fit: contain;
+  
+}
+
+/* placeholder enquanto sem logo */
+.admin-logo[src="logo-empresa.png"] { display: none; }
+
+.admin-logo-area:has(.admin-logo[src="logo-empresa.png"]) {
+  border: 2px dashed var(--borda);
+  border-radius: var(--radius);
+  background: var(--branco);
+}
+
+.admin-logo-area:has(.admin-logo[src="logo-empresa.png"])::after {
+  content: 'Sua logo aqui';
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--cinza-3);
+  letter-spacing: 0.03em;
+}
+
+.admin-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--azul-escuro);
+  margin-bottom: 6px;
+  letter-spacing: -0.01em;
+}
+
+.admin-subtitle {
+  font-size: 13px;
+  color: var(--cinza-4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.admin-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--azul-escuro);
+  background: var(--amarelo);
+  padding: 3px 10px;
+  border-radius: 99px;
+  margin-top: 10px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.admin-body {
+  padding: 26px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.admin-btn {
+  background: var(--azul);
+  margin-top: 4px;
+  padding: 16px;
+  font-size: 17px;
+  font-weight: 700;
+  border-radius: var(--radius);
+  letter-spacing: 0.01em;
+}
+
+.admin-btn:hover { background: var(--azul-hover); }
+
+.admin-footer-note {
+  font-size: 12.5px;
+  color: var(--cinza-4);
+  line-height: 1.6;
+  padding: 16px 28px 24px;
+  display: flex;
+  gap: 8px;
+  border-top: 1px solid var(--borda);
+  background: var(--cinza-1);
+}
+
+.admin-footer-note i { flex-shrink: 0; margin-top: 2px; color: var(--azul); }
+.admin-footer-note a { color: var(--azul); font-weight: 600; text-decoration: underline; }
+
+.admin-voltar {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--cinza-4);
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.15s;
+}
+
+.admin-voltar:hover { color: var(--azul); }
+
+@media (max-width: 480px) {
+  .admin-header { padding: 28px 20px 20px; }
+  .admin-body { padding: 22px 20px; }
+  .admin-footer-note { padding: 14px 20px 20px; }
+}

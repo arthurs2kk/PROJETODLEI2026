@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Todos os Relatos • Pro Povo</title>
+
+    <link rel="icon" type="image/png" href="Images/flavinconProPovo.png">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+
+    <link rel="stylesheet" href="relatos.css">
+</head>
+
+<body>
+
+<!-- Barra Superior -->
+
+<div class="gov-bar">
+    <span>
+        <i class="ti ti-shield-check"></i>
+        Plataforma cidadã independente • Pro Povo
+    </span>
+</div>
+
+<!-- Navbar -->
+
+<nav class="navbar">
+
+    <div class="navbar-left">
+
+        <div class="empresa-logo">
+            <img src="images/LogoProPovo.png">
+        </div>
+
+        <div class="navbar-divider"></div>
+
+        <div class="logo">
+
+            <div class="logo-icon">
+                <i class="ti ti-building-community"></i>
+            </div>
+
+            <div class="logo-text-group">
+                <span class="logo-title">Pro Povo</span>
+                <span class="logo-sub">Fale com sua cidade</span>
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="nav-links">
+
+        <a href="index.html" class="nav-link">
+            Início
+        </a>
+
+        <a href="relatos.html" class="nav-link active">
+            Relatos
+        </a>
+
+    </div>
+
+</nav>
+
+<!-- Cabeçalho -->
+
+<header class="page-header">
+
+    <div>
+
+        <h1>
+            Todos os relatos
+        </h1>
+
+        <p>
+            Veja todos os problemas cadastrados pela comunidade.
+        </p>
+
+    </div>
+
+</header>
+
+<!-- Pesquisa -->
+
+<section class="search-area">
+
+    <div class="search-box">
+
+        <i class="ti ti-search"></i>
+
+        <input
+                type="text"
+                id="search-input"
+                placeholder="Pesquisar por título, endereço ou descrição...">
+
+    </div>
+
+</section>
+
+<!-- Filtros -->
+
+<section class="filters">
+
+    <div class="filter-group">
+
+        <span>Categoria</span>
+
+        <select id="categoria">
+
+            <option value="todos">Todas</option>
+
+            <option>Buraco / Via danificada</option>
+
+            <option>Iluminação pública</option>
+
+            <option>Lixo / Entulho</option>
+
+            <option>Água / Esgoto</option>
+
+            <option>Áreas verdes</option>
+
+            <option>Outros</option>
+
+        </select>
+
+    </div>
+
+    <div class="filter-group">
+
+        <span>Status</span>
+
+        <select id="status">
+
+            <option value="todos">Todos</option>
+
+            <option value="aberto">Aberto</option>
+
+            <option value="andamento">Em andamento</option>
+
+            <option value="resolvido">Resolvido</option>
+
+        </select>
+
+    </div>
+
+    <div class="filter-group">
+
+        <span>Ordenar</span>
+
+        <select id="ordenacao">
+
+            <option value="votos">
+                Mais votados
+            </option>
+
+            <option value="recentes">
+                Mais recentes
+            </option>
+
+            <option value="antigos">
+                Mais antigos
+            </option>
+
+        </select>
+
+    </div>
+
+</section>
+
+<!-- Informações -->
+
+<section class="results-info">
+
+    <span id="contador">
+        Carregando...
+    </span>
+
+</section>
+
+<!-- Lista -->
+
+<main>
+
+    <div id="lista-relatos">
+
+        <!-- preenchido pelo JS -->
+
+    </div>
+
+</main>
+
+<!-- Estado vazio -->
+
+<div id="sem-relatos" class="empty-state">
+
+    <i class="ti ti-mood-empty"></i>
+
+    <h2>Nenhum relato encontrado</h2>
+
+    <p>
+        Tente alterar os filtros ou realizar outra pesquisa.
+    </p>
+
+</div>
+
+<!-- Modal -->
+
+<div class="modal-overlay" id="modal-detalhes">
+
+    <div class="modal">
+
+        <div class="modal-header">
+
+            <h2 id="modal-titulo">
+
+            </h2>
+
+            <button id="fechar-modal">
+
+                <i class="ti ti-x"></i>
+
+            </button>
+
+        </div>
+
+        <div class="modal-body">
+
+            <div id="modal-badges"></div>
+
+            <p id="modal-descricao"></p>
+
+            <div id="modal-infos"></div>
+
+        </div>
+
+        <div class="modal-footer">
+
+            <button class="btn-primary"
+                    id="modal-fechar">
+
+                Fechar
+
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- Toast -->
+
+<div id="toast"></div>
+
+<script type="module" src="relatos.js"></script>
+
+</body>
+</html>

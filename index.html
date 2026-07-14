@@ -9,6 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
   <link rel="stylesheet" href="home.css" />
+  <link rel="icon" type="image/png" href="Images/flavinconProPovo.png">
 </head>
 <body>
 
@@ -37,8 +38,7 @@
 
     <div class="nav-links">
       <a href="#" class="nav-link active">Início</a>
-      <a href="#" class="nav-link">Relatos</a>
-      <a href="#" class="nav-link">Mapa</a>
+      <a href="relatos.html" class="nav-link">Relatos</a>
       <a href="#" class="nav-link">Como funciona</a>
     </div>
 
@@ -54,9 +54,8 @@
 
   <!-- MENU MOBILE -->
   <div class="mobile-menu" id="mobile-menu">
-    <a href="#" class="mobile-link"><i class="ti ti-home"></i> Início</a>
-    <a href="#" class="mobile-link"><i class="ti ti-list"></i> Relatos</a>
-    <a href="#" class="mobile-link"><i class="ti ti-map-2"></i> Mapa</a>
+    <a href="index.html" class="mobile-link"><i class="ti ti-home"></i> Início</a>
+    <a href="relatos.html" class="mobile-link"><i class="ti ti-list"></i> Relatos</a>
     <a href="#" class="mobile-link"><i class="ti ti-help-circle"></i> Como funciona</a>
     <div class="mobile-divider"></div>
     <button class="btn-outline w100">Entrar</button>
@@ -78,9 +77,6 @@
         <div class="hero-actions">
           <button class="btn-cta" id="btn-relatar">
             <i class="ti ti-plus"></i> Relatar um problema
-          </button>
-          <button class="btn-secondary-hero">
-            <i class="ti ti-map-2"></i> Ver mapa da cidade
           </button>
         </div>
       </div>
@@ -197,8 +193,9 @@
     <main class="feed">
       <div class="feed-header">
         <div>
-          <h2 class="feed-title">Problemas relatados</h2>
-          <p class="feed-sub" id="feed-count">Mostrando 3 relatos</p>
+          <h2 class="feed-title">Problemas mais votados</h2>
+           <p class="feed-sub" id="feed-count">Mostrando 3 relatos</p>
+           <a href="relatos.html" class="ver-todos-link">Ver todos os relatos <i class="ti ti-arrow-right"></i></a>
         </div>
         <select class="sort-select" id="sort-select">
           <option value="votos">Ordenar: Mais votados</option>

@@ -136,13 +136,7 @@ document.getElementById('btn-cadastrar')?.addEventListener('click', async () => 
 // ── LOGIN com Google ──
 document.querySelectorAll('.btn-social').forEach(btn => {
   btn.addEventListener('click', async () => {
-    try {
-      await signInWithPopup(auth, provider);
-      showToast('✅ Login com Google realizado!');
-      setTimeout(() => window.location.href = 'index.html', 1000);
-    } catch (e) {
-      showToast('❌ ' + traduzirErro(e.code));
-    }
+    window.location.href = 'AdmLogin.html';
   });
 });
 
