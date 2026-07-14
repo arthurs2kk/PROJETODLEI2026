@@ -114,7 +114,7 @@
         <div class="stat-row">
           <div class="stat-icon navy"><i class="ti ti-users"></i></div>
           <div class="stat-info">
-            <span class="stat-num" data-target="5490">0</span>
+            <span class="stat-num" id="stat-usuarios">0</span>
             <span class="stat-label">Cidadãos cadastrados</span>
           </div>
         </div>
@@ -211,77 +211,9 @@
           <option value="recentes">Ordenar: Mais recentes</option>
         </select>
       </div>
-
+<!-- não sei o porque tem que deixar isso mas se tirar para de aparecer os relatos -->
+      
       <div id="cards-list">
-
-        <article class="card" data-cat="buraco" data-status="andamento" data-votos="143" data-id="1">
-          <div class="card-side buraco-side"><i class="ti ti-road-off"></i></div>
-          <div class="card-body">
-            <div class="card-tags">
-              <span class="badge badge-buraco"><i class="ti ti-road"></i> Buraco</span>
-              <span class="status status-andamento"><i class="ti ti-clock"></i> Em andamento</span>
-            </div>
-            <h3 class="card-title">Buraco enorme na Rua das Flores, próximo ao mercado central</h3>
-            <p class="card-desc">Buraco de aproximadamente 1 metro de diâmetro, oferece risco a pedestres e veículos.</p>
-            <div class="card-meta">
-              <span><i class="ti ti-map-pin"></i> Centro</span>
-              <span><i class="ti ti-clock"></i> Há 2 dias</span>
-              <span><i class="ti ti-user"></i> João S.</span>
-            </div>
-            <div class="card-footer">
-              <button class="vote-btn voted" data-id="1">
-                <i class="ti ti-thumb-up"></i> <span class="vcount">143</span> pessoas apoiam
-              </button>
-              <button class="detail-btn">Ver detalhes <i class="ti ti-arrow-right"></i></button>
-            </div>
-          </div>
-        </article>
-
-        <article class="card" data-cat="iluminacao" data-status="aberto" data-votos="87" data-id="2">
-          <div class="card-side ilum-side"><i class="ti ti-bulb-off"></i></div>
-          <div class="card-body">
-            <div class="card-tags">
-              <span class="badge badge-ilum"><i class="ti ti-bulb"></i> Iluminação</span>
-              <span class="status status-aberto"><i class="ti ti-circle-x"></i> Aberto</span>
-            </div>
-            <h3 class="card-title">Poste apagado há mais de 3 semanas na Av. Brasil</h3>
-            <p class="card-desc">A falta de iluminação deixa a rua perigosa durante a noite, especialmente para idosos.</p>
-            <div class="card-meta">
-              <span><i class="ti ti-map-pin"></i> Bairro Novo</span>
-              <span><i class="ti ti-clock"></i> Há 5 dias</span>
-              <span><i class="ti ti-user"></i> Maria L.</span>
-            </div>
-            <div class="card-footer">
-              <button class="vote-btn" data-id="2">
-                <i class="ti ti-thumb-up"></i> <span class="vcount">87</span> pessoas apoiam
-              </button>
-              <button class="detail-btn">Ver detalhes <i class="ti ti-arrow-right"></i></button>
-            </div>
-          </div>
-        </article>
-
-        <article class="card" data-cat="lixo" data-status="resolvido" data-votos="64" data-id="3">
-          <div class="card-side lixo-side"><i class="ti ti-trash-x"></i></div>
-          <div class="card-body">
-            <div class="card-tags">
-              <span class="badge badge-lixo"><i class="ti ti-trash"></i> Lixo</span>
-              <span class="status status-resolvido"><i class="ti ti-circle-check"></i> Resolvido</span>
-            </div>
-            <h3 class="card-title">Lixo acumulado no Parque Municipal sem coleta há 10 dias</h3>
-            <p class="card-desc">Grande volume de lixo e entulho acumulado na entrada do parque, causando mau cheiro.</p>
-            <div class="card-meta">
-              <span><i class="ti ti-map-pin"></i> Parque Municipal</span>
-              <span><i class="ti ti-clock"></i> Há 1 semana</span>
-              <span><i class="ti ti-user"></i> Carlos M.</span>
-            </div>
-            <div class="card-footer">
-              <button class="vote-btn" data-id="3">
-                <i class="ti ti-thumb-up"></i> <span class="vcount">64</span> pessoas apoiam
-              </button>
-              <button class="detail-btn">Ver detalhes <i class="ti ti-arrow-right"></i></button>
-            </div>
-          </div>
-        </article>
 
       </div>
 
@@ -328,15 +260,7 @@
           <label class="form-label">Endereço / Localização <span class="required">*</span></label>
           <input type="text" class="form-input" id="f-local" placeholder="Ex: Rua das Flores, 123 — bairro Centro" />
         </div>
-        <div class="form-group">
-          <label class="form-label">Foto do problema <span class="optional">(opcional)</span></label>
-          <div class="upload-area" id="upload-area">
-            <i class="ti ti-photo"></i>
-            <strong>Clique para adicionar uma foto</strong>
-            <span>JPG, PNG ou HEIC · máx. 10 MB</span>
-            <input type="file" id="f-foto" accept="image/*" style="display:none" />
-          </div>
-        </div>
+
         <p class="form-note"><i class="ti ti-lock"></i> Seus dados são protegidos e usados apenas para contato sobre este relato.</p>
       </div>
       <div class="modal-footer">

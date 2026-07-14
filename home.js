@@ -117,7 +117,20 @@ ouvirRelatos(async (relatos) => {
   state.relatosDoBanco = relatos;
   await renderCards();
   atualizarEstatisticas(relatos);
+  atualizarContadoresCategoria(relatos);
 });
+
+function atualizarContadoresCategoria(relatos) {
+  const todos = document.querySelector('#cat-filters .filter-btn[data-cat="todos"] .fcount');
+  if (todos) todos.textContent = relatos.length;
+
+  document.querySelectorAll('#cat-filters .filter-btn[data-cat]:not([data-cat="todos"])').forEach(btn => {
+    const cat = btn.dataset.cat;
+    const count = relatos.filter(r => r.categoria === cat).length;
+    const span = btn.querySelector('.fcount');
+    if (span) span.textContent = count;
+  });
+}
 
 // ── Renderizar cards ──
 async function renderCards() {
