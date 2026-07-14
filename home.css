@@ -96,7 +96,7 @@ body {
   max-width: 170px;
   width: auto;
   object-fit: contain;
-  
+
 }
 
 .navbar-divider {
@@ -254,6 +254,12 @@ body {
   padding: 12px 16px;
   background: var(--azul-escuro);
   border-bottom: 3px solid var(--amarelo);
+  position: absolute;
+  top: 60px;
+  left: 0;
+  right: 0;
+  z-index: 99;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.2);
 }
 
 .mobile-menu.open { display: flex; }
@@ -911,6 +917,7 @@ body {
     padding: 0 12px;
     height: 60px;
     gap: 0;
+    position: relative;
   }
 
   .navbar-left {
@@ -938,6 +945,11 @@ body {
   }
 
   .logo-text-group {
+    display: none;
+  }
+
+  .nav-links,
+  .nav-btns {
     display: none;
   }
 
