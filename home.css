@@ -906,14 +906,44 @@ body {
 }
 
 @media (max-width: 640px) {
-  .nav-links { display: none; }
-  .nav-btns  { display: none; }
-  .hamburger { display: flex; }
-  .hero { padding: 32px 16px; }
-  .hero-title { font-size: 24px; }
-  .card-side { width: 52px; font-size: 20px; }
-  .card-meta span:last-child { display: none; }
-  .how-it-works { display: none; }
-  .empresa-logo { max-width: 80px; }
-  .navbar-divider { display: none; }
+
+  .navbar {
+    padding: 0 12px;
+    height: 60px;
+    gap: 0;
+  }
+
+  .navbar-left {
+    gap: 8px;
+    overflow: hidden;
+  }
+
+  .empresa-logo {
+    height: 45px;
+    max-width: 70px;
+  }
+
+  .empresa-logo img {
+    max-width: 70px;
+  }
+
+  .logo {
+    gap: 6px;
+  }
+
+  .logo-icon {
+    width: 38px;
+    height: 38px;
+    font-size: 16px;
+  }
+
+  .logo-text-group {
+    display: none;
+  }
+
+  .hamburger {
+    display: flex;
+    margin-left: auto;
+  }
+
 }
