@@ -123,7 +123,8 @@ document.getElementById('btn-cadastrar')?.addEventListener('click', async () => 
 
   setBtnLoading('btn-cadastrar', true);
   try {
-    await createUserWithEmailAndPassword(auth, email, senha);
+    const cred = await createUserWithEmailAndPassword(auth, email, senha);
+    await salvarUsuario(cred.user.uid, { nome, email, cidade });
     showToast('✅ Conta criada! Bem-vindo ao Pro Povo.');
     setTimeout(() => window.location.href = 'index.html', 1000);
   } catch (e) {
