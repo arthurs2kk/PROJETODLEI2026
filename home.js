@@ -195,20 +195,7 @@ document.getElementById('detalhe-fechar-btn')?.addEventListener('click', () => {
   document.getElementById('modal-detalhe-overlay').classList.remove('open');
 });
 
-// Evento "Ver detalhes"
-  lista.querySelectorAll('.detail-btn').forEach((btn, i) => {
-    btn.addEventListener('click', () => {
-      const r = relatos[i];
-      alert(
-        `📌 ${r.titulo}\n\n` +
-        `Categoria: ${r.categoria}\n` +
-        `Status: ${r.status}\n` +
-        `Local: ${r.endereco}\n` +
-        `Relatado por: ${r.autorNome}\n\n` +
-        `${r.descricao}`
-      );
-    });
-  });
+
 
 // ── HTML de cada card ──
 function cardHTML(r) {
@@ -343,3 +330,4 @@ function showToast(msg) {
 const s = document.createElement('style');
 s.textContent = `@keyframes spin { to { transform: rotate(360deg); } }`;
 document.head.appendChild(s);
+
