@@ -34,8 +34,8 @@ document.getElementById('btn-entrar').addEventListener('click', (event) => {
 // ── Modal ──
 function openModal() {
   if (!state.usuario) {
-    showToast('⚠️ Você precisa estar logado para relatar.');
-    setTimeout(() => window.location.href = 'login.html', 1500);
+    showToast('⚠️ Você precisa estar logado para relatar. Redirecionando para login...');
+    setTimeout(() => window.location.href = 'login.html', 1000);
     return;
   }
   document.getElementById('modal-overlay').classList.add('open');
@@ -142,6 +142,16 @@ async function renderCards() {
 
   lista.innerHTML = relatos.map(r => cardHTML(r)).join('');
 
+  // Evento "Ver detalhes"
+  lista.querySelectorAll('.detail-btn').forEach((btn, i) => {
+    btn.addEventListener('click', () => {
+      const r = relatos[i];
+      lista.querySelectorAll('.detail-btn').forEach((btn, i) => {
+    btn.addEventListener('click', () => abrirDetalhe(relatos[i]));
+  });
+    });
+  });
+
   // Marcar votos do usuário logado
   if (state.usuario) {
     relatos.forEach(async (r) => {
@@ -165,16 +175,51 @@ async function renderCards() {
   });
 }
 
+function abrirDetalhe(r) {
+  document.getElementById('detalhe-titulo').textContent = r.titulo;
+  document.getElementById('detalhe-desc').textContent   = r.descricao;
+  document.getElementById('detalhe-tags').innerHTML = `
+    <span class="badge badge-${r.categoria === 'Buraco / Via danificada' ? 'buraco' : 'agua'}">${r.categoria}</span>
+    <span class="status status-${r.status}">${r.status}</span>`;
+  document.getElementById('detalhe-meta').innerHTML = `
+    <span><i class="ti ti-map-pin"></i> ${r.endereco}</span>
+    <span><i class="ti ti-user"></i> ${r.autorNome}</span>
+    <span><i class="ti ti-clock"></i> ${tempoRelativo(r.dataCriacao)}</span>`;
+  document.getElementById('modal-detalhe-overlay').classList.add('open');
+}
+
+document.getElementById('detalhe-close')?.addEventListener('click', () => {
+  document.getElementById('modal-detalhe-overlay').classList.remove('open');
+});
+document.getElementById('detalhe-fechar-btn')?.addEventListener('click', () => {
+  document.getElementById('modal-detalhe-overlay').classList.remove('open');
+});
+
+// Evento "Ver detalhes"
+  lista.querySelectorAll('.detail-btn').forEach((btn, i) => {
+    btn.addEventListener('click', () => {
+      const r = relatos[i];
+      alert(
+        `📌 ${r.titulo}\n\n` +
+        `Categoria: ${r.categoria}\n` +
+        `Status: ${r.status}\n` +
+        `Local: ${r.endereco}\n` +
+        `Relatado por: ${r.autorNome}\n\n` +
+        `${r.descricao}`
+      );
+    });
+  });
+
 // ── HTML de cada card ──
 function cardHTML(r) {
   const cats = {
-    buraco:      { label: 'Buraco',      icon: 'ti-road-off',  side: 'buraco-side', badge: 'badge-buraco' },
-    iluminacao:  { label: 'Iluminação',  icon: 'ti-bulb-off',  side: 'ilum-side',   badge: 'badge-ilum'   },
-    lixo:        { label: 'Lixo',        icon: 'ti-trash-x',   side: 'lixo-side',   badge: 'badge-lixo'   },
-    agua:        { label: 'Água/Esgoto', icon: 'ti-droplet',   side: 'agua-side',   badge: 'badge-agua'   },
-    areas:       { label: 'Áreas verdes',icon: 'ti-trees',     side: 'lixo-side',   badge: 'badge-lixo'   },
-    outros:      { label: 'Outros',      icon: 'ti-dots',      side: 'agua-side',   badge: 'badge-agua'   },
-  };
+  'Buraco / Via danificada': { label: 'Buraco',       icon: 'ti-road-off', side: 'buraco-side', badge: 'badge-buraco' },
+  'Iluminação pública':      { label: 'Iluminação',   icon: 'ti-bulb-off', side: 'ilum-side',   badge: 'badge-ilum'  },
+  'Lixo / Entulho':          { label: 'Lixo',         icon: 'ti-trash-x',  side: 'lixo-side',   badge: 'badge-lixo'  },
+  'Água / Esgoto':           { label: 'Água/Esgoto',  icon: 'ti-droplet',  side: 'agua-side',   badge: 'badge-agua'  },
+  'Áreas verdes':            { label: 'Áreas verdes', icon: 'ti-trees',    side: 'lixo-side',   badge: 'badge-lixo'  },
+  'Outros':                  { label: 'Outros',       icon: 'ti-dots',     side: 'agua-side',   badge: 'badge-agua'  },
+};
 
   const status = {
     aberto:    { label: 'Aberto',       css: 'status-aberto',    icon: 'ti-circle-x'     },

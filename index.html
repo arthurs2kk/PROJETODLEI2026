@@ -20,7 +20,6 @@
   <!-- NAVBAR -->
   <nav class="navbar">
     <div class="navbar-left">
-      <!-- LOGO DA SUA EMPRESA: substitua o src pela sua imagem -->
       <div class="empresa-logo">
         <img src="images/LogoProPovo.png" alt="Logo da empresa" id="logo-empresa" />
       </div>
@@ -30,7 +29,7 @@
           <i class="ti ti-building-community"></i>
         </div>
         <div class="logo-text-group">
-          <span class="logo-title">Pro Povo</span>
+          <span class="logo-title">Pro Povo - </span>
           <span class="logo-sub">Fale com sua cidade</span>
         </div>
       </div>
@@ -181,11 +180,11 @@
         <div class="sidebar-label">Filtrar por categoria</div>
         <div class="filter-list" id="cat-filters">
           <button class="filter-btn active" data-cat="todos"><i class="ti ti-layout-grid"></i> Todos <span class="fcount">1.247</span></button>
-          <button class="filter-btn" data-cat="buraco"><i class="ti ti-road"></i> Buracos <span class="fcount">412</span></button>
-          <button class="filter-btn" data-cat="iluminacao"><i class="ti ti-bulb"></i> Iluminação <span class="fcount">289</span></button>
-          <button class="filter-btn" data-cat="lixo"><i class="ti ti-trash"></i> Lixo / Entulho <span class="fcount">201</span></button>
-          <button class="filter-btn" data-cat="agua"><i class="ti ti-droplet"></i> Água / Esgoto <span class="fcount">178</span></button>
-          <button class="filter-btn" data-cat="areas"><i class="ti ti-trees"></i> Áreas verdes <span class="fcount">96</span></button>
+          <button class="filter-btn" data-cat="Buraco / Via danificada"><i class="ti ti-road"></i> Buracos <span class="fcount">412</span></button>
+          <button class="filter-btn" data-cat="Iluminação pública"><i class="ti ti-bulb"></i> Iluminação <span class="fcount">289</span></button>
+          <button class="filter-btn" data-cat="Lixo / Entulho"><i class="ti ti-trash"></i> Lixo / Entulho <span class="fcount">201</span></button>
+          <button class="filter-btn" data-cat="Água / Esgoto"><i class="ti ti-droplet"></i> Água / Esgoto <span class="fcount">178</span></button>
+          <button class="filter-btn" data-cat="Áreas verdes"><i class="ti ti-trees"></i> Áreas verdes <span class="fcount">96</span></button>
           <button class="filter-btn" data-cat="outros"><i class="ti ti-dots"></i> Outros <span class="fcount">71</span></button>
         </div>
       </div>
@@ -346,6 +345,28 @@
       </div>
     </div>
   </div>
+
+  <!-- MODAL DETALHES DO RELATO -->
+<div class="modal-overlay" id="modal-detalhe-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title-group">
+        <div class="modal-icon" id="detalhe-icon"><i class="ti ti-file-description"></i></div>
+        <h2 class="modal-title">Detalhes do relato</h2>
+      </div>
+      <button class="modal-close" id="detalhe-close"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="card-tags" id="detalhe-tags"></div>
+      <h3 class="card-title" id="detalhe-titulo" style="font-size:18px;margin-top:10px;"></h3>
+      <p class="card-desc" id="detalhe-desc" style="margin:12px 0;"></p>
+      <div class="card-meta" id="detalhe-meta" style="flex-direction:column;align-items:flex-start;gap:8px;"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-outline" id="detalhe-fechar-btn">Fechar</button>
+    </div>
+  </div>
+</div>
 
   <!-- TOAST -->
   <div class="toast" id="toast"></div>
