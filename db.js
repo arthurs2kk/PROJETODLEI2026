@@ -104,3 +104,21 @@ export async function ehAdmin(uid) {
   const snapshot = await get(ref(db, `admins/${uid}`));
   return snapshot.exists() && snapshot.val() === true;
 }
+
+// ── Atualizar status de um relato ──
+export async function atualizarStatus(relatoId, novoStatus) {
+  await update(ref(db, `relatos/${relatoId}`), { status: novoStatus });
+}
+
+// ── Salvar resposta oficial da prefeitura ──
+export async function salvarResposta(relatoId, resposta) {
+  await update(ref(db, `relatos/${relatoId}`), {
+    respostaOficial: resposta,
+    dataResposta: Date.now()
+  });
+}
+
+// ── Excluir relato ──
+export async function excluirRelato(relatoId) {
+  await set(ref(db, `relatos/${relatoId}`), null);
+}

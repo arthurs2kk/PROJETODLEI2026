@@ -1,0 +1,188 @@
+.verificando-overlay {
+  position: fixed; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 14px;
+  background: var(--cinza-1);
+  color: var(--cinza-4);
+  font-size: 14px;
+  z-index: 999;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.admin-gov-bar { background: var(--azul-escuro); }
+
+.admin-user-tag {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: rgba(255,255,255,0.9);
+  padding: 6px 12px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 99px;
+}
+
+/* ── Resumo ── */
+.admin-resumo {
+  max-width: 1200px;
+  margin: -20px auto 0;
+  padding: 0 20px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  position: relative;
+  z-index: 2;
+}
+
+.resumo-card {
+  background: var(--branco);
+  border: 1px solid var(--borda);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  text-align: center;
+  box-shadow: var(--shadow);
+  border-top: 4px solid var(--cinza-3);
+}
+
+.resumo-aberto     { border-top-color: var(--vermelho); }
+.resumo-andamento  { border-top-color: var(--laranja); }
+.resumo-resolvido  { border-top-color: var(--verde); }
+
+.resumo-num {
+  display: block;
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--cinza-5);
+}
+
+.resumo-label {
+  display: block;
+  font-size: 12px;
+  color: var(--cinza-4);
+  margin-top: 2px;
+}
+
+/* ── Cards de gestão ── */
+#admin-lista { display: flex; flex-direction: column; gap: 12px; }
+
+.gestao-card {
+  background: var(--branco);
+  border: 1px solid var(--borda);
+  border-left: 5px solid var(--cinza-3);
+  border-radius: var(--radius-lg);
+  padding: 16px 18px;
+  box-shadow: var(--shadow);
+}
+
+.gestao-card[data-status="aberto"]    { border-left-color: var(--vermelho); }
+.gestao-card[data-status="andamento"] { border-left-color: var(--laranja); }
+.gestao-card[data-status="resolvido"] { border-left-color: var(--verde); }
+
+.gestao-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.gestao-titulo { font-size: 15px; font-weight: 700; color: var(--cinza-5); }
+
+.gestao-meta {
+  display: flex;
+  gap: 14px;
+  font-size: 12px;
+  color: var(--cinza-4);
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.gestao-desc {
+  font-size: 13.5px;
+  color: var(--cinza-4);
+  margin-bottom: 14px;
+  line-height: 1.5;
+}
+
+.gestao-controles {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+  padding-top: 12px;
+  border-top: 1px solid var(--borda);
+}
+
+.gestao-select {
+  padding: 8px 12px;
+  border: 1px solid var(--borda);
+  border-radius: var(--radius);
+  font-size: 13px;
+  font-family: var(--font);
+  background: var(--cinza-1);
+  cursor: pointer;
+}
+
+.btn-gestao {
+  padding: 8px 14px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font);
+  cursor: pointer;
+  border: 1px solid var(--borda);
+  background: var(--branco);
+  color: var(--cinza-5);
+  display: inline-flex; align-items: center; gap: 5px;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.btn-gestao:hover { background: var(--cinza-1); }
+
+.btn-gestao-resposta { color: var(--azul); border-color: var(--azul-claro); }
+.btn-gestao-resposta:hover { background: var(--azul-claro); }
+
+.btn-gestao-excluir { color: var(--vermelho); border-color: #F5D5CE; }
+.btn-gestao-excluir:hover { background: var(--verm-bg); }
+
+.gestao-resposta-area {
+  display: none;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--borda);
+}
+
+.gestao-resposta-area.open { display: block; }
+
+.gestao-resposta-area textarea {
+  width: 100%;
+  min-height: 70px;
+  padding: 10px 12px;
+  border: 1px solid var(--borda);
+  border-radius: var(--radius);
+  font-family: var(--font);
+  font-size: 13.5px;
+  resize: vertical;
+  margin-bottom: 8px;
+}
+
+.resposta-existente {
+  background: var(--azul-claro);
+  border-left: 3px solid var(--azul);
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-size: 13px;
+  color: var(--azul-escuro);
+  margin-bottom: 10px;
+}
+
+.resposta-existente strong { display: block; margin-bottom: 3px; font-size: 12px; }
+
+@media (max-width: 640px) {
+  .admin-resumo { grid-template-columns: repeat(2, 1fr); }
+  .gestao-controles { flex-direction: column; align-items: stretch; }
+  .gestao-select { width: 100%; }
+}

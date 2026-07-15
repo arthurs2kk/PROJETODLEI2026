@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Painel da Prefeitura — Pro Povo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
+  <link rel="stylesheet" href="home.css" />
+  <link rel="stylesheet" href="relatos.css" />
+  <link rel="stylesheet" href="AdminPage.css" />
+</head>
+<body>
+
+  <!-- Tela de verificação (evita "flash" de conteúdo antes de confirmar admin) -->
+  <div id="verificando" class="verificando-overlay">
+    <i class="ti ti-loader-2" style="animation:spin 0.8s linear infinite; font-size:32px; color:var(--azul);"></i>
+    <p>Verificando permissão de acesso...</p>
+  </div>
+
+  <div id="painel-conteudo" style="display:none;">
+
+    <div class="gov-bar admin-gov-bar">
+      <span><i class="ti ti-lock"></i> Área restrita · Painel administrativo</span>
+    </div>
+
+    <nav class="navbar">
+      <div class="navbar-left">
+        <div class="empresa-logo">
+          <img src="Images/LogoProPovo.png" alt="Logo da empresa" id="logo-empresa" />
+        </div>
+        <div class="navbar-divider"></div>
+        <div class="logo">
+          <div class="logo-text-group">
+            <span class="logo-title">Pro Povo</span>
+            <span class="logo-sub">Painel administrativo</span>
+          </div>
+        </div>
+      </div>
+      <div class="nav-btns">
+        <span class="admin-user-tag" id="admin-user-tag"><i class="ti ti-user-shield"></i> Carregando...</span>
+        <button class="btn-outline" id="btn-sair">Sair</button>
+      </div>
+    </nav>
+
+    <!-- CABEÇALHO -->
+    <div class="relatos-header">
+      <div class="relatos-header-inner">
+        <h1 class="relatos-title"><i class="ti ti-building-community"></i> Gestão de relatos</h1>
+        <p class="relatos-subtitle">Atualize o status, responda e gerencie os relatos da população</p>
+      </div>
+    </div>
+
+    <!-- RESUMO -->
+    <div class="admin-resumo">
+      <div class="resumo-card">
+        <span class="resumo-num" id="resumo-total">0</span>
+        <span class="resumo-label">Total de relatos</span>
+      </div>
+      <div class="resumo-card resumo-aberto">
+        <span class="resumo-num" id="resumo-aberto">0</span>
+        <span class="resumo-label">Abertos</span>
+      </div>
+      <div class="resumo-card resumo-andamento">
+        <span class="resumo-num" id="resumo-andamento">0</span>
+        <span class="resumo-label">Em andamento</span>
+      </div>
+      <div class="resumo-card resumo-resolvido">
+        <span class="resumo-num" id="resumo-resolvido">0</span>
+        <span class="resumo-label">Resolvidos</span>
+      </div>
+    </div>
+
+    <!-- CONTROLES -->
+    <div class="relatos-controls">
+      <div class="busca-wrap">
+        <i class="ti ti-search busca-icon"></i>
+        <input type="text" id="busca-input" class="busca-input" placeholder="Buscar por título ou endereço..." />
+      </div>
+      <select class="filtro-select" id="filtro-status">
+        <option value="todos">Todos os status</option>
+        <option value="aberto">Aberto</option>
+        <option value="andamento">Em andamento</option>
+        <option value="resolvido">Resolvido</option>
+      </select>
+    </div>
+
+    <!-- LISTA DE GESTÃO -->
+    <div class="relatos-wrapper">
+      <div id="admin-lista"></div>
+      <div class="tabela-empty" id="lista-empty" style="display:none;">
+        <i class="ti ti-mood-empty"></i>
+        <p>Nenhum relato encontrado.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script type="module" src="AdminPage.js"></script>
+</body>
+</html>

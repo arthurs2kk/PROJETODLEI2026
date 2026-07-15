@@ -50,7 +50,7 @@ document.getElementById('btn-admin-login')?.addEventListener('click', async () =
     }
 
     showToast('✅ Acesso autorizado! Redirecionando...');
-    setTimeout(() => window.location.href = 'admin-painel.html', 1000);
+    setTimeout(() => window.location.href = 'AdminPage.html', 1000);
 
   } catch (e) {
     showToast('❌ ' + traduzirErro(e.code));
