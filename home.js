@@ -17,21 +17,47 @@ onAuthStateChanged(auth, (user) => {
   state.usuario = user;
   const btnEntrar    = document.getElementById('btn-entrar');
   const btnCadastrar = document.getElementById('btn-cadastrar');
+  const btnEntrarMobile    = document.getElementById('btn-entrar-mobile');
+  const btnCadastrarMobile = document.getElementById('btn-cadastrar-mobile');
+
   if (user) {
-    if (btnEntrar)    btnEntrar.textContent    = user.displayName || user.email.split('@')[0];
+    const nome = user.displayName || user.email.split('@')[0];
+
+    if (btnEntrar)    btnEntrar.textContent    = nome;
     if (btnCadastrar) btnCadastrar.textContent = 'Sair';
+
+    if (btnEntrarMobile)    btnEntrarMobile.textContent    = nome;
+    if (btnCadastrarMobile) btnCadastrarMobile.textContent = 'Sair';
+
     btnCadastrar?.addEventListener('click', () => {
+      import('./firebase.js').then(({ auth, signOut }) => {
+        signOut(auth).then(() => window.location.href = 'login.html');
+      });
+    }, { once: true });
+
+    btnCadastrarMobile?.addEventListener('click', () => {
       import('./firebase.js').then(({ auth, signOut }) => {
         signOut(auth).then(() => window.location.href = 'login.html');
       });
     }, { once: true });
   }
 });
+
+// ── Botões de login/cadastro (desktop) ──
 document.getElementById('btn-entrar').addEventListener('click', (event) => {
     window.location.href = 'login.html'; 
 });
 
 document.getElementById('btn-cadastrar')?.addEventListener('click', () => {
+    window.location.href = 'login.html';
+});
+
+// ── Botões de login/cadastro (menu mobile) ──
+document.getElementById('btn-entrar-mobile')?.addEventListener('click', () => {
+    window.location.href = 'login.html';
+});
+
+document.getElementById('btn-cadastrar-mobile')?.addEventListener('click', () => {
     window.location.href = 'login.html';
 });
 
@@ -161,12 +187,7 @@ async function renderCards() {
 
   // Evento "Ver detalhes"
   lista.querySelectorAll('.detail-btn').forEach((btn, i) => {
-    btn.addEventListener('click', () => {
-      const r = relatos[i];
-      lista.querySelectorAll('.detail-btn').forEach((btn, i) => {
     btn.addEventListener('click', () => abrirDetalhe(relatos[i]));
-  });
-    });
   });
 
   // Marcar votos do usuário logado
@@ -211,8 +232,6 @@ document.getElementById('detalhe-close')?.addEventListener('click', () => {
 document.getElementById('detalhe-fechar-btn')?.addEventListener('click', () => {
   document.getElementById('modal-detalhe-overlay').classList.remove('open');
 });
-
-
 
 // ── HTML de cada card ──
 function cardHTML(r) {
