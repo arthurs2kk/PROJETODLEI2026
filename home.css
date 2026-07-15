@@ -138,7 +138,7 @@ body {
   font-weight: 500;
   color: rgba(255,255,255,0.85);
   text-decoration: none;
-  transition: background 0.15s, color 0.15s;
+  transition: color 0.15s;
 }
 
 .nav-link:hover,
@@ -153,10 +153,38 @@ body {
   display: none;
   background: none;
   border: none;
-  font-size: 24px;
   cursor: pointer;
-  color: #fff;
   margin-left: auto;
+
+  width: 40px;
+  height: 40px;
+
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+}
+
+.hamburger span {
+  width: 26px;
+  height: 3px;
+  background: #fff;
+  border-radius: 999px;
+  transition: transform 0.35s ease, opacity 0.25s ease;
+}
+
+
+/* vira X */
+.hamburger.active span:nth-child(1) {
+  transform: translateY(9px) rotate(45deg);
+}
+
+.hamburger.active span:nth-child(2) {
+  opacity: 0;
+}
+
+.hamburger.active span:nth-child(3) {
+  transform: translateY(-9px) rotate(-45deg);
 }
 
 /* ── Botões ── */
@@ -248,21 +276,34 @@ body {
 
 /* ── Mobile menu ── */
 .mobile-menu {
-  display: none;
+  display: flex;
   flex-direction: column;
   gap: 4px;
   padding: 12px 16px;
   background: var(--azul-escuro);
   border-bottom: 3px solid var(--amarelo);
   position: absolute;
-  top: 60px;
+  top: 62px;
   left: 0;
   right: 0;
   z-index: 99;
   box-shadow: 0 8px 16px rgba(0,0,0,0.2);
-}
 
-.mobile-menu.open { display: flex; }
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px);
+
+  transition:
+    opacity 0.35s ease,
+    transform 0.35s cubic-bezier(.22,1,.36,1),
+    visibility 0.35s;
+}
+/* Estado aberto */
+.mobile-menu.open {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
 
 .mobile-link {
   display: flex;
@@ -277,7 +318,9 @@ body {
   transition: background 0.12s;
 }
 
-.mobile-link:hover { background: rgba(255,255,255,0.1); }
+.mobile-link:hover {
+  background: rgba(255,255,255,0.1);
+}
 
 .mobile-divider {
   height: 1px;
@@ -957,5 +1000,9 @@ body {
     display: flex;
     margin-left: auto;
   }
+
+  .mobile-menu {
+  top: 80px;
+}
 
 }

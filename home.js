@@ -31,6 +31,10 @@ document.getElementById('btn-entrar').addEventListener('click', (event) => {
     window.location.href = 'login.html'; 
 });
 
+document.getElementById('btn-cadastrar')?.addEventListener('click', () => {
+    window.location.href = 'login.html';
+});
+
 // ── Modal ──
 function openModal() {
   if (!state.usuario) {
@@ -326,9 +330,9 @@ document.getElementById('btn-limpar')?.addEventListener('click', () => {
   renderCards();
 });
 
-// ── Menu mobile ──
 document.getElementById('hamburger')?.addEventListener('click', () => {
   document.getElementById('mobile-menu').classList.toggle('open');
+  document.getElementById('hamburger').classList.toggle('active');
 });
 
 // ── Toast ──
@@ -343,4 +347,3 @@ function showToast(msg) {
 const s = document.createElement('style');
 s.textContent = `@keyframes spin { to { transform: rotate(360deg); } }`;
 document.head.appendChild(s);
-
