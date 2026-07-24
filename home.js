@@ -216,6 +216,9 @@ async function renderCards() {
 function abrirDetalhe(r) {
   document.getElementById('detalhe-titulo').textContent = r.titulo;
   document.getElementById('detalhe-desc').textContent   = r.descricao;
+  document.getElementById('detalhe-resposta').innerHTML = r.respostaOficial
+  ? `<div class="resposta-cidadao"><strong><i class="ti ti-building-community"></i> Resposta da prefeitura:</strong><p>${r.respostaOficial}</p></div>`
+  : '';
   document.getElementById('detalhe-tags').innerHTML = `
     <span class="badge badge-${r.categoria === 'Buraco / Via danificada' ? 'buraco' : 'agua'}">${r.categoria}</span>
     <span class="status status-${r.status}">${r.status}</span>`;
@@ -267,6 +270,11 @@ function cardHTML(r) {
         </div>
         <h3 class="card-title">${r.titulo}</h3>
         <p class="card-desc">${r.descricao}</p>
+        ${r.respostaOficial ? `
+         <div class="resposta-cidadao">
+           <strong><i class="ti ti-building-community"></i> Resposta da prefeitura:</strong>
+           <p>${r.respostaOficial}</p>
+         </div>` : ''}
         <div class="card-meta">
           <span><i class="ti ti-map-pin"></i> ${r.endereco}</span>
           <span><i class="ti ti-clock"></i> ${tempo}</span>

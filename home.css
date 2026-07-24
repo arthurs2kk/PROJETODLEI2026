@@ -1005,4 +1005,21 @@ body {
   top: 80px;
 }
 
+.resposta-cidadao {
+  background: var(--azul-claro);
+  border-left: 3px solid var(--azul);
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin: 8px 0;
+  font-size: 13px;
+  color: var(--azul-escuro);
+}
+.resposta-cidadao strong {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+
 }

@@ -129,6 +129,9 @@ function abrirDetalhe(r) {
 
   document.getElementById('detalhe-titulo').textContent = r.titulo;
   document.getElementById('detalhe-desc').textContent   = r.descricao;
+  document.getElementById('detalhe-resposta').innerHTML = r.respostaOficial
+  ? `<div class="resposta-cidadao"><strong><i class="ti ti-building-community"></i> Resposta da prefeitura:</strong><p>${r.respostaOficial}</p></div>`
+  : '';
   document.getElementById('detalhe-tags').innerHTML = `
     <span class="badge ${cat.badge}">${cat.label}</span>
     <span class="status ${st.css}">${st.label}</span>`;
