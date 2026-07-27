@@ -1,15 +1,19 @@
 // ── Pro Povo — app.js ──
 import { auth, onAuthStateChanged } from "./firebase.js";
 import { criarRelato, ouvirRelatos, votar, jaVotou } from "./db.js";
+import { buscarComDebounce } from "./endereco.js";
+
 
 // ── Estado ──
 const state = {
   cat: 'todos',
   status: 'todos',
-  sort: 'votos',
+  votes: { 1: 143, 2: 87, 3: 64 },
+  voted: {},
   usuario: null,
   fotoFile: null,
-  relatosDoBanco: []
+  relatosDoBanco: [],
+  enderecoSelecionado: null   
 };
 
 // ── Usuário logado ──
@@ -116,7 +120,10 @@ document.getElementById('btn-enviar')?.addEventListener('click', async () => {
 
   try {
     await criarRelato({
-      titulo, categoria, descricao, endereco,
+      titulo, categoria, descricao,
+      endereco: state.enderecoSelecionado.texto,
+      lat: state.enderecoSelecionado.lat,
+      lng: state.enderecoSelecionado.lng,
       autorId:   state.usuario.uid,
       autorNome: state.usuario.displayName || state.usuario.email.split('@')[0]
     }, state.fotoFile);
@@ -131,6 +138,17 @@ document.getElementById('btn-enviar')?.addEventListener('click', async () => {
     btn.disabled = false;
     btn.innerHTML = '<i class="ti ti-send"></i> Enviar relato';
   }
+    const erroConteudo = verificarConteudo(titulo, descricao);
+      if (erroConteudo) {
+        showToast('⚠️ ' + erroConteudo);
+        return;
+      }
+
+      if (!state.enderecoSelecionado) {
+        showToast('⚠️ Selecione um endereço válido na lista de sugestões.');
+        return;
+      }
+
 });
 
 function limparFormulario() {
@@ -138,6 +156,8 @@ function limparFormulario() {
     document.getElementById(id).value = '';
   });
   state.fotoFile = null;
+  state.enderecoSelecionado = null;                        
+  document.getElementById('endereco-status').textContent = ''; 
   const area = document.getElementById('upload-area');
   if (area) area.innerHTML = `<i class="ti ti-photo"></i><strong>Clique para adicionar uma foto</strong><span>JPG, PNG ou HEIC · máx. 10 MB</span><input type="file" id="f-foto" accept="image/*" style="display:none" />`;
 }
@@ -374,3 +394,53 @@ function showToast(msg) {
 const s = document.createElement('style');
 s.textContent = `@keyframes spin { to { transform: rotate(360deg); } }`;
 document.head.appendChild(s);
+
+/// ── Autocomplete de endereço ──
+const inputLocal = document.getElementById('f-local');
+const dropSugestoes = document.getElementById('endereco-sugestoes');
+const statusEndereco = document.getElementById('endereco-status');
+let sugestoesAtuais = [];
+
+inputLocal?.addEventListener('input', (e) => {
+  state.enderecoSelecionado = null;
+  statusEndereco.textContent = '';
+  statusEndereco.className = 'endereco-status';
+
+  const valor = e.target.value.trim();
+  if (valor.length < 4) {
+    dropSugestoes.classList.remove('open');
+    return;
+  }
+
+  buscarComDebounce(valor, (sugestoes) => {
+    sugestoesAtuais = sugestoes;
+    if (sugestoes.length === 0) {
+      dropSugestoes.classList.remove('open');
+      return;
+    }
+    dropSugestoes.innerHTML = sugestoes.map((s, i) => `
+      <div class="sugestao-item" data-i="${i}">
+        <i class="ti ti-map-pin"></i> ${s.texto}
+      </div>`).join('');
+    dropSugestoes.classList.add('open');
+  });
+});
+
+// Delegação de evento — resolve o problema de clique não funcionar
+dropSugestoes?.addEventListener('mousedown', (e) => {
+  const item = e.target.closest('.sugestao-item');
+  if (!item) return;
+  e.preventDefault(); // evita que o input perca foco antes da hora
+
+  const i = Number(item.dataset.i);
+  const s = sugestoesAtuais[i];
+  inputLocal.value = s.texto;
+  state.enderecoSelecionado = s;
+  dropSugestoes.classList.remove('open');
+  statusEndereco.textContent = '✓ Endereço válido selecionado';
+  statusEndereco.className = 'endereco-status valido';
+});
+
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.endereco-wrap')) dropSugestoes?.classList.remove('open');
+});

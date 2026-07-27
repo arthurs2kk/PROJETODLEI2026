@@ -37,14 +37,11 @@ export async function geocodificar(endereco, cidade = '') {
 export async function criarRelato(dados, fotoFile) {
   let fotoUrl = null;
 
-  // Upload da foto se houver
   if (fotoFile) {
     const storageRef = sRef(storage, `relatos/${Date.now()}_${fotoFile.name}`);
     await uploadBytes(storageRef, fotoFile);
     fotoUrl = await getDownloadURL(storageRef);
   }
-
-  const coords = await geocodificar(dados.endereco);
 
   const novoRef = push(ref(db, "relatos"));
   await set(novoRef, {
@@ -52,8 +49,8 @@ export async function criarRelato(dados, fotoFile) {
     categoria:   dados.categoria,
     descricao:   dados.descricao,
     endereco:    dados.endereco,
-    lat:         coords ? coords.lat : null,
-    lng:         coords ? coords.lng : null,
+    lat:         dados.lat || null,
+    lng:         dados.lng || null,
     fotoUrl:     fotoUrl,
     status:      "aberto",
     votos:       0,

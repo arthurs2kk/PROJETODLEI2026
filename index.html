@@ -249,9 +249,22 @@
           <textarea class="form-input form-textarea" id="f-desc" placeholder="Descreva o problema com o máximo de detalhes possível..."></textarea>
         </div>
         <div class="form-group">
-          <label class="form-label">Endereço / Localização <span class="required">*</span></label>
-          <input type="text" class="form-input" id="f-local" placeholder="Ex: Rua das Flores, 123 — bairro Centro" />
-        </div>
+  <label class="form-label">Endereço / Localização <span class="required">*</span></label>
+  <div class="endereco-wrap">
+    <input type="text" class="form-input" id="f-local" name="endereco-relato-unico" placeholder="Digite e escolha um endereço válido..." autocomplete="new-password" />
+    <div class="endereco-sugestoes" id="endereco-sugestoes"></div>
+  </div>
+  <span class="endereco-status" id="endereco-status"></span>
+</div>
+        <div class="form-group">
+            <label class="form-label">Foto do problema <span class="optional">(opcional)</span></label>
+          <div class="upload-area" id="upload-area">
+            <i class="ti ti-photo"></i>
+              <strong>Clique para adicionar uma foto</strong>
+              <span>JPG, PNG ou HEIC · máx. 10 MB</span>
+              <input type="file" id="f-foto" accept="image/*" style="display:none" />
+          </div>
+         </div>
 
         <p class="form-note"><i class="ti ti-lock"></i> Seus dados são protegidos e usados apenas para contato sobre este relato.</p>
       </div>
