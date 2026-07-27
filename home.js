@@ -1,7 +1,7 @@
 // ── Pro Povo — app.js ──
 import { auth, onAuthStateChanged } from "./firebase.js";
 import { criarRelato, ouvirRelatos, votar, jaVotou } from "./db.js";
-import { buscarComDebounce } from "./endereco.js";
+import { buscarComDebounce, estaNaParaiba } from "./endereco.js";
 
 
 // ── Estado ──
@@ -145,9 +145,14 @@ document.getElementById('btn-enviar')?.addEventListener('click', async () => {
       }
 
       if (!state.enderecoSelecionado) {
-        showToast('⚠️ Selecione um endereço válido na lista de sugestões.');
-        return;
-      }
+    showToast('⚠️ Selecione um endereço válido na lista de sugestões.');
+    return;
+  }
+
+  if (!estaNaParaiba(state.enderecoSelecionado.lat, state.enderecoSelecionado.lng)) {
+    showToast('⚠️ O Pro Povo aceita relatos apenas de endereços na Paraíba.');
+    return;
+  }
 
 });
 

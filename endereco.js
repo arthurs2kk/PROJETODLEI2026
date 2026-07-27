@@ -1,14 +1,19 @@
 // ── Pro Povo — endereco.js ──
-// Autocomplete de endereços reais usando Nominatim (OpenStreetMap, gratuito)
 
 let debounceTimer = null;
 
-// ── Busca sugestões de endereço conforme o usuário digita ──
+const VIEWBOX_PARAIBA = "-38.85,-6.02,-34.79,-8.31";
+
+const LIMITES_PB = { latMin: -8.31, latMax: -6.02, lngMin: -38.85, lngMax: -34.79 };
+
+
 export async function buscarSugestoesEndereco(query) {
   if (query.length < 4) return [];
 
   try {
-    const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=5&countrycodes=br&q=${encodeURIComponent(query)}`;
+    const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=6` +
+                `&countrycodes=br&viewbox=${VIEWBOX_PARAIBA}&bounded=1` +
+                `&q=${encodeURIComponent(query)}`;
     const resp = await fetch(url, { headers: { 'Accept-Language': 'pt-BR' } });
     const dados = await resp.json();
 
@@ -31,3 +36,10 @@ export function buscarComDebounce(query, callback, delay = 500) {
     callback(sugestoes);
   }, delay);
 }
+
+// ── Confirma se um ponto está dentro da Paraíba (segurança extra) ──
+export function estaNaParaiba(lat, lng) {
+  return lat >= LIMITES_PB.latMin && lat <= LIMITES_PB.latMax &&
+         lng >= LIMITES_PB.lngMin && lng <= LIMITES_PB.lngMax;
+}
+

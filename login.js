@@ -1,12 +1,5 @@
 // ── Pro Povo — login.js ──
-import {
-  auth,
-  provider,
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  signInWithPopup,
-  onAuthStateChanged
-} from "./firebase.js";
+import { auth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, onAuthStateChanged, sendEmailVerification } from "./firebase.js";
 
 // ── Se já estiver logado, vai direto pro index ──
 onAuthStateChanged(auth, (user) => {
