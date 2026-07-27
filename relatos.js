@@ -129,6 +129,9 @@ function abrirDetalhe(r) {
 
   document.getElementById('detalhe-titulo').textContent = r.titulo;
   document.getElementById('detalhe-desc').textContent   = r.descricao;
+  document.getElementById('detalhe-foto').innerHTML = r.fotoUrl
+    ? `<img src="${r.fotoUrl}" alt="Foto do relato" style="width:100%; border-radius:8px; margin-bottom:12px; max-height:280px; object-fit:cover;">`
+    : '';
   document.getElementById('detalhe-resposta').innerHTML = r.respostaOficial
   ? `<div class="resposta-cidadao"><strong><i class="ti ti-building-community"></i> Resposta da prefeitura:</strong><p>${r.respostaOficial}</p></div>`
   : '';

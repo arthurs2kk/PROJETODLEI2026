@@ -2,10 +2,10 @@
 // Funções para salvar e buscar dados no Realtime Database
 
 import {
-  db, storage,
-  ref, push, set, get, onValue, update, runTransaction,
-  sRef, uploadBytes, getDownloadURL
+  db,
+  ref, push, set, get, onValue, update, runTransaction
 } from "./firebase.js";
+import { uploadImagem } from "/cloudinary.js";
 
 // ── Salvar usuário após cadastro ──
 export async function salvarUsuario(uid, dados) {
@@ -37,10 +37,9 @@ export async function geocodificar(endereco, cidade = '') {
 export async function criarRelato(dados, fotoFile) {
   let fotoUrl = null;
 
+  // Upload da foto via Cloudinary (se houver)
   if (fotoFile) {
-    const storageRef = sRef(storage, `relatos/${Date.now()}_${fotoFile.name}`);
-    await uploadBytes(storageRef, fotoFile);
-    fotoUrl = await getDownloadURL(storageRef);
+    fotoUrl = await uploadImagem(fotoFile);
   }
 
   const novoRef = push(ref(db, "relatos"));
@@ -60,6 +59,12 @@ export async function criarRelato(dados, fotoFile) {
   });
 
   return novoRef.key;
+}
+
+// ── Verificar se o usuário é administrador ──
+export async function ehAdmin(uid) {
+  const snapshot = await get(ref(db, `admins/${uid}`));
+  return snapshot.exists() && snapshot.val() === true;
 }
 
 // ── Ouvir relatos em tempo real ──
@@ -95,11 +100,6 @@ export async function votar(relatoId, userId) {
 export async function jaVotou(relatoId, userId) {
   const snapshot = await get(ref(db, `votos/${relatoId}/${userId}`));
   return snapshot.exists();
-}
-
-export async function ehAdmin(uid) {
-  const snapshot = await get(ref(db, `admins/${uid}`));
-  return snapshot.exists() && snapshot.val() === true;
 }
 
 // ── Atualizar status de um relato ──

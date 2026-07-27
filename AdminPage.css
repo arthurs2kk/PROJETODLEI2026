@@ -186,3 +186,13 @@
   .gestao-controles { flex-direction: column; align-items: stretch; }
   .gestao-select { width: 100%; }
 }
+
+.gestao-foto {
+  width: 100% !important;
+  height: 160px !important;
+  object-fit: cover !important;
+  border-radius: 8px !important;
+  margin: 10px 0 !important;
+  display: block !important;
+  border: 1px solid var(--borda);
+}

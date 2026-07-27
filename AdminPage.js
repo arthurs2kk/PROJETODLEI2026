@@ -115,6 +115,7 @@ function cardHTML(r) {
         <span><i class="ti ti-clock"></i> ${data}</span>
         <span><i class="ti ti-thumb-up"></i> ${r.votos || 0} votos</span>
       </div>
+      ${r.fotoUrl ? `<img src="${r.fotoUrl}" alt="Foto do relato" class="gestao-foto">` : ''}
       <p class="gestao-desc">${r.descricao}</p>
 
       <div class="gestao-controles">
