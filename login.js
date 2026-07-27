@@ -1,10 +1,34 @@
 // ── Pro Povo — login.js ──
 import { auth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, onAuthStateChanged } from "./firebase.js";
+import { salvarUsuario } from "./db.js";
 
 // ── Se já estiver logado, vai direto pro index ──
 onAuthStateChanged(auth, (user) => {
   if (user) window.location.href = "index.html";
 });
+
+// ── Carregar cidades da Paraíba no select de cadastro (via API do IBGE) ──
+// Isso garante que só é possível cadastrar uma cidade que realmente existe na Paraíba.
+async function carregarCidadesParaiba() {
+  const select = document.getElementById('cad-cidade');
+  if (!select) return;
+
+  try {
+    const resp = await fetch('https://servicodados.ibge.gov.br/api/v1/localidades/estados/PB/municipios');
+    const cidades = await resp.json();
+
+    // Ordena alfabeticamente (ignorando acentos)
+    cidades.sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+
+    select.innerHTML = '<option value="">— Selecione sua cidade —</option>' +
+      cidades.map(c => `<option value="${c.nome}">${c.nome}</option>`).join('');
+  } catch (e) {
+    console.warn('Não foi possível carregar a lista de cidades da Paraíba:', e);
+    select.innerHTML = '<option value="">Erro ao carregar cidades. Recarregue a página.</option>';
+  }
+}
+
+carregarCidadesParaiba();
 
 // ── Abas ──
 document.querySelectorAll('.tab-btn').forEach(btn => {

@@ -1,6 +1,6 @@
 // ── Pro Povo — firebase.js ──
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged, updateProfile, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { getDatabase, ref, push, set, get, onValue, update, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const firebaseConfig = {
@@ -23,5 +23,6 @@ export {
   auth, db, provider,
   createUserWithEmailAndPassword, signInWithEmailAndPassword,
   signInWithPopup, signOut, onAuthStateChanged,
+  updateProfile, sendPasswordResetEmail,
   ref, push, set, get, onValue, update, runTransaction
 };

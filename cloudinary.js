@@ -2,7 +2,7 @@
 // Upload de imagens direto do navegador, sem backend, usando preset "unsigned"
 
 const CLOUD_NAME = "dk8uky6m";
-const UPLOAD_PRESET = "pro_povo_imagens";
+const UPLOAD_PRESET = "ProPovo";
 
 // ── Envia o arquivo de imagem e retorna a URL pública ──
 export async function uploadImagem(file) {

@@ -5,7 +5,7 @@ import {
   db,
   ref, push, set, get, onValue, update, runTransaction
 } from "./firebase.js";
-import { uploadImagem } from "/cloudinary.js";
+import { uploadImagem } from "./cloudinary.js";
 
 // ── Salvar usuário após cadastro ──
 export async function salvarUsuario(uid, dados) {
@@ -59,6 +59,21 @@ export async function criarRelato(dados, fotoFile) {
   });
 
   return novoRef.key;
+}
+
+// ── Buscar dados do perfil do usuário ──
+export async function buscarUsuario(uid) {
+  const snapshot = await get(ref(db, `usuarios/${uid}`));
+  return snapshot.exists() ? snapshot.val() : null;
+}
+
+// ── Atualizar dados do perfil (nome e cidade) ──
+export async function atualizarUsuario(uid, dados) {
+  await update(ref(db, `usuarios/${uid}`), {
+    nome:            dados.nome,
+    cidade:          dados.cidade,
+    dataAtualizacao: Date.now()
+  });
 }
 
 // ── Verificar se o usuário é administrador ──

@@ -2,6 +2,7 @@
 import { auth, onAuthStateChanged } from "./firebase.js";
 import { criarRelato, ouvirRelatos, votar, jaVotou } from "./db.js";
 import { buscarComDebounce, estaNaParaiba } from "./endereco.js";
+import { initNavbar } from "./navbar.js";
 
 
 // ── Estado ──
@@ -16,53 +17,12 @@ const state = {
   enderecoSelecionado: null   
 };
 
-// ── Usuário logado ──
+// ── Navbar (login/cadastro/nome do usuário/sair/perfil) ──
+initNavbar();
+
+// ── Guarda o usuário logado para uso no restante da página (ex: enviar relato) ──
 onAuthStateChanged(auth, (user) => {
   state.usuario = user;
-  const btnEntrar    = document.getElementById('btn-entrar');
-  const btnCadastrar = document.getElementById('btn-cadastrar');
-  const btnEntrarMobile    = document.getElementById('btn-entrar-mobile');
-  const btnCadastrarMobile = document.getElementById('btn-cadastrar-mobile');
-
-  if (user) {
-    const nome = user.displayName || user.email.split('@')[0];
-
-    if (btnEntrar)    btnEntrar.textContent    = nome;
-    if (btnCadastrar) btnCadastrar.textContent = 'Sair';
-
-    if (btnEntrarMobile)    btnEntrarMobile.textContent    = nome;
-    if (btnCadastrarMobile) btnCadastrarMobile.textContent = 'Sair';
-
-    btnCadastrar?.addEventListener('click', () => {
-      import('./firebase.js').then(({ auth, signOut }) => {
-        signOut(auth).then(() => window.location.href = 'login.html');
-      });
-    }, { once: true });
-
-    btnCadastrarMobile?.addEventListener('click', () => {
-      import('./firebase.js').then(({ auth, signOut }) => {
-        signOut(auth).then(() => window.location.href = 'login.html');
-      });
-    }, { once: true });
-  }
-});
-
-// ── Botões de login/cadastro (desktop) ──
-document.getElementById('btn-entrar').addEventListener('click', (event) => {
-    window.location.href = 'login.html'; 
-});
-
-document.getElementById('btn-cadastrar')?.addEventListener('click', () => {
-    window.location.href = 'login.html';
-});
-
-// ── Botões de login/cadastro (menu mobile) ──
-document.getElementById('btn-entrar-mobile')?.addEventListener('click', () => {
-    window.location.href = 'login.html';
-});
-
-document.getElementById('btn-cadastrar-mobile')?.addEventListener('click', () => {
-    window.location.href = 'login.html';
 });
 
 // ── Modal ──
@@ -102,6 +62,23 @@ document.getElementById('f-foto')?.addEventListener('change', (e) => {
   area.innerHTML = `<i class="ti ti-photo-check" style="color:var(--verde);font-size:32px"></i><strong>${file.name}</strong><span>Foto anexada</span>`;
 });
 
+// ── Verificação básica de conteúdo (título/descrição) ──
+function verificarConteudo(titulo, descricao) {
+  if (titulo.length < 5) {
+    return 'O título deve ter pelo menos 5 caracteres.';
+  }
+  if (descricao.length < 10) {
+    return 'A descrição deve ter pelo menos 10 caracteres.';
+  }
+  const PALAVRAS_PROIBIDAS = ['porra', 'merda', 'caralho', 'fdp', 'desgraça'];
+  const textoCompleto = (titulo + ' ' + descricao).toLowerCase();
+  const encontrada = PALAVRAS_PROIBIDAS.find(p => textoCompleto.includes(p));
+  if (encontrada) {
+    return 'Seu relato contém linguagem imprópria. Reescreva de forma respeitosa.';
+  }
+  return null;
+}
+
 // ── Enviar relato ──
 document.getElementById('btn-enviar')?.addEventListener('click', async () => {
   const titulo    = document.getElementById('f-titulo').value.trim();
@@ -111,6 +88,22 @@ document.getElementById('btn-enviar')?.addEventListener('click', async () => {
 
   if (!titulo || !categoria || !descricao || !endereco) {
     showToast('⚠️ Preencha todos os campos obrigatórios.');
+    return;
+  }
+
+  const erroConteudo = verificarConteudo(titulo, descricao);
+  if (erroConteudo) {
+    showToast('⚠️ ' + erroConteudo);
+    return;
+  }
+
+  if (!state.enderecoSelecionado) {
+    showToast('⚠️ Selecione um endereço válido na lista de sugestões.');
+    return;
+  }
+
+  if (!estaNaParaiba(state.enderecoSelecionado.lat, state.enderecoSelecionado.lng)) {
+    showToast('⚠️ O Pro Povo aceita relatos apenas de endereços na Paraíba.');
     return;
   }
 
@@ -138,22 +131,6 @@ document.getElementById('btn-enviar')?.addEventListener('click', async () => {
     btn.disabled = false;
     btn.innerHTML = '<i class="ti ti-send"></i> Enviar relato';
   }
-    const erroConteudo = verificarConteudo(titulo, descricao);
-      if (erroConteudo) {
-        showToast('⚠️ ' + erroConteudo);
-        return;
-      }
-
-      if (!state.enderecoSelecionado) {
-    showToast('⚠️ Selecione um endereço válido na lista de sugestões.');
-    return;
-  }
-
-  if (!estaNaParaiba(state.enderecoSelecionado.lat, state.enderecoSelecionado.lng)) {
-    showToast('⚠️ O Pro Povo aceita relatos apenas de endereços na Paraíba.');
-    return;
-  }
-
 });
 
 function limparFormulario() {

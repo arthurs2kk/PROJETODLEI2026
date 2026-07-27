@@ -1,5 +1,9 @@
 // ── Pro Povo — relatos.js ──
 import { ouvirRelatos } from "./db.js";
+import { initNavbar } from "./navbar.js";
+
+// ── Navbar (login/cadastro/nome do usuário/sair/perfil) ──
+initNavbar();
 
 const state = {
   todos: [],

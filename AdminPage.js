@@ -6,12 +6,12 @@ const state = { todos: [], busca: '', status: 'todos' };
 
 // ── Verificação de acesso ──
 onAuthStateChanged(auth, async (user) => {
-  if (!user) { window.location.href = 'admin-login.html'; return; }
+  if (!user) { window.location.href = 'AdmLogin.html'; return; }
 
   const autorizado = await ehAdmin(user.uid);
   if (!autorizado) {
     await signOut(auth);
-    window.location.href = 'admin-login.html';
+    window.location.href = 'AdmLogin.html';
     return;
   }
 

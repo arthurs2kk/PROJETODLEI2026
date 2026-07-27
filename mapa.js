@@ -1,5 +1,9 @@
 // ── Pro Povo — mapa.js ──
 import { ouvirRelatos } from "./db.js";
+import { initNavbar } from "./navbar.js";
+
+// ── Navbar (login/cadastro/nome do usuário/sair/perfil) ──
+initNavbar();
 
 // ── Menu mobile ──
 document.getElementById('hamburger')?.addEventListener('click', () => {
