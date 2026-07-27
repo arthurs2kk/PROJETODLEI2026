@@ -1,5 +1,5 @@
 // ── Pro Povo — login.js ──
-import { auth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, onAuthStateChanged, sendEmailVerification } from "./firebase.js";
+import { auth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, onAuthStateChanged } from "./firebase.js";
 
 // ── Se já estiver logado, vai direto pro index ──
 onAuthStateChanged(auth, (user) => {
@@ -126,7 +126,6 @@ document.getElementById('btn-cadastrar')?.addEventListener('click', async () => 
   }
 });
 
-// ── LOGIN com Google ──
 document.querySelectorAll('.btn-social').forEach(btn => {
   btn.addEventListener('click', async () => {
     window.location.href = 'AdmLogin.html';
