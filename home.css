@@ -942,6 +942,27 @@ body {
   transform: translateX(-50%) translateY(0);
 }
 
+/* ── Rodapé de suporte ── */
+.site-footer {
+  text-align: center;
+  padding: 20px;
+  background: var(--branco);
+  border-top: 1px solid var(--borda);
+  font-size: 13px;
+  color: var(--cinza-4);
+}
+
+.site-footer i { color: var(--azul); margin-right: 4px; }
+
+.site-footer a {
+  color: var(--azul);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.site-footer a:hover { color: var(--azul-hover); }
+
 /* ── Responsivo ── */
 @media (max-width: 860px) {
   .hero-inner { flex-direction: column; }
@@ -1005,6 +1026,9 @@ body {
   top: 80px;
 }
 
+}
+
+/* ── Resposta da prefeitura no card/detalhe (visível em qualquer tamanho de tela) ── */
 .resposta-cidadao {
   background: var(--azul-claro);
   border-left: 3px solid var(--azul);
@@ -1022,42 +1046,41 @@ body {
   margin-bottom: 4px;
 }
 
+/* ── Dropdown de sugestões de endereço (visível em qualquer tamanho de tela) ── */
 .endereco-wrap {
-  position: relative !important;
+  position: relative;
 }
 
 .endereco-sugestoes {
-  display: none !important;
+  display: none;
 }
 
 .endereco-sugestoes.open {
-  display: block !important;
-  position: absolute !important;
-  top: 100% !important;
-  left: 0 !important;
-  right: 0 !important;
-  background: #ffffff !important;
-  border: 1px solid #ccc !important;
-  border-radius: 8px !important;
-  box-shadow: 0 4px 14px rgba(0,0,0,0.18) !important;
-  max-height: 220px !important;
-  overflow-y: auto !important;
-  z-index: 999 !important;
-  margin-top: 4px !important;
+  display: block;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.18);
+  max-height: 220px;
+  overflow-y: auto;
+  z-index: 999;
+  margin-top: 4px;
 }
 
 .sugestao-item {
-  padding: 10px 12px !important;
-  font-size: 13.5px !important;
-  cursor: pointer !important;
-  border-bottom: 1px solid #eee !important;
-  display: flex !important;
-  align-items: center !important;
-  gap: 8px !important;
+  padding: 10px 12px;
+  font-size: 13.5px;
+  cursor: pointer;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .sugestao-item:hover {
-  background: #f0f6ff !important;
-}
-
+  background: #f0f6ff;
 }
