@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Meus relatos — Pro Povo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
+  <link rel="stylesheet" href="home.css" />
+  <link rel="stylesheet" href="relatos.css" />
+  <link rel="stylesheet" href="MeusRelatos.css" />
+  <link rel="icon" type="image/png" href="Images/flavinconProPovo.png">
+</head>
+<body>
+
+  <div class="gov-bar">
+    <span><i class="ti ti-shield-check"></i> Plataforma cidadã independente · Pro Povo</span>
+  </div>
+
+  <nav class="navbar">
+    <div class="navbar-left">
+      <div class="empresa-logo">
+        <img src="Images/LogoProPovo.png" alt="Logo da empresa" id="logo-empresa" />
+      </div>
+      <div class="navbar-divider"></div>
+      <div class="logo">
+        <div class="logo-text-group">
+          <span class="logo-title">Pro Povo</span>
+          <span class="logo-sub">Fale com sua cidade</span>
+        </div>
+      </div>
+    </div>
+    <div class="nav-links">
+      <a href="index.html" class="nav-link">Início</a>
+      <a href="relatos.html" class="nav-link">Relatos</a>
+      <a href="mapa.html" class="nav-link">Mapa</a>
+      <a href="MeusRelatos.html" class="nav-link active" id="nav-meus-relatos">Meus relatos</a>
+    </div>
+    <div class="nav-btns">
+      <button class="btn-outline" id="btn-entrar">Entrar</button>
+      <button class="btn-primary" id="btn-cadastrar">Criar conta</button>
+    </div>
+    <button class="hamburger" id="hamburger" aria-label="Abrir menu">
+      <i class="ti ti-menu-2"></i>
+    </button>
+  </nav>
+
+  <div class="mobile-menu" id="mobile-menu">
+    <a href="index.html" class="mobile-link"><i class="ti ti-home"></i> Início</a>
+    <a href="relatos.html" class="mobile-link"><i class="ti ti-list"></i> Relatos</a>
+    <a href="mapa.html" class="mobile-link"><i class="ti ti-map-2"></i> Mapa</a>
+    <a href="MeusRelatos.html" class="mobile-link" id="mobile-meus-relatos"><i class="ti ti-user-check"></i> Meus relatos</a>
+  </div>
+
+  <!-- CABEÇALHO -->
+  <div class="relatos-header">
+    <div class="relatos-header-inner">
+      <h1 class="relatos-title"><i class="ti ti-user-check"></i> Meus relatos</h1>
+      <p class="relatos-subtitle">Acompanhe o status dos problemas que você relatou e edite os que ainda estão abertos</p>
+    </div>
+  </div>
+
+  <!-- CONTROLES -->
+  <div class="relatos-controls">
+    <div class="busca-wrap">
+      <i class="ti ti-search busca-icon"></i>
+      <input type="text" id="busca-input" class="busca-input" placeholder="Buscar nos seus relatos..." />
+    </div>
+    <select class="filtro-select" id="filtro-status">
+      <option value="todos">Todos os status</option>
+      <option value="aberto">Aberto</option>
+      <option value="andamento">Em andamento</option>
+      <option value="resolvido">Resolvido</option>
+    </select>
+  </div>
+
+  <!-- LISTA -->
+  <div class="relatos-wrapper">
+    <div id="meus-lista" class="meus-lista"></div>
+
+    <div class="tabela-empty" id="lista-empty" style="display:none;">
+      <i class="ti ti-mood-empty"></i>
+      <p>Você ainda não enviou nenhum relato.</p>
+      <a href="index.html" class="btn-primary" style="text-decoration:none; display:inline-flex; margin-top:10px;">
+        <i class="ti ti-plus"></i> Relatar um problema
+      </a>
+    </div>
+  </div>
+
+  <!-- MODAL DE EDIÇÃO -->
+  <div class="modal-overlay" id="modal-editar-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <div class="modal-icon"><i class="ti ti-edit"></i></div>
+          <h2 class="modal-title">Editar relato</h2>
+        </div>
+        <button class="modal-close" id="editar-close"><i class="ti ti-x"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Título do problema <span class="required">*</span></label>
+          <input type="text" class="form-input" id="ed-titulo" maxlength="100" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Categoria <span class="required">*</span></label>
+          <select class="form-input" id="ed-cat">
+            <option>Buraco / Via danificada</option>
+            <option>Iluminação pública</option>
+            <option>Lixo / Entulho</option>
+            <option>Água / Esgoto</option>
+            <option>Áreas verdes</option>
+            <option>Outros</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Descrição <span class="required">*</span></label>
+          <textarea class="form-input form-textarea" id="ed-desc"></textarea>
+        </div>
+        <p class="form-note"><i class="ti ti-info-circle"></i> Endereço e foto não podem ser alterados após o envio.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-outline" id="editar-cancelar">Cancelar</button>
+        <button class="btn-primary" id="editar-salvar"><i class="ti ti-device-floppy"></i> Salvar alterações</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script type="module" src="MeusRelatos.js"></script>
+</body>
+</html>

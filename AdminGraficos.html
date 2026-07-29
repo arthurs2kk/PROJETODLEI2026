@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Painel da Prefeitura — Pro Povo</title>
+  <title>Gráficos — Pro Povo</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="home.css" />
   <link rel="stylesheet" href="relatos.css" />
   <link rel="stylesheet" href="AdminPage.css" />
+  <link rel="stylesheet" href="AdminGraficos.css" />
   <link rel="icon" type="image/png" href="Images/flavinconProPovo.png">
 </head>
 <body>
@@ -41,8 +42,8 @@
         </div>
       </div>
       <div class="nav-links">
-        <a href="AdminPage.html" class="nav-link active">Gestão de relatos</a>
-        <a href="AdminGraficos.html" class="nav-link">Gráficos</a>
+        <a href="AdminPage.html" class="nav-link">Gestão de relatos</a>
+        <a href="AdminGraficos.html" class="nav-link active">Gráficos</a>
       </div>
       <div class="nav-btns">
         <span class="admin-user-tag" id="admin-user-tag"><i class="ti ti-user-shield"></i> Carregando...</span>
@@ -65,57 +66,48 @@
     <!-- CABEÇALHO -->
     <div class="relatos-header">
       <div class="relatos-header-inner">
-        <h1 class="relatos-title"><i class="ti ti-building-community"></i> Gestão de relatos</h1>
-        <p class="relatos-subtitle">Atualize o status, responda e gerencie os relatos da população</p>
-      </div>
-    </div>
-
-    <!-- RESUMO -->
-    <div class="admin-resumo">
-      <div class="resumo-card">
-        <span class="resumo-num" id="resumo-total">0</span>
-        <span class="resumo-label">Total de relatos</span>
-      </div>
-      <div class="resumo-card resumo-aberto">
-        <span class="resumo-num" id="resumo-aberto">0</span>
-        <span class="resumo-label">Abertos</span>
-      </div>
-      <div class="resumo-card resumo-andamento">
-        <span class="resumo-num" id="resumo-andamento">0</span>
-        <span class="resumo-label">Em andamento</span>
-      </div>
-      <div class="resumo-card resumo-resolvido">
-        <span class="resumo-num" id="resumo-resolvido">0</span>
-        <span class="resumo-label">Resolvidos</span>
+        <h1 class="relatos-title"><i class="ti ti-chart-bar"></i> Gráficos e estatísticas</h1>
+        <p class="relatos-subtitle">Explore os relatos por cidade, bairro, tipo de problema e status</p>
       </div>
     </div>
 
     <!-- CONTROLES -->
-    <div class="relatos-controls">
-      <div class="busca-wrap">
-        <i class="ti ti-search busca-icon"></i>
-        <input type="text" id="busca-input" class="busca-input" placeholder="Buscar por título ou endereço..." />
-      </div>
-      <select class="filtro-select" id="filtro-status">
-        <option value="todos">Todos os status</option>
-        <option value="aberto">Aberto</option>
-        <option value="andamento">Em andamento</option>
-        <option value="resolvido">Resolvido</option>
+    <div class="graf-controles">
+      <select class="filtro-select" id="grafico-tipo">
+        <option value="cidades">Cidades com mais relatos (por habitante)</option>
+        <option value="bairros">Bairros com mais relatos (dentro de uma cidade)</option>
+        <option value="categorias">Tipos de problema mais comuns</option>
+        <option value="status">Status dos relatos</option>
+        <option value="evolucao">Evolução mensal de relatos</option>
       </select>
+
+      <select class="filtro-select" id="grafico-filtro-cidade" style="display:none;">
+        <option value="">Selecione uma cidade...</option>
+      </select>
+
+      <div class="graf-acoes">
+        <button class="btn-outline" id="btn-baixar-csv"><i class="ti ti-file-spreadsheet"></i> Baixar dados (CSV)</button>
+        <button class="btn-outline" id="btn-baixar-png"><i class="ti ti-download"></i> Baixar gráfico (PNG)</button>
+      </div>
     </div>
 
-    <!-- LISTA DE GESTÃO -->
-    <div class="relatos-wrapper">
-      <div id="admin-lista"></div>
-      <div class="tabela-empty" id="lista-empty" style="display:none;">
-        <i class="ti ti-mood-empty"></i>
-        <p>Nenhum relato encontrado.</p>
+    <!-- AVISO -->
+    <div class="graf-aviso" id="graf-aviso" style="display:none;">
+      <div class="graf-aviso-box"><i class="ti ti-info-circle"></i> <span id="graf-aviso-texto"></span></div>
+    </div>
+
+    <!-- GRÁFICO -->
+    <div class="graf-card">
+      <div class="graf-canvas-wrap">
+        <canvas id="grafico-canvas"></canvas>
       </div>
     </div>
+
   </div>
 
   <div class="toast" id="toast"></div>
 
-  <script type="module" src="AdminPage.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script type="module" src="AdminGraficos.js"></script>
 </body>
 </html>

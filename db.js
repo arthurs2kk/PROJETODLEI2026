@@ -76,6 +76,29 @@ export async function atualizarUsuario(uid, dados) {
   });
 }
 
+// ── Ouvir, em tempo real, apenas os relatos criados pelo próprio usuário ──
+export function ouvirRelatosDoUsuario(uid, callback) {
+  onValue(ref(db, "relatos"), (snapshot) => {
+    const dados = snapshot.val();
+    if (!dados) { callback([]); return; }
+    const lista = Object.entries(dados)
+      .map(([id, relato]) => ({ id, ...relato }))
+      .filter(r => r.autorId === uid);
+    lista.sort((a, b) => b.dataCriacao - a.dataCriacao);
+    callback(lista);
+  });
+}
+
+// ── Cidadão edita seu próprio relato (só título, categoria e descrição) ──
+export async function atualizarRelatoDoUsuario(relatoId, dados) {
+  await update(ref(db, `relatos/${relatoId}`), {
+    titulo:     dados.titulo,
+    categoria:  dados.categoria,
+    descricao:  dados.descricao,
+    dataEdicao: Date.now()
+  });
+}
+
 // ── Verificar se o usuário é administrador ──
 export async function ehAdmin(uid) {
   const snapshot = await get(ref(db, `admins/${uid}`));

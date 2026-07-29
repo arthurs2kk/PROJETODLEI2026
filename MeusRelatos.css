@@ -1,0 +1,108 @@
+/* ── Lista de relatos do usuário ── */
+.meus-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.meu-relato-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--branco);
+  border: 1px solid var(--borda);
+  border-left: 5px solid var(--cinza-3);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  padding: 16px 18px;
+}
+
+.meu-relato-card[data-status="aberto"]    { border-left-color: var(--vermelho); }
+.meu-relato-card[data-status="andamento"] { border-left-color: var(--laranja); }
+.meu-relato-card[data-status="resolvido"] { border-left-color: var(--verde); }
+
+.meu-relato-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.meu-relato-titulo {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--cinza-5);
+}
+
+.meu-relato-foto {
+  width: 100%;
+  max-height: 200px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin: 8px 0;
+  border: 1px solid var(--borda);
+}
+
+.meu-relato-desc {
+  font-size: 13.5px;
+  color: var(--cinza-4);
+  line-height: 1.5;
+  margin-bottom: 10px;
+}
+
+.meu-relato-meta {
+  display: flex;
+  gap: 14px;
+  font-size: 12px;
+  color: var(--cinza-4);
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.meu-relato-controles {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+  padding-top: 12px;
+  border-top: 1px solid var(--borda);
+}
+
+.meu-relato-bloqueado {
+  font-size: 12.5px;
+  color: var(--cinza-4);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-top: 12px;
+  border-top: 1px solid var(--borda);
+}
+
+.meu-relato-bloqueado i { color: var(--laranja); }
+
+.btn-meu-relato {
+  padding: 8px 14px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font);
+  cursor: pointer;
+  border: 1px solid var(--borda);
+  background: var(--branco);
+  color: var(--cinza-5);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.btn-meu-editar { color: var(--azul); border-color: var(--azul-claro); }
+.btn-meu-editar:hover { background: var(--azul-claro); }
+
+.btn-meu-excluir { color: var(--vermelho); border-color: #F5D5CE; }
+.btn-meu-excluir:hover { background: var(--verm-bg); }
+
+@media (max-width: 640px) {
+  .meu-relato-controles { flex-direction: column; align-items: stretch; }
+}

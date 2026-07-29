@@ -1,3 +1,11 @@
+// ── Pro Povo — navbar.js ──
+// Módulo compartilhado por index.html, relatos.html e mapa.html.
+// Responsável por:
+//   1) Atualizar os botões "Entrar"/"Criar conta" para o nome do usuário + "Sair" quando logado
+//      (antes isso só acontecia em home.js, por isso relatos e mapa continuavam mostrando
+//      "Entrar"/"Criar conta" mesmo com o usuário autenticado).
+//   2) Abrir um modal de "Meu perfil" ao clicar no nome do usuário, permitindo editar
+//      nome e cidade, e enviar um e-mail de redefinição de senha.
 
 import { auth, onAuthStateChanged, signOut, updateProfile, sendPasswordResetEmail } from "./firebase.js";
 import { buscarUsuario, atualizarUsuario } from "./db.js";
@@ -126,8 +134,13 @@ export function initNavbar() {
   const btnCadastrar       = document.getElementById('btn-cadastrar');
   const btnEntrarMobile    = document.getElementById('btn-entrar-mobile');
   const btnCadastrarMobile = document.getElementById('btn-cadastrar-mobile');
+  const navMeusRelatos     = document.getElementById('nav-meus-relatos');
+  const mobileMeusRelatos  = document.getElementById('mobile-meus-relatos');
 
   onAuthStateChanged(auth, (user) => {
+    if (navMeusRelatos)    navMeusRelatos.style.display    = user ? '' : 'none';
+    if (mobileMeusRelatos) mobileMeusRelatos.style.display = user ? '' : 'none';
+
     if (user) {
       const nome = user.displayName || user.email.split('@')[0];
 

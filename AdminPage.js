@@ -17,6 +17,8 @@ onAuthStateChanged(auth, async (user) => {
 
   document.getElementById('admin-user-tag').innerHTML =
     `<i class="ti ti-user-shield"></i> ${user.displayName || user.email}`;
+  document.getElementById('admin-user-tag-mobile').innerHTML =
+    `<i class="ti ti-user-shield"></i> ${user.displayName || user.email}`;
   document.getElementById('verificando').style.display = 'none';
   document.getElementById('painel-conteudo').style.display = 'block';
 
@@ -28,7 +30,17 @@ onAuthStateChanged(auth, async (user) => {
 
 document.getElementById('btn-sair')?.addEventListener('click', async () => {
   await signOut(auth);
-  window.location.href = 'admin-login.html';
+  window.location.href = 'AdmLogin.html';
+});
+
+document.getElementById('btn-sair-mobile')?.addEventListener('click', async () => {
+  await signOut(auth);
+  window.location.href = 'AdmLogin.html';
+});
+
+// ── Menu mobile ──
+document.getElementById('hamburger')?.addEventListener('click', () => {
+  document.getElementById('mobile-menu').classList.toggle('open');
 });
 
 // ── Busca e filtro ──

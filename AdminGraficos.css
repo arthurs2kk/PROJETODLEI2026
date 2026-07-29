@@ -1,0 +1,76 @@
+/* ── Controles ── */
+.graf-controles {
+  max-width: 1200px;
+  margin: -20px auto 0;
+  padding: 0 20px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+  position: relative;
+  z-index: 2;
+}
+
+.graf-controles .filtro-select { min-width: 220px; }
+
+.graf-acoes {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+  flex-wrap: wrap;
+}
+
+/* .btn-outline por padrão é feito pra navbar escura (texto branco).
+   Aqui o fundo é claro, então precisa da mesma inversão usada em .sidebar/.modal-footer */
+.graf-acoes .btn-outline {
+  border-color: var(--borda);
+  color: var(--cinza-5);
+  background: var(--branco);
+}
+
+.graf-acoes .btn-outline:hover {
+  background: var(--cinza-2);
+}
+
+/* ── Aviso ── */
+.graf-aviso {
+  max-width: 1200px;
+  margin: 12px auto 0;
+  padding: 0 20px;
+}
+
+.graf-aviso-box {
+  background: #FFF8D0;
+  border: 1px solid #F0DE8A;
+  color: #6B4F00;
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ── Gráfico ── */
+.graf-card {
+  max-width: 1200px;
+  margin: 20px auto 50px;
+  padding: 0 20px;
+}
+
+.graf-canvas-wrap {
+  background: var(--branco);
+  border: 1px solid var(--borda);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  padding: 24px;
+  height: 480px;
+  position: relative;
+}
+
+@media (max-width: 640px) {
+  .graf-controles { margin-top: -14px; }
+  .graf-acoes { margin-left: 0; width: 100%; }
+  .graf-acoes button { flex: 1; justify-content: center; }
+  .graf-canvas-wrap { height: 380px; padding: 16px; }
+}
