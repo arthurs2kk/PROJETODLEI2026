@@ -1,6 +1,6 @@
 // ── Pro Povo — app.js ──
 import { auth, onAuthStateChanged } from "./firebase.js";
-import { criarRelato, ouvirRelatos, votar, jaVotou } from "./db.js";
+import { criarRelato, ouvirRelatos, votar, jaVotou, tempoRestanteParaEnviar } from "./db.js";
 import { buscarComDebounce, estaNaParaiba } from "./endereco.js";
 import { initNavbar } from "./navbar.js";
 
@@ -107,6 +107,13 @@ document.getElementById('btn-enviar')?.addEventListener('click', async () => {
     return;
   }
 
+  const restante = await tempoRestanteParaEnviar(state.usuario.uid);
+  if (restante > 0) {
+    const minutos = Math.ceil(restante / 60000);
+    showToast(`⏳ Aguarde cerca de ${minutos} minuto${minutos > 1 ? 's' : ''} antes de enviar outro relato.`);
+    return;
+  }
+
   const btn = document.getElementById('btn-enviar');
   btn.disabled = true;
   btn.innerHTML = '<i class="ti ti-loader-2" style="animation:spin 0.8s linear infinite"></i> Enviando...';
@@ -117,6 +124,8 @@ document.getElementById('btn-enviar')?.addEventListener('click', async () => {
       endereco: state.enderecoSelecionado.texto,
       lat: state.enderecoSelecionado.lat,
       lng: state.enderecoSelecionado.lng,
+      cidade: state.enderecoSelecionado.cidade,
+      bairro: state.enderecoSelecionado.bairro,
       autorId:   state.usuario.uid,
       autorNome: state.usuario.displayName || state.usuario.email.split('@')[0]
     }, state.fotoFile);
@@ -126,7 +135,11 @@ document.getElementById('btn-enviar')?.addEventListener('click', async () => {
     showToast('✅ Relato enviado com sucesso! Obrigado.');
   } catch (err) {
     console.error(err);
-    showToast('❌ Erro ao enviar. Tente novamente.');
+    if (err.code === 'LIMITE_ENVIO') {
+      showToast('⏳ Você enviou um relato há pouco tempo. Aguarde alguns minutos antes de enviar outro.');
+    } else {
+      showToast('❌ Erro ao enviar. Tente novamente.');
+    }
   } finally {
     btn.disabled = false;
     btn.innerHTML = '<i class="ti ti-send"></i> Enviar relato';

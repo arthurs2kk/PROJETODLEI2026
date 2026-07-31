@@ -46,11 +46,16 @@ document.getElementById('hamburger')?.addEventListener('click', () => {
   document.getElementById('mobile-menu').classList.toggle('open');
 });
 
-// ── Extrai cidade e bairro do texto do endereço ──
-// O endereço é salvo como "rua, bairro, cidade, Paraíba, Região Nordeste, Brasil"
-// (formato do Nominatim). Relatos antigos que não seguem esse padrão ficam sem cidade
-// identificada, e são tratados separadamente em vez de arriscar um dado errado.
+// ── Extrai cidade e bairro de um relato ──
+// Relatos criados a partir de agora já vêm com cidade/bairro salvos direto do
+// Nominatim (muito mais confiável). Relatos antigos, criados antes dessa mudança,
+// não têm esses campos — pra eles, tentamos um fallback lendo o texto do endereço,
+// que é salvo como "rua, bairro, cidade, Paraíba, Região Nordeste, Brasil".
 function extrairCidadeBairro(r) {
+  if (r.cidade) {
+    return { cidade: r.cidade, bairro: r.bairro || null };
+  }
+
   const partes = (r.endereco || '').split(',').map(p => p.trim()).filter(Boolean);
   const idxPB = partes.findIndex(p => normalizar(p).includes('paraiba'));
   if (idxPB > 0) {

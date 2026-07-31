@@ -99,7 +99,7 @@ async function salvarPerfil(user) {
 
   try {
     await updateProfile(user, { displayName: nome });
-    await atualizarUsuario(user.uid, { nome, cidade });
+    await atualizarUsuario(user.uid, { nome, cidade, email: user.email });
 
     // Atualiza o nome exibido na navbar na hora, sem precisar recarregar a página
     document.querySelectorAll('#btn-entrar, #btn-entrar-mobile').forEach(b => {
@@ -124,7 +124,13 @@ async function trocarSenha(user) {
     showToast('📧 Link de redefinição de senha enviado para o seu e-mail.');
   } catch (e) {
     console.error(e);
-    showToast('❌ Não foi possível enviar o e-mail. Tente novamente.');
+    const mensagens = {
+      'auth/too-many-requests': '⏳ Muitas tentativas seguidas. Aguarde alguns minutos e tente de novo.',
+      'auth/invalid-email':     '❌ E-mail inválido.',
+      'auth/user-not-found':    '❌ Não encontramos uma conta com esse e-mail.',
+      'auth/network-request-failed': '❌ Erro de conexão. Verifique sua internet.'
+    };
+    showToast(mensagens[e.code] || '❌ Não foi possível enviar o e-mail. Tente novamente.');
   }
 }
 

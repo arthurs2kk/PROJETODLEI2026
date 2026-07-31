@@ -17,11 +17,20 @@ export async function buscarSugestoesEndereco(query) {
     const resp = await fetch(url, { headers: { 'Accept-Language': 'pt-BR' } });
     const dados = await resp.json();
 
-    return dados.map(item => ({
-      texto: item.display_name,
-      lat: parseFloat(item.lat),
-      lng: parseFloat(item.lon)
-    }));
+    // O Nominatim já devolve o endereço "quebrado" em partes (address), graças ao
+    // addressdetails=1 acima. Antes a gente descartava isso e só guardava o texto
+    // inteiro (display_name) — agora aproveitamos pra salvar cidade/bairro certinhos,
+    // sem precisar tentar adivinhar depois olhando o texto.
+    return dados.map(item => {
+      const addr = item.address || {};
+      return {
+        texto:  item.display_name,
+        lat:    parseFloat(item.lat),
+        lng:    parseFloat(item.lon),
+        cidade: addr.city || addr.town || addr.village || addr.municipality || null,
+        bairro: addr.suburb || addr.neighbourhood || addr.city_district || addr.quarter || null
+      };
+    });
   } catch (e) {
     console.warn('Erro ao buscar endereços:', e);
     return [];
@@ -42,4 +51,3 @@ export function estaNaParaiba(lat, lng) {
   return lat >= LIMITES_PB.latMin && lat <= LIMITES_PB.latMax &&
          lng >= LIMITES_PB.lngMin && lng <= LIMITES_PB.lngMax;
 }
-

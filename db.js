@@ -33,6 +33,18 @@ export async function geocodificar(endereco, cidade = '') {
   return null;
 }
 
+// ── Tempo mínimo, em milissegundos, entre dois relatos do mesmo cidadão ──
+const INTERVALO_MINIMO_ENVIO = 5 * 60 * 1000; // 5 minutos
+
+// ── Quanto tempo falta (em ms) até o usuário poder enviar outro relato. 0 = pode enviar já ──
+export async function tempoRestanteParaEnviar(uid) {
+  const snapshot = await get(ref(db, `limitesEnvio/${uid}`));
+  if (!snapshot.exists()) return 0;
+  const passou = Date.now() - snapshot.val();
+  const restante = INTERVALO_MINIMO_ENVIO - passou;
+  return restante > 0 ? restante : 0;
+}
+
 // ── Criar novo relato ──
 export async function criarRelato(dados, fotoFile) {
   let fotoUrl = null;
@@ -43,20 +55,42 @@ export async function criarRelato(dados, fotoFile) {
   }
 
   const novoRef = push(ref(db, "relatos"));
-  await set(novoRef, {
+  const agora = Date.now();
+
+  const dadosRelato = {
     titulo:      dados.titulo,
     categoria:   dados.categoria,
     descricao:   dados.descricao,
     endereco:    dados.endereco,
     lat:         dados.lat || null,
     lng:         dados.lng || null,
+    cidade:      dados.cidade || null,
+    bairro:      dados.bairro || null,
     fotoUrl:     fotoUrl,
     status:      "aberto",
     votos:       0,
     autorId:     dados.autorId,
     autorNome:   dados.autorNome,
-    dataCriacao: Date.now()
-  });
+    dataCriacao: agora
+  };
+
+  // Grava o relato e atualiza o carimbo de "último envio" numa única operação atômica.
+  // As regras do banco exigem que esse carimbo bata com dataCriacao pra autorizar a
+  // criação — isso impede alguém de contornar o limite de envio chamando a API
+  // diretamente, sem passar pelo app (o limite não depende de "boa vontade" do cliente).
+  try {
+    await update(ref(db), {
+      [`relatos/${novoRef.key}`]:        dadosRelato,
+      [`limitesEnvio/${dados.autorId}`]: agora
+    });
+  } catch (e) {
+    if (e.code === 'PERMISSION_DENIED') {
+      const erro = new Error('Você precisa aguardar antes de enviar outro relato.');
+      erro.code = 'LIMITE_ENVIO';
+      throw erro;
+    }
+    throw e;
+  }
 
   return novoRef.key;
 }
@@ -67,10 +101,15 @@ export async function buscarUsuario(uid) {
   return snapshot.exists() ? snapshot.val() : null;
 }
 
-// ── Atualizar dados do perfil (nome e cidade) ──
+// ── Atualizar dados do perfil (nome, e-mail e cidade) ──
+// O e-mail é reenviado aqui mesmo sem ter mudado: as regras do banco exigem que
+// nome/email/cidade existam juntos em usuarios/{uid}, então se o registro tivesse
+// ficado incompleto por algum motivo (ex: conta criada antes de uma correção
+// anterior), essa gravação já conserta sozinha em vez de falhar na validação.
 export async function atualizarUsuario(uid, dados) {
   await update(ref(db, `usuarios/${uid}`), {
     nome:            dados.nome,
+    email:           dados.email,
     cidade:          dados.cidade,
     dataAtualizacao: Date.now()
   });
