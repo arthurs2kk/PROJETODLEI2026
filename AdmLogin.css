@@ -27,6 +27,7 @@
   max-width: 440px;
   box-shadow: var(--shadow-md);
   overflow: hidden;
+  animation: fadeInUp .5s var(--ease) both;
 }
 
 .admin-header {
@@ -117,9 +118,11 @@
   font-weight: 700;
   border-radius: var(--radius);
   letter-spacing: 0.01em;
+  transition: background var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
 }
 
-.admin-btn:hover { background: var(--azul-hover); }
+.admin-btn:hover  { background: var(--azul-hover); transform: translateY(-1px); box-shadow: var(--shadow); }
+.admin-btn:active { transform: translateY(0) scale(.98); }
 
 .admin-footer-note {
   font-size: 12.5px;
@@ -143,10 +146,10 @@
   color: var(--cinza-4);
   text-decoration: none;
   font-weight: 600;
-  transition: color 0.15s;
+  transition: color var(--transition-fast), transform var(--transition-fast);
 }
 
-.admin-voltar:hover { color: var(--azul); }
+.admin-voltar:hover { color: var(--azul); transform: translateX(-3px); }
 
 @media (max-width: 480px) {
   .admin-header { padding: 28px 20px 20px; }

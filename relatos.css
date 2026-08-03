@@ -60,9 +60,10 @@
   background: var(--branco);
   box-shadow: var(--shadow);
   outline: none;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
-.busca-input:focus { border-color: var(--azul); box-shadow: 0 0 0 3px rgba(19,81,180,0.12); }
+.busca-input:focus { border-color: var(--azul); box-shadow: 0 0 0 4px rgba(19,81,180,0.10); }
 
 .filtro-select {
   padding: 12px 14px;
@@ -74,7 +75,10 @@
   color: var(--cinza-5);
   box-shadow: var(--shadow);
   cursor: pointer;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
+
+.filtro-select:hover { box-shadow: var(--shadow-md); }
 
 /* ── Área da tabela ── */
 .relatos-wrapper {
@@ -89,6 +93,7 @@
   border-radius: var(--radius-lg);
   overflow: hidden;
   box-shadow: var(--shadow);
+  animation: fadeInUp .4s var(--ease) both;
 }
 
 .tabela-relatos {
@@ -125,7 +130,7 @@
   vertical-align: middle;
 }
 
-.tabela-relatos tbody tr { transition: background 0.12s; }
+.tabela-relatos tbody tr { transition: background var(--transition-fast); }
 .tabela-relatos tbody tr:hover { background: var(--cinza-1); }
 .tabela-relatos tbody tr:last-child td { border-bottom: none; }
 
@@ -153,10 +158,10 @@
   cursor: pointer;
   font-family: var(--font);
   white-space: nowrap;
-  transition: background 0.15s, border-color 0.15s;
+  transition: background var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast);
 }
 
-.btn-tabela-detalhe:hover { background: var(--azul-claro); border-color: var(--azul); }
+.btn-tabela-detalhe:hover { background: var(--azul-claro); border-color: var(--azul); transform: translateY(-1px); }
 
 /* Badges e status reaproveitam classes do home.css (.badge-*, .status-*) */
 .tabela-relatos .badge,
@@ -188,9 +193,10 @@
   align-items: center;
   gap: 4px;
   white-space: nowrap;
+  transition: gap var(--transition-fast);
 }
 
-.ver-todos-link:hover { text-decoration: underline; }
+.ver-todos-link:hover { text-decoration: underline; gap: 8px; }
 
 /* ── Responsivo: vira cards empilhados no mobile ── */
 @media (max-width: 760px) {

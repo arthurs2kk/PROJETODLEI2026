@@ -26,17 +26,18 @@
   border-color: var(--borda);
   color: var(--cinza-5);
   background: var(--branco);
+  transition: background var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
 }
 
-.graf-acoes .btn-outline:hover {
-  background: var(--cinza-2);
-}
+.graf-acoes .btn-outline:hover  { background: var(--cinza-2); transform: translateY(-1px); box-shadow: var(--shadow); }
+.graf-acoes .btn-outline:active { transform: translateY(0) scale(.97); }
 
 /* ── Aviso ── */
 .graf-aviso {
   max-width: 1200px;
   margin: 12px auto 0;
   padding: 0 20px;
+  animation: fadeInUp .3s var(--ease) both;
 }
 
 .graf-aviso-box {
@@ -66,7 +67,11 @@
   padding: 24px;
   height: 480px;
   position: relative;
+  transition: box-shadow var(--transition-fast);
+  animation: fadeInUp .4s var(--ease) both;
 }
+
+.graf-canvas-wrap:hover { box-shadow: var(--shadow-md); }
 
 @media (max-width: 640px) {
   .graf-controles { margin-top: -14px; }

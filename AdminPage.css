@@ -44,7 +44,15 @@
   text-align: center;
   box-shadow: var(--shadow);
   border-top: 4px solid var(--cinza-3);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  animation: fadeInUp .4s var(--ease) both;
 }
+
+.resumo-card:nth-child(2) { animation-delay: .05s; }
+.resumo-card:nth-child(3) { animation-delay: .1s; }
+.resumo-card:nth-child(4) { animation-delay: .15s; }
+
+.resumo-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
 
 .resumo-aberto     { border-top-color: var(--vermelho); }
 .resumo-andamento  { border-top-color: var(--laranja); }
@@ -74,7 +82,11 @@
   border-radius: var(--radius-lg);
   padding: 16px 18px;
   box-shadow: var(--shadow);
+  transition: box-shadow var(--transition-fast), transform var(--transition-fast);
+  animation: fadeInUp .35s var(--ease) both;
 }
+
+.gestao-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
 
 .gestao-card[data-status="aberto"]    { border-left-color: var(--vermelho); }
 .gestao-card[data-status="andamento"] { border-left-color: var(--laranja); }
@@ -137,10 +149,11 @@
   background: var(--branco);
   color: var(--cinza-5);
   display: inline-flex; align-items: center; gap: 5px;
-  transition: background 0.15s, border-color 0.15s;
+  transition: background var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast);
 }
 
-.btn-gestao:hover { background: var(--cinza-1); }
+.btn-gestao:hover  { background: var(--cinza-1); transform: translateY(-1px); }
+.btn-gestao:active { transform: translateY(0) scale(.96); }
 
 .btn-gestao-resposta { color: var(--azul); border-color: var(--azul-claro); }
 .btn-gestao-resposta:hover { background: var(--azul-claro); }
@@ -149,13 +162,22 @@
 .btn-gestao-excluir:hover { background: var(--verm-bg); }
 
 .gestao-resposta-area {
-  display: none;
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 1px dashed transparent;
+  transition: max-height var(--transition), opacity var(--transition), margin-top var(--transition), padding-top var(--transition);
+}
+
+.gestao-resposta-area.open {
+  max-height: 600px;
+  opacity: 1;
   margin-top: 12px;
   padding-top: 12px;
   border-top: 1px dashed var(--borda);
 }
-
-.gestao-resposta-area.open { display: block; }
 
 .gestao-resposta-area textarea {
   width: 100%;

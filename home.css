@@ -29,14 +29,45 @@
   --laran-bg:    #FFF0E0;
 
   --font: 'Noto Sans', Arial, sans-serif;
-  --radius: 6px;
-  --radius-lg: 10px;
+  --radius: 10px;
+  --radius-lg: 16px;
 
-  --shadow: 0 1px 4px rgba(0,0,0,0.10);
-  --shadow-md: 0 2px 10px rgba(0,0,0,0.12);
+  --shadow:    0 2px 10px rgba(12,50,111,0.07);
+  --shadow-md: 0 10px 30px rgba(12,50,111,0.12);
+  --shadow-lg: 0 24px 60px rgba(12,50,111,0.20);
+
+  --ease: cubic-bezier(.22,1,.36,1);
+  --transition:      0.25s var(--ease);
+  --transition-fast: 0.15s ease;
 }
 
 html { scroll-behavior: smooth; }
+
+/* ── Movimento ── */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes modalIn {
+  from { opacity: 0; transform: translateY(18px) scale(.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Respeita quem prefere menos animação (acessibilidade) */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
 
 body {
   font-family: var(--font);
@@ -133,12 +164,12 @@ body {
 
 .nav-link {
   padding: 8px 14px;
-  border-radius: var(--radius);
+  border-radius: 99px;
   font-size: 14px;
   font-weight: 500;
   color: rgba(255,255,255,0.85);
   text-decoration: none;
-  transition: color 0.15s;
+  transition: color var(--transition-fast), background var(--transition-fast);
 }
 
 .nav-link:hover,
@@ -198,10 +229,11 @@ body {
   font-weight: 600;
   font-family: var(--font);
   cursor: pointer;
-  transition: background 0.15s;
+  transition: background var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast);
 }
 
-.btn-outline:hover { background: rgba(255,255,255,0.12); }
+.btn-outline:hover  { background: rgba(255,255,255,0.12); }
+.btn-outline:active { transform: scale(.97); }
 
 /* btn-outline fora da navbar */
 .sidebar .btn-outline,
@@ -230,10 +262,11 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  transition: filter 0.15s;
+  transition: filter var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
 }
 
-.btn-primary:hover { filter: brightness(0.93); }
+.btn-primary:hover  { filter: brightness(0.96); transform: translateY(-1px); box-shadow: var(--shadow); }
+.btn-primary:active { transform: translateY(0) scale(.97); }
 
 .btn-cta {
   display: inline-flex;
@@ -249,10 +282,11 @@ body {
   font-family: var(--font);
   cursor: pointer;
   box-shadow: 0 3px 10px rgba(0,0,0,0.15);
-  transition: filter 0.15s, transform 0.15s;
+  transition: filter var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
 }
 
-.btn-cta:hover { filter: brightness(0.93); transform: translateY(-1px); }
+.btn-cta:hover  { filter: brightness(0.96); transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.btn-cta:active { transform: translateY(0) scale(.97); }
 
 .btn-secondary-hero {
   display: inline-flex;
@@ -267,10 +301,11 @@ body {
   font-weight: 600;
   font-family: var(--font);
   cursor: pointer;
-  transition: background 0.15s;
+  transition: background var(--transition-fast), transform var(--transition-fast);
 }
 
-.btn-secondary-hero:hover { background: rgba(255,255,255,0.1); }
+.btn-secondary-hero:hover  { background: rgba(255,255,255,0.1); transform: translateY(-1px); }
+.btn-secondary-hero:active { transform: translateY(0) scale(.97); }
 
 .w100 { width: 100%; justify-content: center; }
 
@@ -315,11 +350,12 @@ body {
   color: rgba(255,255,255,0.9);
   text-decoration: none;
   border-radius: var(--radius);
-  transition: background 0.12s;
+  transition: background var(--transition-fast), transform var(--transition-fast);
 }
 
 .mobile-link:hover {
   background: rgba(255,255,255,0.1);
+  transform: translateX(4px);
 }
 
 .mobile-divider {
@@ -343,7 +379,10 @@ body {
   gap: 40px;
 }
 
-.hero-text { flex: 1; }
+.hero-text {
+  flex: 1;
+  animation: fadeInUp .6s var(--ease) both;
+}
 
 .hero-eyebrow {
   display: inline-flex;
@@ -390,6 +429,7 @@ body {
   width: 280px;
   flex-shrink: 0;
   box-shadow: var(--shadow-md);
+  animation: fadeInUp .6s var(--ease) .12s both;
 }
 
 .stats-title {
@@ -474,6 +514,13 @@ body {
   padding: 14px 18px;
   flex: 1;
   min-width: 180px;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast);
+}
+
+.step:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+  border-color: var(--azul-claro);
 }
 
 .step-num {
@@ -526,7 +573,10 @@ body {
   border-radius: var(--radius-lg);
   padding: 16px;
   box-shadow: var(--shadow);
+  transition: box-shadow var(--transition-fast);
 }
+
+.sidebar-box:hover { box-shadow: var(--shadow-md); }
 
 .btn-relatar-side {
   width: 100%;
@@ -560,7 +610,7 @@ body {
   color: var(--cinza-5);
   cursor: pointer;
   text-align: left;
-  transition: background 0.12s;
+  transition: background var(--transition-fast), color var(--transition-fast);
 }
 
 .filter-btn:hover { background: var(--cinza-2); }
@@ -630,10 +680,11 @@ body {
   overflow: hidden;
   margin-bottom: 14px;
   box-shadow: var(--shadow);
-  transition: box-shadow 0.2s, transform 0.15s;
+  transition: box-shadow var(--transition), transform var(--transition);
+  animation: fadeInUp .35s var(--ease) both;
 }
 
-.card:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+.card:hover { box-shadow: var(--shadow-md); transform: translateY(-3px); }
 
 .card[data-cat="buraco"]     { border-left-color: var(--vermelho); }
 .card[data-cat="iluminacao"] { border-left-color: var(--laranja); }
@@ -711,19 +762,29 @@ body {
   font-family: var(--font);
   color: var(--cinza-4);
   cursor: pointer;
-  transition: all 0.15s;
+  transition: background var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast), transform var(--transition-fast);
 }
 
 .vote-btn:hover {
   border-color: var(--azul);
   color: var(--azul);
   background: var(--azul-claro);
+  transform: translateY(-1px);
 }
+
+.vote-btn:active { transform: scale(.93); }
 
 .vote-btn.voted {
   background: var(--azul-claro);
   border-color: var(--azul);
   color: var(--azul-escuro);
+  animation: votePop .35s var(--ease);
+}
+
+@keyframes votePop {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.12); }
+  100% { transform: scale(1); }
 }
 
 .detail-btn {
@@ -787,30 +848,40 @@ body {
 
 /* ── Modal ── */
 .modal-overlay {
-  display: none;
+  display: flex;
   position: fixed; inset: 0;
-  background: rgba(0,0,0,0.5);
+  background: rgba(12,50,111,0.45);
   z-index: 200;
   align-items: center;
   justify-content: center;
   padding: 16px;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity var(--transition), visibility var(--transition), background var(--transition);
 }
 
-.modal-overlay.open { display: flex; }
+.modal-overlay.open {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
 
 .modal {
   background: var(--branco);
   border-radius: var(--radius-lg);
   width: 100%;
   max-width: 520px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.2);
-  animation: fadein 0.2s ease;
+  box-shadow: var(--shadow-lg);
   border-top: 5px solid var(--azul);
+  transform: translateY(18px) scale(.97);
+  opacity: 0;
+  transition: transform var(--transition), opacity var(--transition);
 }
 
-@keyframes fadein {
-  from { opacity: 0; transform: translateY(14px); }
-  to   { opacity: 1; transform: none; }
+.modal-overlay.open .modal {
+  transform: translateY(0) scale(1);
+  opacity: 1;
 }
 
 .modal-header {
@@ -841,10 +912,10 @@ body {
   width: 34px; height: 34px;
   display: flex; align-items: center; justify-content: center;
   border-radius: var(--radius);
-  transition: background 0.15s;
+  transition: background var(--transition-fast), transform var(--transition-fast);
 }
 
-.modal-close:hover { background: var(--cinza-2); }
+.modal-close:hover  { background: var(--cinza-2); transform: rotate(90deg); }
 
 .modal-body {
   padding: 20px 24px;
@@ -879,12 +950,12 @@ body {
   color: var(--cinza-5);
   background: var(--branco);
   outline: none;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 .form-input:focus {
   border-color: var(--azul);
-  box-shadow: 0 0 0 3px rgba(19,81,180,0.12);
+  box-shadow: 0 0 0 4px rgba(19,81,180,0.10);
 }
 
 .form-textarea { resize: vertical; min-height: 96px; }
@@ -900,10 +971,10 @@ body {
   font-size: 13px;
   text-align: center;
   cursor: pointer;
-  transition: border-color 0.15s, background 0.15s;
+  transition: border-color var(--transition-fast), background var(--transition-fast), transform var(--transition-fast);
 }
 
-.upload-area:hover { border-color: var(--azul); background: var(--azul-claro); }
+.upload-area:hover { border-color: var(--azul); background: var(--azul-claro); transform: translateY(-1px); }
 .upload-area i { font-size: 32px; color: var(--cinza-3); }
 .upload-area strong { font-size: 14px; color: var(--cinza-5); }
 
@@ -923,7 +994,7 @@ body {
 .toast {
   position: fixed;
   bottom: 28px; left: 50%;
-  transform: translateX(-50%) translateY(60px);
+  transform: translateX(-50%) translateY(60px) scale(.95);
   background: var(--azul-escuro);
   color: #fff;
   padding: 12px 24px;
@@ -932,14 +1003,15 @@ body {
   font-weight: 600;
   z-index: 300;
   opacity: 0;
-  transition: all 0.3s;
+  transition: opacity var(--transition), transform var(--transition);
   white-space: nowrap;
   border-left: 4px solid var(--amarelo);
+  box-shadow: var(--shadow-md);
 }
 
 .toast.show {
   opacity: 1;
-  transform: translateX(-50%) translateY(0);
+  transform: translateX(-50%) translateY(0) scale(1);
 }
 
 /* ── Rodapé de suporte ── */
@@ -959,6 +1031,7 @@ body {
   font-weight: 600;
   text-decoration: underline;
   text-underline-offset: 2px;
+  transition: color var(--transition-fast);
 }
 
 .site-footer a:hover { color: var(--azul-hover); }
@@ -1062,13 +1135,14 @@ body {
   left: 0;
   right: 0;
   background: #ffffff;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  box-shadow: 0 4px 14px rgba(0,0,0,0.18);
+  border: 1px solid var(--borda);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
   max-height: 220px;
   overflow-y: auto;
   z-index: 999;
-  margin-top: 4px;
+  margin-top: 6px;
+  animation: fadeInUp .18s var(--ease) both;
 }
 
 .sugestao-item {
@@ -1079,8 +1153,9 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
+  transition: background var(--transition-fast);
 }
 
 .sugestao-item:hover {
-  background: #f0f6ff;
+  background: var(--azul-claro);
 }

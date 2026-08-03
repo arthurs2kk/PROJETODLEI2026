@@ -40,6 +40,12 @@
   border: 1px solid rgba(255,255,255,0.22);
   border-radius: 99px;
   padding: 6px 14px;
+  transition: background var(--transition-fast), transform var(--transition-fast);
+}
+
+.legenda-item:hover {
+  background: rgba(255,255,255,0.2);
+  transform: translateY(-1px);
 }
 
 .dot {
@@ -68,7 +74,8 @@
   border-radius: var(--radius-lg);
   border: 4px solid var(--branco);
   overflow: hidden;
-  box-shadow: 0 8px 28px rgba(12,50,111,0.18);
+  box-shadow: var(--shadow-lg);
+  animation: fadeInUp .5s var(--ease) both;
 }
 
 .mapa-contagem {
@@ -80,9 +87,9 @@
 
 /* ── Popup do Leaflet ── */
 .leaflet-popup-content-wrapper {
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   font-family: var(--font);
-  box-shadow: 0 6px 20px rgba(0,0,0,0.18);
+  box-shadow: var(--shadow-lg);
   padding: 2px;
 }
 
