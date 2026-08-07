@@ -1,9 +1,12 @@
 // ── Pro Povo — relatos.js ──
 import { ouvirRelatos } from "./db.js";
 import { initNavbar } from "./navbar.js";
+import { otimizarImagem } from "./cloudinary.js";
 
 // ── Navbar (login/cadastro/nome do usuário/sair/perfil) ──
 initNavbar();
+
+const LOTE = 20; // quantos itens carregar a cada "página" do scroll
 
 const state = {
   todos: [],
@@ -11,7 +14,8 @@ const state = {
   categoria: 'todos',
   status: 'todos',
   sortCol: 'votos',
-  sortDir: 'desc'
+  sortDir: 'desc',
+  exibidos: LOTE // quantos itens renderizar por vez
 };
 
 // ── Menu mobile ──
@@ -44,17 +48,20 @@ ouvirRelatos((relatos) => {
 // ── Busca ──
 document.getElementById('busca-input')?.addEventListener('input', (e) => {
   state.busca = e.target.value.trim().toLowerCase();
+  state.exibidos = LOTE; // reseta a paginação ao mudar o filtro
   render();
 });
 
 // ── Filtros ──
 document.getElementById('filtro-categoria')?.addEventListener('change', (e) => {
   state.categoria = e.target.value;
+  state.exibidos = LOTE; // reseta a paginação ao mudar o filtro
   render();
 });
 
 document.getElementById('filtro-status')?.addEventListener('change', (e) => {
   state.status = e.target.value;
+  state.exibidos = LOTE; // reseta a paginação ao mudar o filtro
   render();
 });
 
@@ -68,6 +75,7 @@ document.querySelectorAll('th[data-sort]').forEach(th => {
       state.sortCol = col;
       state.sortDir = 'desc';
     }
+    state.exibidos = LOTE; // reseta a paginação ao reordenar
     render();
   });
 });
@@ -98,14 +106,22 @@ function render() {
   const empty = document.getElementById('tabela-empty');
   const contagem = document.getElementById('relatos-contagem');
 
-  contagem.textContent = `Mostrando ${lista.length} relato${lista.length !== 1 ? 's' : ''} de ${state.todos.length} no total`;
+  // Só renderiza os itens dentro do limite atual (paginação por scroll)
+  const visiveis = lista.slice(0, state.exibidos);
+
+  contagem.textContent =
+    `Mostrando ${visiveis.length} de ${lista.length} relato${lista.length !== 1 ? 's' : ''} filtrado${lista.length !== 1 ? 's' : ''} (${state.todos.length} no total)`;
   empty.style.display = lista.length === 0 ? 'block' : 'none';
 
-  tbody.innerHTML = lista.map(linhaHTML).join('');
+  tbody.innerHTML = visiveis.map(linhaHTML).join('');
 
   tbody.querySelectorAll('.btn-tabela-detalhe').forEach((btn, i) => {
-    btn.addEventListener('click', () => abrirDetalhe(lista[i]));
+    btn.addEventListener('click', () => abrirDetalhe(visiveis[i]));
   });
+
+  // Mostra a sentinela só se ainda houver itens não exibidos
+  const sentinela = document.getElementById('scroll-sentinela');
+  if (sentinela) sentinela.style.display = visiveis.length < lista.length ? 'block' : 'none';
 }
 
 // ── Linha da tabela ──
@@ -134,7 +150,7 @@ function abrirDetalhe(r) {
   document.getElementById('detalhe-titulo').textContent = r.titulo;
   document.getElementById('detalhe-desc').textContent   = r.descricao;
   document.getElementById('detalhe-foto').innerHTML = r.fotoUrl
-    ? `<img src="${r.fotoUrl}" alt="Foto do relato" style="width:100%; border-radius:8px; margin-bottom:12px; max-height:280px; object-fit:cover;">`
+    ? `<img src="${otimizarImagem(r.fotoUrl, 700)}" alt="Foto do relato" loading="lazy" style="width:100%; border-radius:8px; margin-bottom:12px; max-height:280px; object-fit:cover;">`
     : '';
   document.getElementById('detalhe-resposta').innerHTML = r.respostaOficial
   ? `<div class="resposta-cidadao"><strong><i class="ti ti-building-community"></i> Resposta da prefeitura:</strong><p>${r.respostaOficial}</p></div>`
@@ -154,3 +170,14 @@ document.getElementById('detalhe-fechar-btn')?.addEventListener('click', fecharD
 function fecharDetalhe() {
   document.getElementById('modal-detalhe-overlay').classList.remove('open');
 }
+
+// ── Scroll infinito: observa a sentinela e carrega mais itens quando ela aparece ──
+const scrollObserver = new IntersectionObserver((entries) => {
+  if (entries[0].isIntersecting) {
+    state.exibidos += LOTE;
+    render();
+  }
+}, { rootMargin: '200px' }); // começa a carregar um pouco antes de chegar no fim
+
+const sentinelaEl = document.getElementById('scroll-sentinela');
+if (sentinelaEl) scrollObserver.observe(sentinelaEl);

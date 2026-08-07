@@ -3,7 +3,8 @@
 
 import {
   db,
-  ref, push, set, get, onValue, update, runTransaction
+  ref, push, set, get, onValue, update, runTransaction,
+  query, orderByChild, equalTo
 } from "./firebase.js";
 import { uploadImagem } from "./cloudinary.js";
 
@@ -116,13 +117,16 @@ export async function atualizarUsuario(uid, dados) {
 }
 
 // ── Ouvir, em tempo real, apenas os relatos criados pelo próprio usuário ──
+// Antes isso baixava TODOS os relatos do banco e filtrava no navegador. Agora a
+// consulta já pede pro Firebase filtrar por autorId (usa o índice "autorId" que já
+// existe nas regras), então só trafega o que realmente é desse usuário.
 export function ouvirRelatosDoUsuario(uid, callback) {
-  onValue(ref(db, "relatos"), (snapshot) => {
+  const consulta = query(ref(db, "relatos"), orderByChild("autorId"), equalTo(uid));
+  onValue(consulta, (snapshot) => {
     const dados = snapshot.val();
     if (!dados) { callback([]); return; }
     const lista = Object.entries(dados)
-      .map(([id, relato]) => ({ id, ...relato }))
-      .filter(r => r.autorId === uid);
+      .map(([id, relato]) => ({ id, ...relato }));
     lista.sort((a, b) => b.dataCriacao - a.dataCriacao);
     callback(lista);
   });

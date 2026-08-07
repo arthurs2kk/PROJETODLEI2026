@@ -2,6 +2,7 @@
 import { auth, onAuthStateChanged } from "./firebase.js";
 import { criarRelato, ouvirRelatos, votar, jaVotou, tempoRestanteParaEnviar } from "./db.js";
 import { buscarComDebounce, estaNaParaiba } from "./endereco.js";
+import { otimizarImagem } from "./cloudinary.js";
 import { initNavbar } from "./navbar.js";
 
 
@@ -232,7 +233,7 @@ function abrirDetalhe(r) {
   document.getElementById('detalhe-titulo').textContent = r.titulo;
   document.getElementById('detalhe-desc').textContent   = r.descricao;
   document.getElementById('detalhe-foto').innerHTML = r.fotoUrl
-    ? `<img src="${r.fotoUrl}" alt="Foto do relato" style="width:100%; border-radius:8px; margin-bottom:12px; max-height:280px; object-fit:cover;">`
+    ? `<img src="${otimizarImagem(r.fotoUrl, 700)}" alt="Foto do relato" loading="lazy" style="width:100%; border-radius:8px; margin-bottom:12px; max-height:280px; object-fit:cover;">`
     : '';
   document.getElementById('detalhe-resposta').innerHTML = r.respostaOficial
   ? `<div class="resposta-cidadao"><strong><i class="ti ti-building-community"></i> Resposta da prefeitura:</strong><p>${r.respostaOficial}</p></div>`
@@ -274,7 +275,7 @@ function cardHTML(r) {
   const cat = cats[r.categoria]    || cats.outros;
   const st  = status[r.status]     || status.aberto;
   const foto = r.fotoUrl
-    ? `<img src="${r.fotoUrl}" alt="Foto do relato" style="width:72px;height:100%;object-fit:cover;">`
+    ? `<img src="${otimizarImagem(r.fotoUrl, 150)}" alt="Foto do relato" loading="lazy" style="width:72px;height:100%;object-fit:cover;">`
     : `<div class="card-side ${cat.side}"><i class="ti ${cat.icon}"></i></div>`;
   const tempo = tempoRelativo(r.dataCriacao);
 

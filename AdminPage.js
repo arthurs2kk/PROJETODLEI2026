@@ -1,8 +1,11 @@
 // ── Pro Povo — admin-painel.js ──
 import { auth, onAuthStateChanged, signOut } from "./firebase.js";
 import { ehAdmin, ouvirRelatos, atualizarStatus, salvarResposta, excluirRelato } from "./db.js";
+import { otimizarImagem } from "./cloudinary.js";
 
-const state = { todos: [], busca: '', status: 'todos' };
+const LOTE = 10; // cards de gestão são mais pesados (foto + textarea), lote menor que a tabela pública
+
+const state = { todos: [], busca: '', status: 'todos', exibidos: LOTE };
 
 // ── Verificação de acesso ──
 onAuthStateChanged(auth, async (user) => {
@@ -46,10 +49,12 @@ document.getElementById('hamburger')?.addEventListener('click', () => {
 // ── Busca e filtro ──
 document.getElementById('busca-input')?.addEventListener('input', (e) => {
   state.busca = e.target.value.trim().toLowerCase();
+  state.exibidos = LOTE; // reseta a paginação ao mudar o filtro
   render();
 });
 document.getElementById('filtro-status')?.addEventListener('change', (e) => {
   state.status = e.target.value;
+  state.exibidos = LOTE; // reseta a paginação ao mudar o filtro
   render();
 });
 
@@ -79,10 +84,13 @@ function render() {
   const empty = document.getElementById('lista-empty');
   empty.style.display = lista.length === 0 ? 'block' : 'none';
 
-  container.innerHTML = lista.map(cardHTML).join('');
+  // Só renderiza os itens dentro do limite atual (paginação por scroll)
+  const visiveis = lista.slice(0, state.exibidos);
 
-  // Eventos
-  lista.forEach(r => {
+  container.innerHTML = visiveis.map(cardHTML).join('');
+
+  // Eventos (só precisam ser religados para os cards visíveis)
+  visiveis.forEach(r => {
     document.getElementById(`status-${r.id}`)?.addEventListener('change', async (e) => {
       await atualizarStatus(r.id, e.target.value);
       showToast('✅ Status atualizado.');
@@ -106,6 +114,10 @@ function render() {
       }
     });
   });
+
+  // Mostra a sentinela só se ainda houver itens não exibidos
+  const sentinela = document.getElementById('scroll-sentinela');
+  if (sentinela) sentinela.style.display = visiveis.length < lista.length ? 'block' : 'none';
 }
 
 // ── Card de gestão ──
@@ -127,7 +139,7 @@ function cardHTML(r) {
         <span><i class="ti ti-clock"></i> ${data}</span>
         <span><i class="ti ti-thumb-up"></i> ${r.votos || 0} votos</span>
       </div>
-      ${r.fotoUrl ? `<img src="${r.fotoUrl}" alt="Foto do relato" class="gestao-foto">` : ''}
+      ${r.fotoUrl ? `<img src="${otimizarImagem(r.fotoUrl, 700)}" alt="Foto do relato" loading="lazy" class="gestao-foto">` : ''}
       <p class="gestao-desc">${r.descricao}</p>
 
       <div class="gestao-controles">
@@ -160,3 +172,14 @@ function showToast(msg) {
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 3000);
 }
+
+// ── Scroll infinito: observa a sentinela e carrega mais itens quando ela aparece ──
+const scrollObserver = new IntersectionObserver((entries) => {
+  if (entries[0].isIntersecting) {
+    state.exibidos += LOTE;
+    render();
+  }
+}, { rootMargin: '300px' }); // começa a carregar um pouco antes de chegar no fim
+
+const sentinelaEl = document.getElementById('scroll-sentinela');
+if (sentinelaEl) scrollObserver.observe(sentinelaEl);
