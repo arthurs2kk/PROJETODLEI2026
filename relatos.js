@@ -2,21 +2,63 @@
 import { ouvirRelatos } from "./db.js";
 import { initNavbar } from "./navbar.js";
 import { otimizarImagem } from "./cloudinary.js";
+import { normalizar } from "./populacao.js";
 
 // ── Navbar (login/cadastro/nome do usuário/sair/perfil) ──
 initNavbar();
 
-const LOTE = 20; // quantos itens carregar a cada "página" do scroll
-
 const state = {
   todos: [],
   busca: '',
+  cidade: '',
   categoria: 'todos',
   status: 'todos',
   sortCol: 'votos',
-  sortDir: 'desc',
-  exibidos: LOTE // quantos itens renderizar por vez
+  sortDir: 'desc'
 };
+
+// ── Extrai a cidade de um relato ──
+// Relatos criados a partir de agora já vêm com a cidade salva direto do Nominatim.
+// Relatos antigos não têm esse campo — pra eles, cai no fallback lendo o texto do
+// endereço, que é salvo como "rua, bairro, cidade, Paraíba, Região Nordeste, Brasil".
+function extrairCidade(r) {
+  if (r.cidade) return r.cidade;
+
+  const partes = (r.endereco || '').split(',').map(p => p.trim()).filter(Boolean);
+  const idxPB = partes.findIndex(p => normalizar(p).includes('paraiba'));
+  return idxPB > 0 ? (partes[idxPB - 1] || null) : null;
+}
+
+// ── Monta a lista de cidades com relatos, para o seletor ──
+function listaCidadesComRelatos(relatos) {
+  const set = new Set();
+  relatos.forEach(r => {
+    const cidade = extrairCidade(r);
+    if (cidade) set.add(cidade);
+  });
+  return [...set].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+}
+
+// ── Atualiza as opções do seletor de cidade, mantendo a seleção atual se possível ──
+function atualizarSeletorCidades() {
+  const select = document.getElementById('filtro-cidade');
+  if (!select) return;
+
+  const cidades = listaCidadesComRelatos(state.todos);
+  select.innerHTML = cidades.map(c => `<option value="${c}">${c}</option>`).join('');
+
+  if (cidades.includes(state.cidade)) {
+    select.value = state.cidade;
+  } else {
+    state.cidade = cidades[0] || '';
+    select.value = state.cidade;
+  }
+}
+
+document.getElementById('filtro-cidade')?.addEventListener('change', (e) => {
+  state.cidade = e.target.value;
+  render();
+});
 
 // ── Menu mobile ──
 document.getElementById('hamburger')?.addEventListener('click', () => {
@@ -42,26 +84,24 @@ const STATUS = {
 // ── Carregar dados em tempo real ──
 ouvirRelatos((relatos) => {
   state.todos = relatos;
+  atualizarSeletorCidades();
   render();
 });
 
 // ── Busca ──
 document.getElementById('busca-input')?.addEventListener('input', (e) => {
   state.busca = e.target.value.trim().toLowerCase();
-  state.exibidos = LOTE; // reseta a paginação ao mudar o filtro
   render();
 });
 
 // ── Filtros ──
 document.getElementById('filtro-categoria')?.addEventListener('change', (e) => {
   state.categoria = e.target.value;
-  state.exibidos = LOTE; // reseta a paginação ao mudar o filtro
   render();
 });
 
 document.getElementById('filtro-status')?.addEventListener('change', (e) => {
   state.status = e.target.value;
-  state.exibidos = LOTE; // reseta a paginação ao mudar o filtro
   render();
 });
 
@@ -75,7 +115,6 @@ document.querySelectorAll('th[data-sort]').forEach(th => {
       state.sortCol = col;
       state.sortDir = 'desc';
     }
-    state.exibidos = LOTE; // reseta a paginação ao reordenar
     render();
   });
 });
@@ -83,6 +122,10 @@ document.querySelectorAll('th[data-sort]').forEach(th => {
 // ── Renderização principal ──
 function render() {
   let lista = [...state.todos];
+
+  if (state.cidade) {
+    lista = lista.filter(r => normalizar(extrairCidade(r)) === normalizar(state.cidade));
+  }
 
   if (state.busca) {
     lista = lista.filter(r =>
@@ -106,22 +149,14 @@ function render() {
   const empty = document.getElementById('tabela-empty');
   const contagem = document.getElementById('relatos-contagem');
 
-  // Só renderiza os itens dentro do limite atual (paginação por scroll)
-  const visiveis = lista.slice(0, state.exibidos);
-
-  contagem.textContent =
-    `Mostrando ${visiveis.length} de ${lista.length} relato${lista.length !== 1 ? 's' : ''} filtrado${lista.length !== 1 ? 's' : ''} (${state.todos.length} no total)`;
+  contagem.textContent = `Mostrando ${lista.length} relato${lista.length !== 1 ? 's' : ''} de ${state.todos.length} no total`;
   empty.style.display = lista.length === 0 ? 'block' : 'none';
 
-  tbody.innerHTML = visiveis.map(linhaHTML).join('');
+  tbody.innerHTML = lista.map(linhaHTML).join('');
 
   tbody.querySelectorAll('.btn-tabela-detalhe').forEach((btn, i) => {
-    btn.addEventListener('click', () => abrirDetalhe(visiveis[i]));
+    btn.addEventListener('click', () => abrirDetalhe(lista[i]));
   });
-
-  // Mostra a sentinela só se ainda houver itens não exibidos
-  const sentinela = document.getElementById('scroll-sentinela');
-  if (sentinela) sentinela.style.display = visiveis.length < lista.length ? 'block' : 'none';
 }
 
 // ── Linha da tabela ──
@@ -170,14 +205,3 @@ document.getElementById('detalhe-fechar-btn')?.addEventListener('click', fecharD
 function fecharDetalhe() {
   document.getElementById('modal-detalhe-overlay').classList.remove('open');
 }
-
-// ── Scroll infinito: observa a sentinela e carrega mais itens quando ela aparece ──
-const scrollObserver = new IntersectionObserver((entries) => {
-  if (entries[0].isIntersecting) {
-    state.exibidos += LOTE;
-    render();
-  }
-}, { rootMargin: '200px' }); // começa a carregar um pouco antes de chegar no fim
-
-const sentinelaEl = document.getElementById('scroll-sentinela');
-if (sentinelaEl) scrollObserver.observe(sentinelaEl);

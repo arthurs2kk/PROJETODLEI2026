@@ -103,6 +103,16 @@ document.getElementById('btn-enviar')?.addEventListener('click', async () => {
     return;
   }
 
+  // Trava extra: mesmo que a lista de sugestões já venha filtrada (endereco.js só
+  // retorna endereços com rua + bairro identificados), garantimos aqui de novo que
+  // o endereço escolhido tem bairro salvo. Isso impede endereços genéricos demais
+  // (ex: só "Campina Grande") de virarem relato, o que quebraria o gráfico de
+  // "bairros com mais relatos" no painel do admin.
+  if (!state.enderecoSelecionado.bairro) {
+    showToast('⚠️ Escolha um endereço mais específico, com rua e bairro identificados.');
+    return;
+  }
+
   if (!estaNaParaiba(state.enderecoSelecionado.lat, state.enderecoSelecionado.lng)) {
     showToast('⚠️ O Pro Povo aceita relatos apenas de endereços na Paraíba.');
     return;

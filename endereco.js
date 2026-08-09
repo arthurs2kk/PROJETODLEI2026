@@ -1,4 +1,3 @@
-// ── Pro Povo — endereco.js ──
 
 let debounceTimer = null;
 
@@ -11,26 +10,28 @@ export async function buscarSugestoesEndereco(query) {
   if (query.length < 4) return [];
 
   try {
-    const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=6` +
+    const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=8` +
                 `&countrycodes=br&viewbox=${VIEWBOX_PARAIBA}&bounded=1` +
                 `&q=${encodeURIComponent(query)}`;
     const resp = await fetch(url, { headers: { 'Accept-Language': 'pt-BR' } });
     const dados = await resp.json();
 
-    // O Nominatim já devolve o endereço "quebrado" em partes (address), graças ao
-    // addressdetails=1 acima. Antes a gente descartava isso e só guardava o texto
-    // inteiro (display_name) — agora aproveitamos pra salvar cidade/bairro certinhos,
-    // sem precisar tentar adivinhar depois olhando o texto.
-    return dados.map(item => {
+
+    const sugestoes = dados.map(item => {
       const addr = item.address || {};
       return {
         texto:  item.display_name,
         lat:    parseFloat(item.lat),
         lng:    parseFloat(item.lon),
         cidade: addr.city || addr.town || addr.village || addr.municipality || null,
-        bairro: addr.suburb || addr.neighbourhood || addr.city_district || addr.quarter || null
+        bairro: addr.suburb || addr.neighbourhood || addr.city_district || addr.quarter || null,
+        rua:    addr.road || addr.pedestrian || addr.footway || addr.residential || null
       };
     });
+
+
+    return sugestoes.filter(s => s.cidade && s.bairro && s.rua);
+
   } catch (e) {
     console.warn('Erro ao buscar endereços:', e);
     return [];
