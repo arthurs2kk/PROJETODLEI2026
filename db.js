@@ -34,10 +34,10 @@ export async function geocodificar(endereco, cidade = '') {
   return null;
 }
 
-// ── Tempo mínimo, em milissegundos, entre dois relatos do mesmo cidadão ──
+
 const INTERVALO_MINIMO_ENVIO = 5 * 60 * 1000; // 5 minutos
 
-// ── Quanto tempo falta (em ms) até o usuário poder enviar outro relato. 0 = pode enviar já ──
+
 export async function tempoRestanteParaEnviar(uid) {
   const snapshot = await get(ref(db, `limitesEnvio/${uid}`));
   if (!snapshot.exists()) return 0;
@@ -75,10 +75,7 @@ export async function criarRelato(dados, fotoFile) {
     dataCriacao: agora
   };
 
-  // Grava o relato e atualiza o carimbo de "último envio" numa única operação atômica.
-  // As regras do banco exigem que esse carimbo bata com dataCriacao pra autorizar a
-  // criação — isso impede alguém de contornar o limite de envio chamando a API
-  // diretamente, sem passar pelo app (o limite não depende de "boa vontade" do cliente).
+
   try {
     await update(ref(db), {
       [`relatos/${novoRef.key}`]:        dadosRelato,
@@ -184,8 +181,16 @@ export async function jaVotou(relatoId, userId) {
 }
 
 // ── Atualizar status de um relato ──
+// Quando o novo status é "resolvido", grava também dataResolucao com o momento
+// exato — é o que permite calcular o tempo médio de resolução no painel de
+// gestão. Se o relato for reaberto depois (status volta pra aberto/andamento),
+// o campo é limpo (null apaga o campo no Realtime Database), pra não contar
+// como resolvido nas métricas.
 export async function atualizarStatus(relatoId, novoStatus) {
-  await update(ref(db, `relatos/${relatoId}`), { status: novoStatus });
+  await update(ref(db, `relatos/${relatoId}`), {
+    status: novoStatus,
+    dataResolucao: novoStatus === 'resolvido' ? Date.now() : null
+  });
 }
 
 // ── Salvar resposta oficial da prefeitura ──

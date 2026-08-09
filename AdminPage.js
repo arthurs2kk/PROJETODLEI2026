@@ -3,9 +3,27 @@ import { auth, onAuthStateChanged, signOut } from "./firebase.js";
 import { ehAdmin, ouvirRelatos, atualizarStatus, salvarResposta, excluirRelato } from "./db.js";
 import { otimizarImagem } from "./cloudinary.js";
 
-const LOTE = 10; // cards de gestão são mais pesados (foto + textarea), lote menor que a tabela pública
+const state = { todos: [], busca: '', status: 'todos' };
 
-const state = { todos: [], busca: '', status: 'todos', exibidos: LOTE };
+
+const SLA_DIAS = 10;
+const SLA_MS = SLA_DIAS * 24 * 60 * 60 * 1000;
+
+function estaAtrasado(r) {
+  return r.status !== 'resolvido' && (Date.now() - r.dataCriacao) > SLA_MS;
+}
+
+function diasEmAberto(r) {
+  return Math.floor((Date.now() - r.dataCriacao) / 86400000);
+}
+
+
+function calcularTempoMedioResolucao(relatos) {
+  const resolvidos = relatos.filter(r => r.status === 'resolvido' && r.dataResolucao);
+  if (resolvidos.length === 0) return null;
+  const totalDias = resolvidos.reduce((soma, r) => soma + (r.dataResolucao - r.dataCriacao), 0) / 86400000;
+  return totalDias / resolvidos.length;
+}
 
 // ── Verificação de acesso ──
 onAuthStateChanged(auth, async (user) => {
@@ -49,12 +67,10 @@ document.getElementById('hamburger')?.addEventListener('click', () => {
 // ── Busca e filtro ──
 document.getElementById('busca-input')?.addEventListener('input', (e) => {
   state.busca = e.target.value.trim().toLowerCase();
-  state.exibidos = LOTE; // reseta a paginação ao mudar o filtro
   render();
 });
 document.getElementById('filtro-status')?.addEventListener('change', (e) => {
   state.status = e.target.value;
-  state.exibidos = LOTE; // reseta a paginação ao mudar o filtro
   render();
 });
 
@@ -70,27 +86,36 @@ function render() {
       r.endereco.toLowerCase().includes(state.busca)
     );
   }
-  if (state.status !== 'todos') lista = lista.filter(r => r.status === state.status);
+
+  // "atrasados" não é um status de verdade — é calculado, então trata à parte
+  if (state.status === 'atrasados') {
+    lista = lista.filter(estaAtrasado);
+  } else if (state.status !== 'todos') {
+    lista = lista.filter(r => r.status === state.status);
+  }
 
   lista.sort((a, b) => b.dataCriacao - a.dataCriacao);
 
   // Resumo (sempre com todos os relatos, não filtrado)
+  const atrasados  = state.todos.filter(estaAtrasado);
+  const tempoMedio = calcularTempoMedioResolucao(state.todos);
+
   document.getElementById('resumo-total').textContent      = state.todos.length;
   document.getElementById('resumo-aberto').textContent     = state.todos.filter(r => r.status === 'aberto').length;
   document.getElementById('resumo-andamento').textContent  = state.todos.filter(r => r.status === 'andamento').length;
   document.getElementById('resumo-resolvido').textContent  = state.todos.filter(r => r.status === 'resolvido').length;
+  document.getElementById('resumo-atrasados').textContent  = atrasados.length;
+  document.getElementById('resumo-tempo-medio').textContent =
+    tempoMedio === null ? '—' : `${tempoMedio.toFixed(1)}d`;
 
   const container = document.getElementById('admin-lista');
   const empty = document.getElementById('lista-empty');
   empty.style.display = lista.length === 0 ? 'block' : 'none';
 
-  // Só renderiza os itens dentro do limite atual (paginação por scroll)
-  const visiveis = lista.slice(0, state.exibidos);
+  container.innerHTML = lista.map(cardHTML).join('');
 
-  container.innerHTML = visiveis.map(cardHTML).join('');
-
-  // Eventos (só precisam ser religados para os cards visíveis)
-  visiveis.forEach(r => {
+  // Eventos
+  lista.forEach(r => {
     document.getElementById(`status-${r.id}`)?.addEventListener('change', async (e) => {
       await atualizarStatus(r.id, e.target.value);
       showToast('✅ Status atualizado.');
@@ -114,24 +139,24 @@ function render() {
       }
     });
   });
-
-  // Mostra a sentinela só se ainda houver itens não exibidos
-  const sentinela = document.getElementById('scroll-sentinela');
-  if (sentinela) sentinela.style.display = visiveis.length < lista.length ? 'block' : 'none';
 }
 
 // ── Card de gestão ──
 function cardHTML(r) {
   const data = new Date(r.dataCriacao).toLocaleDateString('pt-BR');
+  const atrasado = estaAtrasado(r);
   const resposta = r.respostaOficial
     ? `<div class="resposta-existente"><strong>Resposta oficial atual:</strong>${r.respostaOficial}</div>`
     : '';
 
   return `
-    <article class="gestao-card" data-status="${r.status}">
+    <article class="gestao-card ${atrasado ? 'gestao-card-atrasado' : ''}" data-status="${r.status}">
       <div class="gestao-top">
         <span class="gestao-titulo">${r.titulo}</span>
-        <span class="status status-${r.status}">${STATUS_LABEL[r.status]}</span>
+        <div class="gestao-top-badges">
+          ${atrasado ? `<span class="badge-atrasado"><i class="ti ti-alert-triangle"></i> Atrasado · ${diasEmAberto(r)}d</span>` : ''}
+          <span class="status status-${r.status}">${STATUS_LABEL[r.status]}</span>
+        </div>
       </div>
       <div class="gestao-meta">
         <span><i class="ti ti-map-pin"></i> ${r.endereco}</span>
@@ -172,14 +197,3 @@ function showToast(msg) {
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 3000);
 }
-
-// ── Scroll infinito: observa a sentinela e carrega mais itens quando ela aparece ──
-const scrollObserver = new IntersectionObserver((entries) => {
-  if (entries[0].isIntersecting) {
-    state.exibidos += LOTE;
-    render();
-  }
-}, { rootMargin: '300px' }); // começa a carregar um pouco antes de chegar no fim
-
-const sentinelaEl = document.getElementById('scroll-sentinela');
-if (sentinelaEl) scrollObserver.observe(sentinelaEl);

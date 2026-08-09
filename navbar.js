@@ -5,11 +5,13 @@
 //      (antes isso só acontecia em home.js, por isso relatos e mapa continuavam mostrando
 //      "Entrar"/"Criar conta" mesmo com o usuário autenticado).
 //   2) Abrir um modal de "Meu perfil" ao clicar no nome do usuário, permitindo editar
-//      nome e cidade, e enviar um e-mail de redefinição de senha.
+//      nome e cidade, enviar um e-mail de redefinição de senha, e ver/reenviar a
+//      confirmação de e-mail caso ainda não tenha sido verificado.
 
-import { auth, onAuthStateChanged, signOut, updateProfile, sendPasswordResetEmail } from "./firebase.js";
+import { auth, onAuthStateChanged, signOut, updateProfile, sendPasswordResetEmail, sendEmailVerification } from "./firebase.js";
 import { buscarUsuario, atualizarUsuario } from "./db.js";
 import { carregarCidadesPB } from "./cidades.js";
+import { segundosRestantes, registrarEnvio } from "./cooldown.js";
 
 const MODAL_HTML = `
   <div class="modal-overlay" id="perfil-overlay">
@@ -29,6 +31,7 @@ const MODAL_HTML = `
         <div class="form-group">
           <label class="form-label">E-mail</label>
           <input type="email" class="form-input" id="perfil-email" disabled />
+          <div class="perfil-verificacao" id="perfil-verificacao"></div>
         </div>
         <div class="form-group">
           <label class="form-label">Cidade (Paraíba)</label>
@@ -67,12 +70,53 @@ function fecharPerfil() {
   document.body.style.overflow = '';
 }
 
+// ── Mostra se o e-mail já foi confirmado; se não, oferece reenviar ──
+function renderStatusVerificacao(user, el) {
+  if (!el) return;
+
+  if (user.emailVerified) {
+    el.innerHTML = `<span class="verificacao-ok"><i class="ti ti-circle-check"></i> E-mail verificado</span>`;
+    return;
+  }
+
+  el.innerHTML = `
+    <span class="verificacao-pendente"><i class="ti ti-alert-circle"></i> E-mail não verificado</span>
+    <button type="button" class="link-reenviar" id="btn-reenviar-verificacao">Reenviar e-mail</button>`;
+
+  document.getElementById('btn-reenviar-verificacao')?.addEventListener('click', async (e) => {
+    const btn = e.currentTarget;
+    const chaveCooldown = `verificacao:${(user.email || '').toLowerCase()}`;
+    const restante = segundosRestantes(chaveCooldown);
+    if (restante > 0) {
+      showToast(`⏳ E-mail já enviado há pouco. Aguarde ${restante}s antes de reenviar.`);
+      return;
+    }
+
+    const textoOriginal = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Enviando...';
+    try {
+      await sendEmailVerification(user);
+      registrarEnvio(chaveCooldown);
+      showToast('📧 E-mail de confirmação reenviado. Confira também a caixa de spam!');
+    } catch (erro) {
+      console.error(erro);
+      showToast('❌ Não foi possível reenviar agora. Tente de novo em alguns minutos.');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = textoOriginal;
+    }
+  });
+}
+
 async function preencherPerfil(user) {
-  const inputNome   = document.getElementById('perfil-nome');
-  const inputEmail  = document.getElementById('perfil-email');
-  const selectCidade = document.getElementById('perfil-cidade');
+  const inputNome     = document.getElementById('perfil-nome');
+  const inputEmail    = document.getElementById('perfil-email');
+  const selectCidade  = document.getElementById('perfil-cidade');
+  const verificacaoEl = document.getElementById('perfil-verificacao');
 
   inputEmail.value = user.email || '';
+  renderStatusVerificacao(user, verificacaoEl);
 
   let dados = null;
   try {
@@ -119,9 +163,20 @@ async function salvarPerfil(user) {
 
 async function trocarSenha(user) {
   if (!user.email) return;
+
+  const chaveCooldown = `senha:${user.email.toLowerCase()}`;
+  const restante = segundosRestantes(chaveCooldown);
+  if (restante > 0) {
+    showToast(`⏳ Link já enviado há pouco. Aguarde ${restante}s antes de pedir de novo.`);
+    return;
+  }
+
   try {
     await sendPasswordResetEmail(auth, user.email);
-    showToast('📧 Link de redefinição de senha enviado para o seu e-mail.');
+    registrarEnvio(chaveCooldown);
+    // Mesma observação de sempre: é o Firebase quem envia (domínio genérico),
+    // então o e-mail cai na caixa de spam com bastante frequência.
+    showToast('📧 Link de redefinição de senha enviado. Verifique também a caixa de spam/lixo eletrônico!');
   } catch (e) {
     console.error(e);
     const mensagens = {

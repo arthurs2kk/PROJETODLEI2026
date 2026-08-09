@@ -27,12 +27,22 @@ onAuthStateChanged(auth, (user) => {
 });
 
 // ── Modal ──
-function openModal() {
+async function openModal() {
   if (!state.usuario) {
     showToast('⚠️ Você precisa estar logado para relatar. Redirecionando para login...');
     setTimeout(() => window.location.href = 'login.html', 1000);
     return;
   }
+
+  // Recarrega o usuário antes de checar — assim, se ele confirmou o e-mail em
+  // outra aba/dispositivo nessa mesma sessão, o status já chega atualizado.
+  try { await state.usuario.reload(); } catch (e) { /* segue com o valor já carregado */ }
+
+  if (!auth.currentUser?.emailVerified) {
+    showToast('⚠️ Confirme seu e-mail antes de relatar. Abra "Meu perfil" pra reenviar a confirmação, se precisar.');
+    return;
+  }
+
   document.getElementById('modal-overlay').classList.add('open');
   document.body.style.overflow = 'hidden';
 }
@@ -100,16 +110,6 @@ document.getElementById('btn-enviar')?.addEventListener('click', async () => {
 
   if (!state.enderecoSelecionado) {
     showToast('⚠️ Selecione um endereço válido na lista de sugestões.');
-    return;
-  }
-
-  // Trava extra: mesmo que a lista de sugestões já venha filtrada (endereco.js só
-  // retorna endereços com rua + bairro identificados), garantimos aqui de novo que
-  // o endereço escolhido tem bairro salvo. Isso impede endereços genéricos demais
-  // (ex: só "Campina Grande") de virarem relato, o que quebraria o gráfico de
-  // "bairros com mais relatos" no painel do admin.
-  if (!state.enderecoSelecionado.bairro) {
-    showToast('⚠️ Escolha um endereço mais específico, com rua e bairro identificados.');
     return;
   }
 

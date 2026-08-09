@@ -990,6 +990,49 @@ body {
   border: 1px solid var(--borda);
 }
 
+/* ── Status de verificação de e-mail (modal "Meu perfil") ── */
+.perfil-verificacao {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 12.5px;
+  margin-top: 6px;
+}
+
+.verificacao-ok {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--verde);
+  font-weight: 600;
+}
+
+.verificacao-pendente {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--laranja);
+  font-weight: 600;
+}
+
+.link-reenviar {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--azul);
+  font-size: 12.5px;
+  font-weight: 600;
+  font-family: var(--font);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+  transition: color var(--transition-fast);
+}
+
+.link-reenviar:hover { color: var(--azul-hover); }
+.link-reenviar:disabled { color: var(--cinza-3); cursor: default; text-decoration: none; }
+
 /* ── Toast ── */
 .toast {
   position: fixed;

@@ -30,7 +30,7 @@
   margin: -20px auto 0;
   padding: 0 20px;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 12px;
   position: relative;
   z-index: 2;
@@ -51,12 +51,16 @@
 .resumo-card:nth-child(2) { animation-delay: .05s; }
 .resumo-card:nth-child(3) { animation-delay: .1s; }
 .resumo-card:nth-child(4) { animation-delay: .15s; }
+.resumo-card:nth-child(5) { animation-delay: .2s; }
+.resumo-card:nth-child(6) { animation-delay: .25s; }
 
 .resumo-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
 
 .resumo-aberto     { border-top-color: var(--vermelho); }
 .resumo-andamento  { border-top-color: var(--laranja); }
 .resumo-resolvido  { border-top-color: var(--verde); }
+.resumo-tempo           { border-top-color: var(--azul); }
+.resumo-atrasados-card  { border-top-color: var(--vermelho); }
 
 .resumo-num {
   display: block;
@@ -92,6 +96,15 @@
 .gestao-card[data-status="andamento"] { border-left-color: var(--laranja); }
 .gestao-card[data-status="resolvido"] { border-left-color: var(--verde); }
 
+/* Relato fora do prazo de SLA — o contorno se soma à cor de status normal,
+   então continua dando pra ver o status e "atrasado" ao mesmo tempo. */
+.gestao-card-atrasado {
+  box-shadow: 0 0 0 2px rgba(204,41,0,0.18), var(--shadow);
+}
+.gestao-card-atrasado:hover {
+  box-shadow: 0 0 0 2px rgba(204,41,0,0.24), var(--shadow-md);
+}
+
 .gestao-top {
   display: flex;
   align-items: flex-start;
@@ -102,6 +115,27 @@
 }
 
 .gestao-titulo { font-size: 15px; font-weight: 700; color: var(--cinza-5); }
+
+.gestao-top-badges {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.badge-atrasado {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #B8001C;
+  background: #FFE2DE;
+  border: 1px solid #F5B7AE;
+  padding: 3px 9px;
+  border-radius: 99px;
+  white-space: nowrap;
+}
 
 .gestao-meta {
   display: flex;

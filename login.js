@@ -1,7 +1,8 @@
 // ── Pro Povo — login.js ──
-import { auth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, onAuthStateChanged, updateProfile, sendPasswordResetEmail } from "./firebase.js";
+import { auth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, onAuthStateChanged, updateProfile, sendPasswordResetEmail, sendEmailVerification } from "./firebase.js";
 import { salvarUsuario } from "./db.js";
 import { carregarCidadesPB } from "./cidades.js";
+import { segundosRestantes, registrarEnvio } from "./cooldown.js";
 
 // ── Se já estiver logado, vai direto pro index ──
 onAuthStateChanged(auth, (user) => {
@@ -100,9 +101,19 @@ document.getElementById('link-esqueci-senha')?.addEventListener('click', async (
     return;
   }
 
+  const chaveCooldown = `senha:${email.toLowerCase()}`;
+  const restante = segundosRestantes(chaveCooldown);
+  if (restante > 0) {
+    showToast(`⏳ Você já pediu um link há pouco. Aguarde ${restante}s antes de pedir de novo.`);
+    return;
+  }
+
   try {
     await sendPasswordResetEmail(auth, email);
-    showToast('📧 Enviamos um link de redefinição de senha para o seu e-mail.');
+    registrarEnvio(chaveCooldown);
+    // Quem manda esse e-mail é o Firebase (domínio genérico, sem reputação própria),
+    // então ele cai na caixa de spam com bastante frequência — deixamos isso avisado.
+    showToast('📧 Enviamos um link de redefinição de senha. Verifique também a caixa de spam/lixo eletrônico!');
   } catch (e) {
     console.error(e);
     showToast('❌ ' + traduzirErro(e.code));
@@ -144,8 +155,19 @@ document.getElementById('btn-cadastrar')?.addEventListener('click', async () => 
     const cred = await createUserWithEmailAndPassword(auth, email, senha);
     await updateProfile(cred.user, { displayName: nome });
     await salvarUsuario(cred.user.uid, { nome, email, cidade });
-    showToast('✅ Conta criada! Bem-vindo ao Pro Povo.');
-    setTimeout(() => window.location.href = 'index.html', 1000);
+
+    // Envia o e-mail de confirmação, mas não trava o cadastro se isso falhar
+    // por algum motivo — a conta já foi criada com sucesso de qualquer forma.
+    // O usuário sempre pode reenviar depois pela tela de "Meu perfil".
+    try {
+      await sendEmailVerification(cred.user);
+      registrarEnvio(`verificacao:${email.toLowerCase()}`);
+    } catch (erroVerificacao) {
+      console.warn('Não foi possível enviar o e-mail de confirmação agora:', erroVerificacao);
+    }
+
+    showToast('✅ Conta criada! Enviamos um e-mail de confirmação — não esqueça de checar a caixa de spam/lixo eletrônico.');
+    setTimeout(() => window.location.href = 'index.html', 3000);
   } catch (e) {
     showToast('❌ ' + traduzirErro(e.code));
     setBtnLoading('btn-cadastrar', false, '<i class="ti ti-user-plus"></i> Criar minha conta');
