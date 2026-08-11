@@ -4,6 +4,7 @@ import { criarRelato, ouvirRelatos, votar, jaVotou, tempoRestanteParaEnviar } fr
 import { buscarComDebounce, estaNaParaiba } from "./endereco.js";
 import { otimizarImagem } from "./cloudinary.js";
 import { initNavbar } from "./navbar.js";
+import { escapeHTML } from "./escapeHtml.js";
 
 
 // ── Estado ──
@@ -243,17 +244,17 @@ function abrirDetalhe(r) {
   document.getElementById('detalhe-titulo').textContent = r.titulo;
   document.getElementById('detalhe-desc').textContent   = r.descricao;
   document.getElementById('detalhe-foto').innerHTML = r.fotoUrl
-    ? `<img src="${otimizarImagem(r.fotoUrl, 700)}" alt="Foto do relato" loading="lazy" style="width:100%; border-radius:8px; margin-bottom:12px; max-height:280px; object-fit:cover;">`
+    ? `<img src="${escapeHTML(otimizarImagem(r.fotoUrl, 700))}" alt="Foto do relato" loading="lazy" style="width:100%; border-radius:8px; margin-bottom:12px; max-height:280px; object-fit:cover;">`
     : '';
   document.getElementById('detalhe-resposta').innerHTML = r.respostaOficial
-  ? `<div class="resposta-cidadao"><strong><i class="ti ti-building-community"></i> Resposta da prefeitura:</strong><p>${r.respostaOficial}</p></div>`
+  ? `<div class="resposta-cidadao"><strong><i class="ti ti-building-community"></i> Resposta da prefeitura:</strong><p>${escapeHTML(r.respostaOficial)}</p></div>`
   : '';
   document.getElementById('detalhe-tags').innerHTML = `
-    <span class="badge badge-${r.categoria === 'Buraco / Via danificada' ? 'buraco' : 'agua'}">${r.categoria}</span>
-    <span class="status status-${r.status}">${r.status}</span>`;
+    <span class="badge badge-${r.categoria === 'Buraco / Via danificada' ? 'buraco' : 'agua'}">${escapeHTML(r.categoria)}</span>
+    <span class="status status-${escapeHTML(r.status)}">${escapeHTML(r.status)}</span>`;
   document.getElementById('detalhe-meta').innerHTML = `
-    <span><i class="ti ti-map-pin"></i> ${r.endereco}</span>
-    <span><i class="ti ti-user"></i> ${r.autorNome}</span>
+    <span><i class="ti ti-map-pin"></i> ${escapeHTML(r.endereco)}</span>
+    <span><i class="ti ti-user"></i> ${escapeHTML(r.autorNome)}</span>
     <span><i class="ti ti-clock"></i> ${tempoRelativo(r.dataCriacao)}</span>`;
   document.getElementById('modal-detalhe-overlay').classList.add('open');
 }
@@ -282,32 +283,36 @@ function cardHTML(r) {
     resolvido: { label: 'Resolvido',    css: 'status-resolvido', icon: 'ti-circle-check'  },
   };
 
-  const cat = cats[r.categoria]    || cats.outros;
+  // "cats.outros" (minúsculo) nunca existia como chave — se um relato tivesse uma
+  // categoria fora da lista (rules do banco só validam tamanho, não valor), isso
+  // deixava `cat` undefined e quebrava a renderização da home inteira. Corrigido
+  // para usar a chave real ("Outros", com O maiúsculo).
+  const cat = cats[r.categoria]    || cats['Outros'];
   const st  = status[r.status]     || status.aberto;
   const foto = r.fotoUrl
-    ? `<img src="${otimizarImagem(r.fotoUrl, 150)}" alt="Foto do relato" loading="lazy" style="width:72px;height:100%;object-fit:cover;">`
+    ? `<img src="${escapeHTML(otimizarImagem(r.fotoUrl, 150))}" alt="Foto do relato" loading="lazy" style="width:72px;height:100%;object-fit:cover;">`
     : `<div class="card-side ${cat.side}"><i class="ti ${cat.icon}"></i></div>`;
   const tempo = tempoRelativo(r.dataCriacao);
 
   return `
-    <article class="card" data-cat="${r.categoria}" data-status="${r.status}">
+    <article class="card" data-cat="${escapeHTML(r.categoria)}" data-status="${escapeHTML(r.status)}">
       ${foto}
       <div class="card-body">
         <div class="card-tags">
           <span class="badge ${cat.badge}"><i class="ti ti-tag"></i> ${cat.label}</span>
           <span class="status ${st.css}"><i class="ti ${st.icon}"></i> ${st.label}</span>
         </div>
-        <h3 class="card-title">${r.titulo}</h3>
-        <p class="card-desc">${r.descricao}</p>
+        <h3 class="card-title">${escapeHTML(r.titulo)}</h3>
+        <p class="card-desc">${escapeHTML(r.descricao)}</p>
         ${r.respostaOficial ? `
          <div class="resposta-cidadao">
            <strong><i class="ti ti-building-community"></i> Resposta da prefeitura:</strong>
-           <p>${r.respostaOficial}</p>
+           <p>${escapeHTML(r.respostaOficial)}</p>
          </div>` : ''}
         <div class="card-meta">
-          <span><i class="ti ti-map-pin"></i> ${r.endereco}</span>
+          <span><i class="ti ti-map-pin"></i> ${escapeHTML(r.endereco)}</span>
           <span><i class="ti ti-clock"></i> ${tempo}</span>
-          <span><i class="ti ti-user"></i> ${r.autorNome}</span>
+          <span><i class="ti ti-user"></i> ${escapeHTML(r.autorNome)}</span>
         </div>
         <div class="card-footer">
           <button class="vote-btn" data-id="${r.id}">

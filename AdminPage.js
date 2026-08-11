@@ -3,6 +3,7 @@ import { auth, onAuthStateChanged, signOut } from "./firebase.js";
 import { ehAdmin, ouvirRelatos, atualizarStatus, salvarResposta, excluirRelato, buscarUsuario } from "./db.js";
 import { otimizarImagem } from "./cloudinary.js";
 import { notificarMudancaStatus, notificarNovaResposta } from "./notificacoes.js";
+import { escapeHTML } from "./escapeHtml.js";
 
 const state = { todos: [], busca: '', status: 'todos' };
 
@@ -165,26 +166,26 @@ function cardHTML(r) {
   const data = new Date(r.dataCriacao).toLocaleDateString('pt-BR');
   const atrasado = estaAtrasado(r);
   const resposta = r.respostaOficial
-    ? `<div class="resposta-existente"><strong>Resposta oficial atual:</strong>${r.respostaOficial}</div>`
+    ? `<div class="resposta-existente"><strong>Resposta oficial atual:</strong>${escapeHTML(r.respostaOficial)}</div>`
     : '';
 
   return `
-    <article class="gestao-card ${atrasado ? 'gestao-card-atrasado' : ''}" data-status="${r.status}">
+    <article class="gestao-card ${atrasado ? 'gestao-card-atrasado' : ''}" data-status="${escapeHTML(r.status)}">
       <div class="gestao-top">
-        <span class="gestao-titulo">${r.titulo}</span>
+        <span class="gestao-titulo">${escapeHTML(r.titulo)}</span>
         <div class="gestao-top-badges">
           ${atrasado ? `<span class="badge-atrasado"><i class="ti ti-alert-triangle"></i> Atrasado · ${diasEmAberto(r)}d</span>` : ''}
           <span class="status status-${r.status}">${STATUS_LABEL[r.status]}</span>
         </div>
       </div>
       <div class="gestao-meta">
-        <span><i class="ti ti-map-pin"></i> ${r.endereco}</span>
-        <span><i class="ti ti-user"></i> ${r.autorNome}</span>
+        <span><i class="ti ti-map-pin"></i> ${escapeHTML(r.endereco)}</span>
+        <span><i class="ti ti-user"></i> ${escapeHTML(r.autorNome)}</span>
         <span><i class="ti ti-clock"></i> ${data}</span>
         <span><i class="ti ti-thumb-up"></i> ${r.votos || 0} votos</span>
       </div>
-      ${r.fotoUrl ? `<img src="${otimizarImagem(r.fotoUrl, 700)}" alt="Foto do relato" loading="lazy" class="gestao-foto">` : ''}
-      <p class="gestao-desc">${r.descricao}</p>
+      ${r.fotoUrl ? `<img src="${escapeHTML(otimizarImagem(r.fotoUrl, 700))}" alt="Foto do relato" loading="lazy" class="gestao-foto">` : ''}
+      <p class="gestao-desc">${escapeHTML(r.descricao)}</p>
 
       <div class="gestao-controles">
         <select class="gestao-select" id="status-${r.id}">
@@ -202,7 +203,7 @@ function cardHTML(r) {
 
       <div class="gestao-resposta-area" id="resp-area-${r.id}">
         ${resposta}
-        <textarea id="resp-texto-${r.id}" placeholder="Escreva a resposta oficial da prefeitura para este relato...">${r.respostaOficial || ''}</textarea>
+        <textarea id="resp-texto-${r.id}" placeholder="Escreva a resposta oficial da prefeitura para este relato...">${escapeHTML(r.respostaOficial || '')}</textarea>
         <button class="btn-gestao btn-gestao-resposta" id="btn-resp-salvar-${r.id}">
           <i class="ti ti-send"></i> Salvar resposta
         </button>

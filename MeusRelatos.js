@@ -2,6 +2,7 @@
 import { auth, onAuthStateChanged } from "./firebase.js";
 import { ouvirRelatosDoUsuario, atualizarRelatoDoUsuario, excluirRelato } from "./db.js";
 import { initNavbar } from "./navbar.js";
+import { escapeHTML } from "./escapeHtml.js";
 
 const state = { todos: [], busca: '', status: 'todos', relatoEditando: null };
 
@@ -84,7 +85,7 @@ function cardHTML(r) {
   const podeEditar = r.status === 'aberto';
 
   const resposta = r.respostaOficial
-    ? `<div class="resposta-cidadao"><strong><i class="ti ti-building-community"></i> Resposta da prefeitura:</strong><p>${r.respostaOficial}</p></div>`
+    ? `<div class="resposta-cidadao"><strong><i class="ti ti-building-community"></i> Resposta da prefeitura:</strong><p>${escapeHTML(r.respostaOficial)}</p></div>`
     : '';
 
   const controles = podeEditar
@@ -97,17 +98,17 @@ function cardHTML(r) {
        </div>`;
 
   return `
-    <article class="meu-relato-card" data-status="${r.status}">
+    <article class="meu-relato-card" data-status="${escapeHTML(r.status)}">
       <div class="meu-relato-top">
-        <span class="meu-relato-titulo">${r.titulo}</span>
+        <span class="meu-relato-titulo">${escapeHTML(r.titulo)}</span>
         <span class="status ${STATUS_CSS[r.status]}">${STATUS_LABEL[r.status]}</span>
       </div>
       <div class="card-tags"><span class="badge ${cat.badge}"><i class="ti ti-tag"></i> ${cat.label}</span></div>
-      ${r.fotoUrl ? `<img src="${r.fotoUrl}" alt="Foto do relato" class="meu-relato-foto">` : ''}
-      <p class="meu-relato-desc">${r.descricao}</p>
+      ${r.fotoUrl ? `<img src="${escapeHTML(r.fotoUrl)}" alt="Foto do relato" class="meu-relato-foto">` : ''}
+      <p class="meu-relato-desc">${escapeHTML(r.descricao)}</p>
       ${resposta}
       <div class="meu-relato-meta">
-        <span><i class="ti ti-map-pin"></i> ${r.endereco}</span>
+        <span><i class="ti ti-map-pin"></i> ${escapeHTML(r.endereco)}</span>
         <span><i class="ti ti-clock"></i> ${data}</span>
         <span><i class="ti ti-thumb-up"></i> ${r.votos || 0} votos</span>
       </div>

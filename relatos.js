@@ -3,6 +3,7 @@ import { ouvirRelatos } from "./db.js";
 import { initNavbar } from "./navbar.js";
 import { otimizarImagem } from "./cloudinary.js";
 import { normalizar } from "./populacao.js";
+import { escapeHTML } from "./escapeHtml.js";
 
 // ── Navbar (login/cadastro/nome do usuário/sair/perfil) ──
 initNavbar();
@@ -167,10 +168,10 @@ function linhaHTML(r) {
 
   return `
     <tr>
-      <td class="td-titulo" data-label="Título">${r.titulo}</td>
+      <td class="td-titulo" data-label="Título">${escapeHTML(r.titulo)}</td>
       <td data-label="Categoria"><span class="badge ${cat.badge}">${cat.label}</span></td>
       <td data-label="Status"><span class="status ${st.css}">${st.label}</span></td>
-      <td class="td-endereco" data-label="Endereço">${r.endereco}</td>
+      <td class="td-endereco" data-label="Endereço">${escapeHTML(r.endereco)}</td>
       <td class="td-votos" data-label="Votos">${r.votos || 0}</td>
       <td data-label="Data">${data}</td>
       <td class="td-acao" data-label=""><button class="btn-tabela-detalhe">Ver detalhes</button></td>
@@ -185,17 +186,17 @@ function abrirDetalhe(r) {
   document.getElementById('detalhe-titulo').textContent = r.titulo;
   document.getElementById('detalhe-desc').textContent   = r.descricao;
   document.getElementById('detalhe-foto').innerHTML = r.fotoUrl
-    ? `<img src="${otimizarImagem(r.fotoUrl, 700)}" alt="Foto do relato" loading="lazy" style="width:100%; border-radius:8px; margin-bottom:12px; max-height:280px; object-fit:cover;">`
+    ? `<img src="${escapeHTML(otimizarImagem(r.fotoUrl, 700))}" alt="Foto do relato" loading="lazy" style="width:100%; border-radius:8px; margin-bottom:12px; max-height:280px; object-fit:cover;">`
     : '';
   document.getElementById('detalhe-resposta').innerHTML = r.respostaOficial
-  ? `<div class="resposta-cidadao"><strong><i class="ti ti-building-community"></i> Resposta da prefeitura:</strong><p>${r.respostaOficial}</p></div>`
+  ? `<div class="resposta-cidadao"><strong><i class="ti ti-building-community"></i> Resposta da prefeitura:</strong><p>${escapeHTML(r.respostaOficial)}</p></div>`
   : '';
   document.getElementById('detalhe-tags').innerHTML = `
     <span class="badge ${cat.badge}">${cat.label}</span>
     <span class="status ${st.css}">${st.label}</span>`;
   document.getElementById('detalhe-meta').innerHTML = `
-    <span><i class="ti ti-map-pin"></i> ${r.endereco}</span>
-    <span><i class="ti ti-user"></i> ${r.autorNome}</span>
+    <span><i class="ti ti-map-pin"></i> ${escapeHTML(r.endereco)}</span>
+    <span><i class="ti ti-user"></i> ${escapeHTML(r.autorNome)}</span>
     <span><i class="ti ti-clock"></i> ${new Date(r.dataCriacao).toLocaleString('pt-BR')}</span>`;
   document.getElementById('modal-detalhe-overlay').classList.add('open');
 }

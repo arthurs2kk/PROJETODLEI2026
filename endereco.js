@@ -1,3 +1,4 @@
+import { normalizar } from "./populacao.js";
 
 let debounceTimer = null;
 
@@ -23,6 +24,7 @@ export async function buscarSugestoesEndereco(query) {
         texto:  item.display_name,
         lat:    parseFloat(item.lat),
         lng:    parseFloat(item.lon),
+        estado: addr.state || null,
         cidade: addr.city || addr.town || addr.village || addr.municipality || null,
         bairro: addr.suburb || addr.neighbourhood || addr.city_district || addr.quarter || null,
         rua:    addr.road || addr.pedestrian || addr.footway || addr.residential || null
@@ -30,7 +32,11 @@ export async function buscarSugestoesEndereco(query) {
     });
 
 
-    return sugestoes.filter(s => s.cidade && s.bairro && s.rua);
+  
+    return sugestoes.filter(s =>
+      s.cidade && s.bairro && s.rua &&
+      s.estado && normalizar(s.estado).includes('paraiba')
+    );
 
   } catch (e) {
     console.warn('Erro ao buscar endereços:', e);
@@ -47,7 +53,6 @@ export function buscarComDebounce(query, callback, delay = 500) {
   }, delay);
 }
 
-// ── Confirma se um ponto está dentro da Paraíba (segurança extra) ──
 export function estaNaParaiba(lat, lng) {
   return lat >= LIMITES_PB.latMin && lat <= LIMITES_PB.latMax &&
          lng >= LIMITES_PB.lngMin && lng <= LIMITES_PB.lngMax;

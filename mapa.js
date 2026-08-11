@@ -1,6 +1,7 @@
 // ── Pro Povo — mapa.js ──
 import { ouvirRelatos } from "./db.js";
 import { initNavbar } from "./navbar.js";
+import { escapeHTML } from "./escapeHtml.js";
 
 // ── Navbar (login/cadastro/nome do usuário/sair/perfil) ──
 initNavbar();
@@ -69,14 +70,14 @@ ouvirRelatos((relatos) => {
 
     marker.bindPopup(`
       <div class="popup-relato">
-        <div class="popup-titulo">${r.titulo}</div>
+        <div class="popup-titulo">${escapeHTML(r.titulo)}</div>
         <div class="popup-meta">
-          <span><i class="ti ti-map-pin"></i> ${r.endereco}</span>
-          <span><i class="ti ti-user"></i> ${r.autorNome}</span>
+          <span><i class="ti ti-map-pin"></i> ${escapeHTML(r.endereco)}</span>
+          <span><i class="ti ti-user"></i> ${escapeHTML(r.autorNome)}</span>
           <span><i class="ti ti-thumb-up"></i> ${r.votos || 0} votos</span>
         </div>
         <span class="popup-status" style="background:${STATUS_COR[r.status]}22; color:${STATUS_COR[r.status]}">
-          ${STATUS_LABEL[r.status] || r.status}
+          ${escapeHTML(STATUS_LABEL[r.status] || r.status)}
         </span>
       </div>
     `);
