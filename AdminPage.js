@@ -1,11 +1,15 @@
 // ── Pro Povo — admin-painel.js ──
 import { auth, onAuthStateChanged, signOut } from "./firebase.js";
-import { ehAdmin, ouvirRelatos, atualizarStatus, salvarResposta, excluirRelato } from "./db.js";
+import { ehAdmin, ouvirRelatos, atualizarStatus, salvarResposta, excluirRelato, buscarUsuario } from "./db.js";
 import { otimizarImagem } from "./cloudinary.js";
+import { notificarMudancaStatus, notificarNovaResposta } from "./notificacoes.js";
 
 const state = { todos: [], busca: '', status: 'todos' };
 
-
+// ── SLA: depois de quantos dias sem solução um relato é considerado atrasado ──
+// Contado a partir da data de criação do relato. Fica isolado aqui pra ser
+// fácil de ajustar (ex: definir um SLA diferente por categoria no futuro)
+// sem precisar mexer no resto da lógica do painel.
 const SLA_DIAS = 10;
 const SLA_MS = SLA_DIAS * 24 * 60 * 60 * 1000;
 
@@ -17,12 +21,24 @@ function diasEmAberto(r) {
   return Math.floor((Date.now() - r.dataCriacao) / 86400000);
 }
 
-
+// ── Tempo médio de resolução (em dias) ──
+// Considera só relatos resolvidos que já têm dataResolucao gravada. Relatos
+// marcados como resolvidos antes dessa métrica existir não entram na conta
+// (não tem como saber quando foram resolvidos) — a métrica vai ficando mais
+// precisa conforme relatos novos forem resolvidos.
 function calcularTempoMedioResolucao(relatos) {
   const resolvidos = relatos.filter(r => r.status === 'resolvido' && r.dataResolucao);
   if (resolvidos.length === 0) return null;
   const totalDias = resolvidos.reduce((soma, r) => soma + (r.dataResolucao - r.dataCriacao), 0) / 86400000;
   return totalDias / resolvidos.length;
+}
+
+// ── Busca os dados do autor e dispara a notificação, sem travar a interface do
+// admin caso isso demore ou falhe (ex: EmailJS ainda não configurado) ──
+function notificarAutor(relato, enviar) {
+  buscarUsuario(relato.autorId)
+    .then(usuario => enviar(usuario))
+    .catch(erro => console.warn('Não foi possível carregar os dados do autor pra notificar:', erro));
 }
 
 // ── Verificação de acesso ──
@@ -117,8 +133,10 @@ function render() {
   // Eventos
   lista.forEach(r => {
     document.getElementById(`status-${r.id}`)?.addEventListener('change', async (e) => {
-      await atualizarStatus(r.id, e.target.value);
+      const novoStatus = e.target.value;
+      await atualizarStatus(r.id, novoStatus);
       showToast('✅ Status atualizado.');
+      notificarAutor(r, (usuario) => notificarMudancaStatus(usuario, r, novoStatus));
     });
 
     document.getElementById(`btn-resp-${r.id}`)?.addEventListener('click', () => {
@@ -130,6 +148,7 @@ function render() {
       if (!texto) { showToast('⚠️ Escreva uma resposta antes de salvar.'); return; }
       await salvarResposta(r.id, texto);
       showToast('✅ Resposta oficial salva.');
+      notificarAutor(r, (usuario) => notificarNovaResposta(usuario, r, texto));
     });
 
     document.getElementById(`btn-excluir-${r.id}`)?.addEventListener('click', async () => {
