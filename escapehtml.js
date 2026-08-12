@@ -12,4 +12,4 @@ export function escapeHTML(valor) {
     '"': '&quot;',
     "'": '&#39;'
   }[c]));
-}
+} console.log('so pra dar comit e corrigir o nome do arquivo');
