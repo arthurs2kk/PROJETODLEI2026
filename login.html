@@ -140,8 +140,8 @@
 
           <div class="divider"><span>ou</span></div>
 
-          <button class="btn-social">
-            <i></i> Login Administrativo
+          <button class="btn-social" id="btn-google-login" type="button">
+            <i class="ti ti-brand-google"></i> Entrar com Google
           </button>
         </div>
 
@@ -201,19 +201,48 @@
 
           <div class="divider"><span>ou</span></div>
 
-          <button class="btn-social">
-            <i class="ti ti-brand-google"></i> Login Administrativo
+          <button class="btn-social" id="btn-google-cadastro" type="button">
+            <i class="ti ti-brand-google"></i> Cadastrar com Google
           </button>
 
         </div>
 
       </div>
 
+      <a href="AdmLogin.html" class="admin-access-link">
+        <i class="ti ti-shield-lock"></i> Sou funcionário da prefeitura
+      </a>
+
       <p class="login-footer-note">
         <i class="ti ti-lock"></i> Seus dados estão protegidos e não são compartilhados com terceiros.
       </p>
     </div>
 
+  </div>
+
+  <!-- MODAL: completar cadastro de quem entrou com Google pela primeira vez -->
+  <div class="modal-overlay" id="modal-google-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <div class="modal-icon"><i class="ti ti-map-pin"></i></div>
+          <h2 class="modal-title">Só mais um passo</h2>
+        </div>
+      </div>
+      <div class="modal-body">
+        <p class="form-intro">Pra concluir seu cadastro com o Google, conta pra gente qual é a sua cidade na Paraíba.</p>
+        <div class="form-group">
+          <label class="form-label">Cidade (Paraíba) <span class="required">*</span></label>
+          <select class="form-input" id="google-cidade">
+            <option value="">Carregando cidades...</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-outline" id="google-cancelar">Cancelar e sair</button>
+        <button class="btn-primary" id="google-continuar"><i class="ti ti-arrow-right"></i> Continuar</button>
+      </div>
+    </div>
   </div>
 
   <!-- TOAST -->

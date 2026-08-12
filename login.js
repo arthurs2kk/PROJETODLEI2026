@@ -1,12 +1,16 @@
 // ── Pro Povo — login.js ──
-import { auth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, onAuthStateChanged, updateProfile, sendPasswordResetEmail, sendEmailVerification } from "./firebase.js";
-import { salvarUsuario } from "./db.js";
+import { auth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, provider, signOut, onAuthStateChanged, updateProfile, sendPasswordResetEmail, sendEmailVerification } from "./firebase.js";
+import { salvarUsuario, buscarUsuario } from "./db.js";
 import { carregarCidadesPB } from "./cidades.js";
 import { segundosRestantes, registrarEnvio } from "./cooldown.js";
 
 // ── Se já estiver logado, vai direto pro index ──
+// (exceto durante o login com Google, onde pode faltar completar o
+// cadastro com a cidade antes de liberar o acesso — ver entrarComGoogle)
+let googleFlowEmAndamento = false;
+
 onAuthStateChanged(auth, (user) => {
-  if (user) window.location.href = "index.html";
+  if (user && !googleFlowEmAndamento) window.location.href = "index.html";
 });
 
 // ── Carregar cidades da Paraíba no select de cadastro ──
@@ -75,6 +79,8 @@ function traduzirErro(code) {
     'auth/weak-password':            'Senha muito fraca. Use pelo menos 6 caracteres.',
     'auth/too-many-requests':        'Muitas tentativas. Aguarde alguns minutos.',
     'auth/popup-closed-by-user':     'Login com Google cancelado.',
+    'auth/popup-blocked':            'O navegador bloqueou a janela do Google. Permita pop-ups e tente novamente.',
+    'auth/account-exists-with-different-credential': 'Esse e-mail já tem uma conta com senha. Entre com e-mail e senha.',
     'auth/network-request-failed':   'Erro de conexão. Verifique sua internet.',
     'auth/invalid-credential':       'E-mail ou senha incorretos.',
   };
@@ -174,10 +180,76 @@ document.getElementById('btn-cadastrar')?.addEventListener('click', async () => 
   }
 });
 
-document.querySelectorAll('.btn-social').forEach(btn => {
-  btn.addEventListener('click', async () => {
-    window.location.href = 'AdmLogin.html';
-  });
+// ── Login/cadastro com Google ──
+// Só usado na tela de login de cidadãos: o painel administrativo (AdmLogin.html)
+// continua exclusivamente com e-mail/senha, sem nenhuma ligação com este fluxo.
+async function entrarComGoogle() {
+  googleFlowEmAndamento = true;
+  try {
+    const cred = await signInWithPopup(auth, provider);
+    const perfilExistente = await buscarUsuario(cred.user.uid);
+
+    if (perfilExistente) {
+      showToast('✅ Login realizado com Google!');
+      setTimeout(() => window.location.href = 'index.html', 800);
+      return;
+    }
+
+    // Primeira vez com Google — falta a cidade pra completar o cadastro
+    // (nome/e-mail vêm prontos, dataCadastro é preenchido em salvarUsuario)
+    abrirModalGoogle(cred.user);
+  } catch (e) {
+    googleFlowEmAndamento = false;
+    if (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') return;
+    console.error(e);
+    showToast('❌ ' + traduzirErro(e.code));
+  }
+}
+
+document.getElementById('btn-google-login')?.addEventListener('click', entrarComGoogle);
+document.getElementById('btn-google-cadastro')?.addEventListener('click', entrarComGoogle);
+
+// ── Modal: pedir a cidade pra quem entrou pela primeira vez com Google ──
+function abrirModalGoogle(user) {
+  carregarCidadesPB(document.getElementById('google-cidade'));
+  document.getElementById('modal-google-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+
+  document.getElementById('google-continuar').onclick = async () => {
+    const cidade = document.getElementById('google-cidade').value;
+    if (!cidade) { showToast('⚠️ Selecione sua cidade para continuar.'); return; }
+
+    const btn = document.getElementById('google-continuar');
+    const textoOriginal = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="ti ti-loader-2" style="animation:spin 0.8s linear infinite"></i> Salvando...';
+
+    try {
+      await salvarUsuario(user.uid, {
+        nome: user.displayName || (user.email ? user.email.split('@')[0] : 'Usuário'),
+        email: user.email,
+        cidade
+      });
+      showToast('✅ Cadastro completo! Redirecionando...');
+      setTimeout(() => window.location.href = 'index.html', 800);
+    } catch (e) {
+      console.error(e);
+      showToast('❌ Não foi possível concluir o cadastro. Tente novamente.');
+      btn.disabled = false;
+      btn.innerHTML = textoOriginal;
+    }
+  };
+
+  document.getElementById('google-cancelar').onclick = async () => {
+    await signOut(auth);
+    googleFlowEmAndamento = false;
+    document.getElementById('modal-google-overlay').classList.remove('open');
+    document.body.style.overflow = '';
+  };
+}
+
+document.getElementById('modal-google-overlay')?.addEventListener('click', (e) => {
+  if (e.target.id === 'modal-google-overlay') document.getElementById('google-cancelar')?.click();
 });
 
 // ── Menu mobile ──
