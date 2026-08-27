@@ -112,6 +112,25 @@ body {
   flex-shrink: 0;
 }
 
+/* ── Textos da Logo na Navbar ── */
+.logo-title {
+  color: #ffffff; /* Branco puro para a primeira parte */
+  font-weight: 700; /* Deixa o "Pro Povo" em negrito */
+  font-size: 18px;
+}
+
+.logo-sub {
+  color: rgba(255, 255, 255, 0.9); /* Branco levemente suave para o slogan */
+  font-size: 15px;
+}
+
+/* Opcional: Para alinhar os dois textos direitinho um do lado do outro ou em cima/embaixo */
+.logo-text-group {
+  display: flex;
+  flex-direction: column; /* Deixa o título em cima e o slogan embaixo. Se preferir lado a lado, mude para "row" */
+  justify-content: center;
+}
+
 /* ── Logo da empresa ── */
 .empresa-logo {
   display: flex;
@@ -1047,10 +1066,13 @@ body {
   z-index: 300;
   opacity: 0;
   transition: opacity var(--transition), transform var(--transition);
-  white-space: nowrap;
-  border-left: 4px solid var(--amarelo);
-  box-shadow: var(--shadow-md);
+  
+  white-space: normal; 
+  max-width: 90vw;
+  text-align: center; 
+  line-height: 1.4;
 }
+
 
 .toast.show {
   opacity: 1;
@@ -1201,4 +1223,177 @@ body {
 
 .sugestao-item:hover {
   background: var(--azul-claro);
+}
+
+html {
+  color-scheme: light;
+  background: var(--cinza-1);
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+html[data-theme="dark"] {
+  --cinza-1: #121212;
+  --cinza-2: #1e1e1e;
+  --cinza-3: #3b3b3b;
+  --cinza-4: #a8a8a8;
+  --cinza-5: #eeeeee;
+  --branco: #202124;
+  --borda: #424242;
+  --azul-claro: #12345f;
+  --verde-claro: #12381c;
+  --verm-bg: #421b16;
+  --laran-bg: #452b0d;
+  --shadow: 0 2px 10px rgba(0,0,0,.35);
+  --shadow-md: 0 10px 30px rgba(0,0,0,.45);
+  --shadow-lg: 0 24px 60px rgba(0,0,0,.6);
+}
+
+body,
+.card,
+.sidebar-box,
+.modal,
+.how-it-works,
+.site-footer,
+.navbar,
+.mobile-menu,
+.empty-state,
+.step,
+.upload-area,
+.form-input,
+.filtro-select,
+.busca-input,
+.tabela-card,
+.gestao-card,
+.meu-relato-card,
+.resumo-card,
+.graf-canvas-wrap {
+  transition:
+    background-color .22s var(--ease),
+    color .22s var(--ease),
+    border-color .22s var(--ease),
+    box-shadow .22s var(--ease);
+}
+
+input,
+textarea,
+select {
+  color: var(--cinza-5);
+  background-color: var(--branco);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--cinza-4);
+}
+
+[data-theme="dark"] .endereco-sugestoes.open {
+  background: var(--branco);
+}
+
+[data-theme="dark"] .sugestao-item {
+  border-bottom-color: var(--borda);
+}
+
+[data-theme="dark"] .sugestao-item:hover {
+  background: var(--azul-claro);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
+[data-theme="dark"] #detalhe-resposta,
+[data-theme="dark"] #detalhe-resposta *,
+[data-theme="dark"] .resposta-oficial,
+[data-theme="dark"] .resposta-oficial *,
+[data-theme="dark"] .card-resposta,
+[data-theme="dark"] .card-resposta * {
+  color: #f1f5f9 !important;
+}
+
+[data-theme="dark"] #detalhe-resposta,
+[data-theme="dark"] .resposta-oficial,
+[data-theme="dark"] .card-resposta {
+  background: #263238;
+  border-color: #52636b;
+}
+
+[data-theme="dark"] #detalhe-resposta small,
+[data-theme="dark"] #detalhe-resposta time,
+[data-theme="dark"] .resposta-oficial small,
+[data-theme="dark"] .card-resposta small {
+  color: #cbd5e1 !important;
+}
+
+[data-theme="dark"] #detalhe-resposta a,
+[data-theme="dark"] .resposta-oficial a,
+[data-theme="dark"] .card-resposta a {
+  color: #93c5fd !important;
+}
+
+html[data-theme="dark"] .resposta-cidadao,
+html[data-theme="dark"] .resposta-cidadao *,
+html[data-theme="dark"] #detalhe-resposta .resposta-cidadao {
+  color: #f8fafc !important;
+}
+
+html[data-theme="dark"] .resposta-cidadao {
+  background: #263b52 !important;
+  border-left-color: #72aef5 !important;
+}
+
+html[data-theme="dark"] .resposta-cidadao strong {
+  color: #ffffff !important;
+}
+
+html[data-theme="dark"] .resposta-cidadao p,
+html[data-theme="dark"] .resposta-cidadao span,
+html[data-theme="dark"] .resposta-cidadao small {
+  color: #e2e8f0 !important;
+}
+
+html[data-theme="dark"] .vote-btn {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 36px;
+  background: #252b35 !important;
+  border: 2px solid #718096 !important;
+  color: #f8fafc !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+html[data-theme="dark"] .vote-btn i,
+html[data-theme="dark"] .vote-btn span,
+html[data-theme="dark"] .vote-btn strong {
+  color: inherit !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+html[data-theme="dark"] .vote-btn:hover {
+  background: #193b68 !important;
+  border-color: #93c5fd !important;
+  color: #ffffff !important;
+}
+
+html[data-theme="dark"] .vote-btn.voted {
+  background: #1e4f86 !important;
+  border-color: #93c5fd !important;
+  color: #ffffff !important;
+}
+
+html[data-theme="dark"] .vote-btn:disabled {
+  opacity: 0.75 !important;
+  color: #dbeafe !important;
 }

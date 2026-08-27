@@ -10,6 +10,15 @@
   <link rel="preconnect" href="https://res.cloudinary.com">
   <link rel="preconnect" href="https://nominatim.openstreetmap.org">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+  (() => {
+    const tema = localStorage.getItem('theme');
+    if (tema === 'dark' ||
+      (!tema && matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.dataset.theme = 'dark';
+    }
+  })();
+</script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.44.0/dist/tabler-icons.min.css" />
   <link rel="stylesheet" href="home.css" />
   <link rel="icon" type="image/png" href="Images/flavinconProPovo.png">
@@ -43,6 +52,10 @@
     </div>
 
     <div class="nav-btns">
+     
+     <a href="#" class="mobile-link" id="theme-toggle-mobile">
+  <i class="ti ti-moon"></i> Modo escuro
+</a>
       <button class="btn-outline" id="btn-entrar">Entrar</button>
       <button class="btn-primary" id="btn-cadastrar">Criar conta</button>
     </div>
@@ -59,8 +72,12 @@
     <a href="index.html" class="mobile-link"><i class="ti ti-home"></i> Início</a>
     <a href="relatos.html" class="mobile-link"><i class="ti ti-list"></i> Relatos</a>
     <a href="mapa.html" class="mobile-link"><i class="ti ti-map"></i> Mapa</a>
+     <a href="#" class="mobile-link" id="theme-toggle-mobile">
+     <i class="ti ti-moon"></i> Modo Escuro
+    </a>
     <a href="MeusRelatos.html" class="mobile-link" id="mobile-meus-relatos" style="display:none;"><i class="ti ti-user-check"></i> Meus relatos</a>
     <div class="mobile-divider"></div>
+
     <button class="btn-outline w100" id="btn-entrar-mobile">Entrar</button>
     <button class="btn-primary w100" id="btn-cadastrar-mobile">Criar conta</button>
   </div>
@@ -312,7 +329,8 @@
 
   <!-- TOAST -->
   <div class="toast" id="toast"></div>
-
+   <script src="theme.js"></script>
+   <script type="module" src="home.js"></script>
   <script type="module" src="home.js"></script>
 </body>
 </html>

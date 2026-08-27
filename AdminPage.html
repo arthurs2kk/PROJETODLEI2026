@@ -10,6 +10,15 @@
   <link rel="preconnect" href="https://res.cloudinary.com">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.44.0/dist/tabler-icons.min.css" />
+  <script>
+  (() => {
+    const tema = localStorage.getItem('theme');
+    if (tema === 'dark' ||
+      (!tema && matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.dataset.theme = 'dark';
+    }
+  })();
+</script>
   <link rel="stylesheet" href="home.css" />
   <link rel="stylesheet" href="relatos.css" />
   <link rel="stylesheet" href="AdminPage.css" />
@@ -45,6 +54,9 @@
       <div class="nav-links">
         <a href="AdminPage.html" class="nav-link active">Gestão de relatos</a>
         <a href="AdminGraficos.html" class="nav-link">Gráficos</a>
+        <a href="#" class="mobile-link" id="theme-toggle-mobile">
+  <i class="ti ti-moon"></i> Modo escuro
+</a>
       </div>
       <div class="nav-btns">
         <span class="admin-user-tag" id="admin-user-tag"><i class="ti ti-user-shield"></i> Carregando...</span>
@@ -126,7 +138,8 @@
   </div>
 
   <div class="toast" id="toast"></div>
-
+   <script src="theme.js"></script>
+   <script type="module" src="home.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <script type="module" src="AdminPage.js"></script>
 </body>

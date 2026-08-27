@@ -8,6 +8,15 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://pro--povo-default-rtdb.firebaseio.com">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+  (() => {
+    const tema = localStorage.getItem('theme');
+    if (tema === 'dark' ||
+      (!tema && matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.dataset.theme = 'dark';
+    }
+  })();
+</script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.44.0/dist/tabler-icons.min.css" />
   <link rel="stylesheet" href="home.css" />
   <link rel="stylesheet" href="login.css" />
@@ -36,11 +45,15 @@
     </div>
     <div class="nav-links">
       <a href="index.html" class="nav-link">Início</a>
-      <a href="#" class="nav-link">Relatos</a>
-      <a href="#" class="nav-link">Mapa</a>
-      <a href="#" class="nav-link">Como funciona</a>
+      <a href="relatos.html" class="nav-link">Relatos</a>
+      <a href="mapa.html" class="nav-link">Mapa</a>
+     
+      
     </div>
     <div class="nav-btns">
+       <a href="#" class="mobile-link" id="theme-toggle-mobile">
+  <i class="ti ti-moon"></i> Modo escuro
+</a>
       <a href="index.html"><button class="btn-outline">Voltar ao início</button></a>
     </div>
     <button class="hamburger" id="hamburger" aria-label="Abrir menu">
@@ -247,7 +260,8 @@
 
   <!-- TOAST -->
   <div class="toast" id="toast"></div>
-
+  <script src="theme.js"></script>
+   <script type="module" src="home.js"></script>
   <script type="module" src="login.js"></script>
 </body>
 </html>

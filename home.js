@@ -61,17 +61,54 @@ document.getElementById('modal-overlay')?.addEventListener('click', (e) => {
   if (e.target.id === 'modal-overlay') closeModal();
 });
 
-// ── Upload de foto ──
-document.getElementById('upload-area')?.addEventListener('click', () => {
-  document.getElementById('f-foto').click();
+const uploadArea = document.getElementById('upload-area');
+
+uploadArea?.addEventListener('click', (event) => {
+  if (event.target.id !== 'f-foto') {
+    document.getElementById('f-foto')?.click();
+  }
 });
 
-document.getElementById('f-foto')?.addEventListener('change', (e) => {
-  const file = e.target.files[0];
+uploadArea?.addEventListener('change', (event) => {
+  if (event.target.id !== 'f-foto') return;
+
+  const file = event.target.files?.[0];
   if (!file) return;
+
+  const tiposPermitidos = [
+    'image/jpeg',
+    'image/png',
+    'image/webp',
+    'image/heic'
+  ];
+
+  if (!tiposPermitidos.includes(file.type)) {
+    showToast('⚠️ Tipo de imagem não permitido.');
+    event.target.value = '';
+    return;
+  }
+
+  if (file.size > 10 * 1024 * 1024) {
+    showToast('⚠️ A imagem deve ter no máximo 10 MB.');
+    event.target.value = '';
+    return;
+  }
+
   state.fotoFile = file;
-  const area = document.getElementById('upload-area');
-  area.innerHTML = `<i class="ti ti-photo-check" style="color:var(--verde);font-size:32px"></i><strong>${file.name}</strong><span>Foto anexada</span>`;
+
+  uploadArea.replaceChildren();
+
+  const icone = document.createElement('i');
+  icone.className = 'ti ti-photo-check';
+  icone.style.cssText = 'color:var(--verde);font-size:32px';
+
+  const nome = document.createElement('strong');
+  nome.textContent = file.name;
+
+  const texto = document.createElement('span');
+  texto.textContent = 'Foto anexada';
+
+  uploadArea.append(icone, nome, texto, event.target);
 });
 
 // ── Verificação básica de conteúdo (título/descrição) ──
@@ -432,11 +469,21 @@ inputLocal?.addEventListener('input', (e) => {
       dropSugestoes.classList.remove('open');
       return;
     }
-    dropSugestoes.innerHTML = sugestoes.map((s, i) => `
-      <div class="sugestao-item" data-i="${i}">
-        <i class="ti ti-map-pin"></i> ${s.texto}
-      </div>`).join('');
-    dropSugestoes.classList.add('open');
+    dropSugestoes.replaceChildren();
+
+sugestoes.forEach((s, i) => {
+  const item = document.createElement('div');
+  item.className = 'sugestao-item';
+  item.dataset.i = String(i);
+
+  const icone = document.createElement('i');
+  icone.className = 'ti ti-map-pin';
+
+  item.append(icone, document.createTextNode(` ${s.texto}`));
+  dropSugestoes.appendChild(item);
+});
+
+dropSugestoes.classList.add('open');
   });
 });
 

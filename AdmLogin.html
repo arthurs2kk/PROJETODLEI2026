@@ -8,6 +8,15 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
+  <script>
+  (() => {
+    const tema = localStorage.getItem('theme');
+    if (tema === 'dark' ||
+      (!tema && matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.dataset.theme = 'dark';
+    }
+  })();
+</script>
   <link rel="stylesheet" href="home.css" />
   <link rel="stylesheet" href="AdmLogin.css" />
   <link rel="icon" type="image/png" href="Images/flavinconProPovo.png">
@@ -66,7 +75,8 @@
   </div>
 
   <div class="toast" id="toast"></div>
-
+  <script src="theme.js"></script>
+<script type="module" src="home.js"></script>
   <script type="module" src="AdmLogin.js"></script>
 </body>
 </html>

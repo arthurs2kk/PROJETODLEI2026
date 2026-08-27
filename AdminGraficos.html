@@ -9,6 +9,15 @@
   <link rel="preconnect" href="https://pro--povo-default-rtdb.firebaseio.com">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.44.0/dist/tabler-icons.min.css" />
+  <script>
+  (() => {
+    const tema = localStorage.getItem('theme');
+    if (tema === 'dark' ||
+      (!tema && matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.dataset.theme = 'dark';
+    }
+  })();
+</script>
   <link rel="stylesheet" href="home.css" />
   <link rel="stylesheet" href="relatos.css" />
   <link rel="stylesheet" href="AdminPage.css" />
@@ -47,6 +56,9 @@
         <a href="AdminGraficos.html" class="nav-link active">Gráficos</a>
       </div>
       <div class="nav-btns">
+         <a href="#" class="mobile-link" id="theme-toggle-mobile">
+  <i class="ti ti-moon"></i> Modo escuro
+</a>
         <span class="admin-user-tag" id="admin-user-tag"><i class="ti ti-user-shield"></i> Carregando...</span>
         <button class="btn-outline" id="btn-sair">Sair</button>
       </div>
@@ -107,7 +119,8 @@
   </div>
 
   <div class="toast" id="toast"></div>
-
+  <script src="theme.js"></script>
+  <script type="module" src="home.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script type="module" src="AdminGraficos.js"></script>
 </body>

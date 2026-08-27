@@ -10,6 +10,15 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.44.0/dist/tabler-icons.min.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script>
+  (() => {
+    const tema = localStorage.getItem('theme');
+    if (tema === 'dark' ||
+      (!tema && matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.dataset.theme = 'dark';
+    }
+  })();
+</script>
   <link rel="stylesheet" href="home.css" />
   <link rel="stylesheet" href="mapa.css" />
    <link rel="icon" type="image/png" href="Images/flavinconProPovo.png">
@@ -40,6 +49,9 @@
       <a href="MeusRelatos.html" class="nav-link" id="nav-meus-relatos" style="display:none;">Meus relatos</a>
     </div>
     <div class="nav-btns">
+      <a href="#" class="mobile-link" id="theme-toggle-mobile">
+  <i class="ti ti-moon"></i> Modo escuro
+</a>
       <button class="btn-outline" id="btn-entrar">Entrar</button>
       <button class="btn-primary" id="btn-cadastrar">Criar conta</button>
     </div>
@@ -79,6 +91,8 @@
 
   <div class="toast" id="toast"></div>
 
+  <script src="theme.js"></script>
+<script type="module" src="home.js"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script type="module" src="mapa.js"></script>
 </body>
