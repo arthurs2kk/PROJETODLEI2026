@@ -243,6 +243,10 @@
   .gestao-select { width: 100%; }
 }
 
+/* Foto do card: object-fit: cover recorta a imagem pra caber nesse espaço
+   compacto (necessário pra manter os cards uniformes na lista). O cursor de
+   "zoom-in" e o hover avisam que dá pra clicar pra ver a foto inteira, sem
+   corte, através do lightbox abaixo. */
 .gestao-foto {
   width: 100% !important;
   height: 160px !important;
@@ -251,4 +255,51 @@
   margin: 10px 0 !important;
   display: block !important;
   border: 1px solid var(--borda);
+  cursor: zoom-in;
+  transition: filter var(--transition-fast), transform var(--transition-fast);
+}
+
+.gestao-foto:hover { filter: brightness(0.92); }
+
+/* ── Lightbox: foto do relato ampliada, sem corte ── */
+.lightbox-overlay {
+  background: rgba(0,0,0,0.85);
+}
+
+.lightbox-img {
+  max-width: 90vw;
+  max-height: 88vh;
+  object-fit: contain;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  transform: scale(.97);
+  opacity: 0;
+  transition: transform var(--transition), opacity var(--transition);
+}
+
+.lightbox-overlay.open .lightbox-img {
+
+  transform: scale(1);
+  opacity: 1;
+}
+
+.lightbox-close {
+  position: absolute;
+  top: 20px;
+  right: 24px;
+  width: 42px; height: 42px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255,255,255,0.12);
+  color: #fff;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background var(--transition-fast), transform var(--transition-fast);
+}
+
+.lightbox-close:hover { background: rgba(255,255,255,0.22); transform: rotate(90deg); }
+
+@media (max-width: 640px) {
+  .lightbox-close { top: 12px; right: 12px; }
 }
