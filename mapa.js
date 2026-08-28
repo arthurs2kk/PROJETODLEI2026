@@ -1,7 +1,7 @@
 // ── Pro Povo — mapa.js ──
 import { ouvirRelatos } from "./db.js";
 import { initNavbar } from "./navbar.js";
-import { escapeHTML } from "./escapehtml.js";
+import { escapeHTML } from "./escapeHtml.js";
 
 // ── Navbar (login/cadastro/nome do usuário/sair/perfil) ──
 initNavbar();

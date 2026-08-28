@@ -3,7 +3,7 @@ import { ouvirRelatos } from "./db.js";
 import { initNavbar } from "./navbar.js";
 import { otimizarImagem } from "./cloudinary.js";
 import { normalizar } from "./populacao.js";
-import { escapeHTML } from "./escapehtml.js";
+import { escapeHTML } from "./escapeHtml.js";
 
 // ── Navbar (login/cadastro/nome do usuário/sair/perfil) ──
 initNavbar();
@@ -46,7 +46,8 @@ function atualizarSeletorCidades() {
   if (!select) return;
 
   const cidades = listaCidadesComRelatos(state.todos);
-  select.innerHTML = cidades.map(c => `<option value="${c}">${c}</option>`).join('');
+  select.replaceChildren();
+  cidades.forEach(cidade => select.appendChild(new Option(cidade, cidade)));
 
   if (cidades.includes(state.cidade)) {
     select.value = state.cidade;

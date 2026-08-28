@@ -10,11 +10,14 @@ const LIMITES_PB = { latMin: -8.31, latMax: -6.02, lngMin: -38.85, lngMax: -34.7
 export async function buscarSugestoesEndereco(query) {
   if (query.length < 4) return [];
 
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
   try {
     const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=8` +
                 `&countrycodes=br&viewbox=${VIEWBOX_PARAIBA}&bounded=1` +
                 `&q=${encodeURIComponent(query)}`;
-    const resp = await fetch(url, { headers: { 'Accept-Language': 'pt-BR' } });
+    const resp = await fetch(url, { headers: { 'Accept-Language': 'pt-BR' }, signal: controller.signal });
+    if (!resp.ok) return [];
     const dados = await resp.json();
 
 
@@ -41,6 +44,8 @@ export async function buscarSugestoesEndereco(query) {
   } catch (e) {
     console.warn('Erro ao buscar endereços:', e);
     return [];
+  } finally {
+    clearTimeout(timeout);
   }
 }
 

@@ -11,8 +11,17 @@ const UPLOAD_PRESET = "pro_povo_imagens";
 // Isso não gera nenhum upload novo nem gasta cota extra: é só um parâmetro a mais na URL,
 // e o Cloudinary entrega (e guarda em cache no CDN deles) a versão otimizada sob demanda.
 export function otimizarImagem(url, largura = 600) {
-  if (!url || !url.includes('/upload/')) return url;
-  return url.replace('/upload/', `/upload/f_auto,q_auto,w_${largura}/`);
+  if (!url) return null;
+
+  try {
+    const imagem = new URL(url);
+    if (imagem.protocol !== 'https:' || imagem.hostname !== 'res.cloudinary.com' || !imagem.pathname.includes('/upload/')) {
+      return null;
+    }
+    return url.replace('/upload/', `/upload/f_auto,q_auto,w_${largura}/`);
+  } catch {
+    return null;
+  }
 }
 
 // ── Envia o arquivo de imagem e retorna a URL pública ──

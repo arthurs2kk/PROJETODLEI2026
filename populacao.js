@@ -19,10 +19,13 @@ export async function obterPopulacaoPB() {
   if (cache) return cache;
 
   const mapa = new Map();
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
   try {
     // N6[N3[25]]: nível município (N6), dentro do estado (N3) de código 25 = Paraíba
     const url = 'https://servicodados.ibge.gov.br/api/v3/agregados/6579/periodos/-1/variaveis/9324?localidades=N6[N3[25]]';
-    const resp = await fetch(url);
+    const resp = await fetch(url, { signal: controller.signal });
+    if (!resp.ok) return mapa;
     const dados = await resp.json();
 
     const series = dados?.[0]?.resultados?.[0]?.series || [];
@@ -37,6 +40,8 @@ export async function obterPopulacaoPB() {
     });
   } catch (e) {
     console.warn('Não foi possível carregar os dados de população do IBGE:', e);
+  } finally {
+    clearTimeout(timeout);
   }
 
   cache = mapa;

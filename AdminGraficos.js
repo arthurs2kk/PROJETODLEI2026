@@ -2,6 +2,7 @@
 import { auth, onAuthStateChanged, signOut } from "./firebase.js";
 import { ehAdmin, ouvirRelatos } from "./db.js";
 import { obterPopulacaoPB, normalizar } from "./populacao.js";
+import { escapeHTML } from "./escapeHtml.js";
 
 const state = { relatos: [], popMap: new Map(), dadosExport: null };
 let chartAtual = null;
@@ -18,9 +19,9 @@ onAuthStateChanged(auth, async (user) => {
   }
 
   document.getElementById('admin-user-tag').innerHTML =
-    `<i class="ti ti-user-shield"></i> ${user.displayName || user.email}`;
+    `<i class="ti ti-user-shield"></i> ${escapeHTML(user.displayName || user.email)}`;
   document.getElementById('admin-user-tag-mobile').innerHTML =
-    `<i class="ti ti-user-shield"></i> ${user.displayName || user.email}`;
+    `<i class="ti ti-user-shield"></i> ${escapeHTML(user.displayName || user.email)}`;
   document.getElementById('verificando').style.display = 'none';
   document.getElementById('painel-conteudo').style.display = 'block';
 
@@ -78,8 +79,8 @@ function atualizarSeletorCidades() {
   const atual = select.value;
   const cidades = listaCidadesComRelatos(state.relatos);
 
-  select.innerHTML = '<option value="">Selecione uma cidade...</option>' +
-    cidades.map(c => `<option value="${c}">${c}</option>`).join('');
+  select.replaceChildren(new Option('Selecione uma cidade...', ''));
+  cidades.forEach(cidade => select.appendChild(new Option(cidade, cidade)));
 
   if (cidades.includes(atual)) select.value = atual;
   else if (cidades.length > 0) select.value = cidades[0];

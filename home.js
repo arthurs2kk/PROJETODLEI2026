@@ -4,19 +4,21 @@ import { criarRelato, ouvirRelatos, votar, jaVotou, tempoRestanteParaEnviar } fr
 import { buscarComDebounce, estaNaParaiba } from "./endereco.js";
 import { otimizarImagem } from "./cloudinary.js";
 import { initNavbar } from "./navbar.js";
-import { escapeHTML } from "./escapehtml.js";
+import { escapeHTML } from "./escapeHtml.js";
 
 
 // ── Estado ──
 const state = {
   cat: 'todos',
   status: 'todos',
+  sort: 'votos',
   votes: { 1: 143, 2: 87, 3: 64 },
   voted: {},
   usuario: null,
   fotoFile: null,
   relatosDoBanco: [],
-  enderecoSelecionado: null   
+  enderecoSelecionado: null,
+  votosEmAndamento: new Set()
 };
 
 // ── Navbar (login/cadastro/nome do usuário/sair/perfil) ──
@@ -238,7 +240,9 @@ async function renderCards() {
   if (state.status !== 'todos') relatos = relatos.filter(r => r.status === state.status);
 
   // Ordenação
-  relatos.sort((a, b) => b.votos - a.votos);
+  relatos.sort((a, b) => state.sort === 'recentes'
+    ? b.dataCriacao - a.dataCriacao
+    : (b.votos || 0) - (a.votos || 0));
   relatos = relatos.slice(0, 5);
 
   document.getElementById('feed-count').textContent =
@@ -271,8 +275,19 @@ async function renderCards() {
         return;
       }
       const id = btn.dataset.id;
-      const votei = await votar(id, state.usuario.uid);
-      btn.classList.toggle('voted', votei);
+      if (state.votosEmAndamento.has(id)) return;
+      state.votosEmAndamento.add(id);
+      btn.disabled = true;
+      try {
+        const votei = await votar(id, state.usuario.uid);
+        btn.classList.toggle('voted', votei);
+      } catch (e) {
+        console.error('Não foi possível registrar o voto:', e);
+        showToast('❌ Não foi possível registrar seu voto. Tente novamente.');
+      } finally {
+        state.votosEmAndamento.delete(id);
+        btn.disabled = false;
+      }
     });
   });
 }

@@ -12,6 +12,7 @@ import { auth, onAuthStateChanged, signOut, updateProfile, sendPasswordResetEmai
 import { buscarUsuario, atualizarUsuario } from "./db.js";
 import { carregarCidadesPB } from "./cidades.js";
 import { segundosRestantes, registrarEnvio } from "./cooldown.js";
+import { escapeHTML } from "./escapeHtml.js";
 
 const MODAL_HTML = `
   <div class="modal-overlay" id="perfil-overlay">
@@ -147,7 +148,7 @@ async function salvarPerfil(user) {
 
     // Atualiza o nome exibido na navbar na hora, sem precisar recarregar a página
     document.querySelectorAll('#btn-entrar, #btn-entrar-mobile').forEach(b => {
-      if (b) b.innerHTML = `<i class="ti ti-user-circle"></i> ${nome}`;
+      if (b) b.innerHTML = `<i class="ti ti-user-circle"></i> ${escapeHTML(nome)}`;
     });
 
     showToast('✅ Perfil atualizado com sucesso!');
@@ -207,7 +208,7 @@ export function initNavbar() {
 
       [btnEntrar, btnEntrarMobile].forEach(b => {
         if (!b) return;
-        b.innerHTML = `<i class="ti ti-user-circle"></i> ${nome}`;
+        b.innerHTML = `<i class="ti ti-user-circle"></i> ${escapeHTML(nome)}`;
         b.title = 'Ver meu perfil';
         b.onclick = () => { abrirPerfil(); preencherPerfil(user); };
       });

@@ -2,7 +2,8 @@
 import { auth, onAuthStateChanged } from "./firebase.js";
 import { ouvirRelatosDoUsuario, atualizarRelatoDoUsuario, excluirRelato } from "./db.js";
 import { initNavbar } from "./navbar.js";
-import { escapeHTML } from "./escapehtml.js";
+import { escapeHTML } from "./escapeHtml.js";
+import { otimizarImagem } from "./cloudinary.js";
 
 const state = { todos: [], busca: '', status: 'todos', relatoEditando: null };
 
@@ -101,7 +102,7 @@ function cardHTML(r) {
         <span class="status ${STATUS_CSS[r.status]}">${STATUS_LABEL[r.status]}</span>
       </div>
       <div class="card-tags"><span class="badge ${cat.badge}"><i class="ti ti-tag"></i> ${cat.label}</span></div>
-      ${r.fotoUrl ? `<img src="${escapeHTML(r.fotoUrl)}" alt="Foto do relato" class="meu-relato-foto">` : ''}
+      ${otimizarImagem(r.fotoUrl, 700) ? `<img src="${escapeHTML(otimizarImagem(r.fotoUrl, 700))}" alt="Foto do relato" loading="lazy" class="meu-relato-foto">` : ''}
       <p class="meu-relato-desc">${escapeHTML(r.descricao)}</p>
       ${resposta}
       <div class="meu-relato-meta">

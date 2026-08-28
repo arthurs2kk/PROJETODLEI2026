@@ -2,7 +2,7 @@
 // Funções para salvar e buscar dados no Realtime Database
 
 import {
-  db,
+  auth, db,
   ref, push, set, get, onValue, update, runTransaction,
   query, orderByChild, equalTo
 } from "./firebase.js";
@@ -10,6 +10,9 @@ import { uploadImagem } from "./cloudinary.js";
 
 // ── Salvar usuário após cadastro ──
 export async function salvarUsuario(uid, dados) {
+  if (!auth.currentUser || auth.currentUser.uid !== uid) {
+    throw new Error('Usuário autenticado inválido.');
+  }
   await set(ref(db, `usuarios/${uid}`), {
     nome:         dados.nome,
     email:        dados.email,
@@ -20,16 +23,21 @@ export async function salvarUsuario(uid, dados) {
 
 // ── Converter endereço em latitude/longitude (gratuito, sem chave) ──
 export async function geocodificar(endereco, cidade = '') {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
   try {
     const query = encodeURIComponent(`${endereco}, ${cidade}, Brasil`);
     const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${query}`;
-    const resp = await fetch(url, { headers: { 'Accept-Language': 'pt-BR' } });
+    const resp = await fetch(url, { headers: { 'Accept-Language': 'pt-BR' }, signal: controller.signal });
+    if (!resp.ok) return null;
     const dados = await resp.json();
     if (dados && dados[0]) {
       return { lat: parseFloat(dados[0].lat), lng: parseFloat(dados[0].lon) };
     }
   } catch (e) {
     console.warn('Não foi possível geocodificar o endereço:', e);
+  } finally {
+    clearTimeout(timeout);
   }
   return null;
 }
@@ -105,6 +113,9 @@ export async function buscarUsuario(uid) {
 // ficado incompleto por algum motivo (ex: conta criada antes de uma correção
 // anterior), essa gravação já conserta sozinha em vez de falhar na validação.
 export async function atualizarUsuario(uid, dados) {
+  if (!auth.currentUser || auth.currentUser.uid !== uid) {
+    throw new Error('Usuário autenticado inválido.');
+  }
   await update(ref(db, `usuarios/${uid}`), {
     nome:            dados.nome,
     email:           dados.email,
@@ -158,6 +169,9 @@ export function ouvirRelatos(callback) {
 
 // ── Votar num relato (sem voto duplo) ──
 export async function votar(relatoId, userId) {
+  if (!auth.currentUser || auth.currentUser.uid !== userId) {
+    throw new Error('Usuário autenticado inválido.');
+  }
   const votoRef  = ref(db, `votos/${relatoId}/${userId}`);
   const snapshot = await get(votoRef);
 

@@ -3,7 +3,7 @@ import { auth, onAuthStateChanged, signOut } from "./firebase.js";
 import { ehAdmin, ouvirRelatos, atualizarStatus, salvarResposta, excluirRelato, buscarUsuario } from "./db.js";
 import { otimizarImagem } from "./cloudinary.js";
 import { notificarMudancaStatus, notificarNovaResposta } from "./notificacoes.js";
-import { escapeHTML } from "./escapehtml.js";
+import { escapeHTML } from "./escapeHtml.js";
 
 const state = { todos: [], busca: '', status: 'todos' };
 
@@ -54,9 +54,9 @@ onAuthStateChanged(auth, async (user) => {
   }
 
   document.getElementById('admin-user-tag').innerHTML =
-    `<i class="ti ti-user-shield"></i> ${user.displayName || user.email}`;
+    `<i class="ti ti-user-shield"></i> ${escapeHTML(user.displayName || user.email)}`;
   document.getElementById('admin-user-tag-mobile').innerHTML =
-    `<i class="ti ti-user-shield"></i> ${user.displayName || user.email}`;
+    `<i class="ti ti-user-shield"></i> ${escapeHTML(user.displayName || user.email)}`;
   document.getElementById('verificando').style.display = 'none';
   document.getElementById('painel-conteudo').style.display = 'block';
 
