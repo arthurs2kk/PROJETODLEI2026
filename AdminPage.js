@@ -129,6 +129,10 @@ function render() {
 
   // Eventos
   lista.forEach(r => {
+    document.querySelector(`[data-relato-foto="${r.id}"]`)?.addEventListener('click', (e) => {
+      abrirLightbox(e.currentTarget.dataset.fotoUrl);
+    });
+
     document.getElementById(`status-${r.id}`)?.addEventListener('change', async (e) => {
       const novoStatus = e.target.value;
       await atualizarStatus(r.id, novoStatus);
@@ -161,6 +165,7 @@ function render() {
 function cardHTML(r) {
   const data = new Date(r.dataCriacao).toLocaleDateString('pt-BR');
   const atrasado = estaAtrasado(r);
+  const fotoUrl = otimizarImagem(r.fotoUrl, 700);
   const resposta = r.respostaOficial
     ? `<div class="resposta-existente"><strong>Resposta oficial atual:</strong>${escapeHTML(r.respostaOficial)}</div>`
     : '';
@@ -180,7 +185,7 @@ function cardHTML(r) {
         <span><i class="ti ti-clock"></i> ${data}</span>
         <span><i class="ti ti-thumb-up"></i> ${r.votos || 0} votos</span>
       </div>
-      ${r.fotoUrl ? `<img src="${escapeHTML(otimizarImagem(r.fotoUrl, 700))}" alt="Foto do relato" loading="lazy" class="gestao-foto">` : ''}
+      ${fotoUrl ? `<img src="${escapeHTML(fotoUrl)}" data-relato-foto="${escapeHTML(r.id)}" data-foto-url="${escapeHTML(r.fotoUrl)}" alt="Foto do relato. Clique para ampliar" loading="lazy" class="gestao-foto" tabindex="0" role="button">` : ''}
       <p class="gestao-desc">${escapeHTML(r.descricao)}</p>
 
       <div class="gestao-controles">
@@ -206,6 +211,29 @@ function cardHTML(r) {
       </div>
     </article>`;
 }
+
+const lightboxOverlay = document.getElementById('lightbox-overlay');
+const lightboxImg = document.getElementById('lightbox-img');
+
+function abrirLightbox(url) {
+  if (!url || !lightboxOverlay || !lightboxImg) return;
+  lightboxImg.src = url;
+  lightboxOverlay.classList.add('open');
+}
+
+function fecharLightbox() {
+  if (!lightboxOverlay || !lightboxImg) return;
+  lightboxOverlay.classList.remove('open');
+  lightboxImg.removeAttribute('src');
+}
+
+document.getElementById('lightbox-close')?.addEventListener('click', fecharLightbox);
+lightboxOverlay?.addEventListener('click', (e) => {
+  if (e.target === lightboxOverlay) fecharLightbox();
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') fecharLightbox();
+});
 
 function showToast(msg) {
   const t = document.getElementById('toast');
