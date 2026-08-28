@@ -30,7 +30,7 @@ const CATS = {
   'Lixo / Entulho':          { label: 'Lixo',         badge: 'badge-lixo'   },
   'Água / Esgoto':           { label: 'Água/Esgoto',  badge: 'badge-agua'   },
   'Áreas verdes':            { label: 'Áreas verdes', badge: 'badge-lixo'   },
-  'Outros':                  { label: 'Outros',       badge: 'badge-agua'   },
+  'Outros':                  { label: 'Outros',       badge: 'badge-outros' },
 };
 
 const STATUS_LABEL = { aberto: 'Aberto', andamento: 'Em andamento', resolvido: 'Resolvido' };

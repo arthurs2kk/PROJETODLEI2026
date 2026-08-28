@@ -21,6 +21,15 @@ const state = {
   votosEmAndamento: new Set()
 };
 
+const BADGE_BY_CATEGORY = {
+  'Buraco / Via danificada': 'badge-buraco',
+  'Iluminação pública': 'badge-ilum',
+  'Lixo / Entulho': 'badge-lixo',
+  'Água / Esgoto': 'badge-agua',
+  'Áreas verdes': 'badge-lixo',
+  'Outros': 'badge-outros'
+};
+
 // ── Navbar (login/cadastro/nome do usuário/sair/perfil) ──
 initNavbar();
 
@@ -293,6 +302,7 @@ async function renderCards() {
 }
 
 function abrirDetalhe(r) {
+  const badgeClass = BADGE_BY_CATEGORY[r.categoria] || BADGE_BY_CATEGORY.Outros;
   document.getElementById('detalhe-titulo').textContent = r.titulo;
   document.getElementById('detalhe-desc').textContent   = r.descricao;
   document.getElementById('detalhe-foto').innerHTML = r.fotoUrl
@@ -302,7 +312,7 @@ function abrirDetalhe(r) {
   ? `<div class="resposta-cidadao"><strong><i class="ti ti-building-community"></i> Resposta da prefeitura:</strong><p>${escapeHTML(r.respostaOficial)}</p></div>`
   : '';
   document.getElementById('detalhe-tags').innerHTML = `
-    <span class="badge badge-${r.categoria === 'Buraco / Via danificada' ? 'buraco' : 'agua'}">${escapeHTML(r.categoria)}</span>
+    <span class="badge ${badgeClass}">${escapeHTML(r.categoria)}</span>
     <span class="status status-${escapeHTML(r.status)}">${escapeHTML(r.status)}</span>`;
   document.getElementById('detalhe-meta').innerHTML = `
     <span><i class="ti ti-map-pin"></i> ${escapeHTML(r.endereco)}</span>
@@ -326,7 +336,7 @@ function cardHTML(r) {
   'Lixo / Entulho':          { label: 'Lixo',         icon: 'ti-trash-x',  side: 'lixo-side',   badge: 'badge-lixo'  },
   'Água / Esgoto':           { label: 'Água/Esgoto',  icon: 'ti-droplet',  side: 'agua-side',   badge: 'badge-agua'  },
   'Áreas verdes':            { label: 'Áreas verdes', icon: 'ti-trees',    side: 'lixo-side',   badge: 'badge-lixo'  },
-  'Outros':                  { label: 'Outros',       icon: 'ti-dots',     side: 'agua-side',   badge: 'badge-agua'  },
+  'Outros':                  { label: 'Outros',       icon: 'ti-dots',     side: 'agua-side',   badge: 'badge-outros' },
 };
 
   const status = {
@@ -339,7 +349,7 @@ function cardHTML(r) {
   // categoria fora da lista (rules do banco só validam tamanho, não valor), isso
   // deixava `cat` undefined e quebrava a renderização da home inteira. Corrigido
   // para usar a chave real ("Outros", com O maiúsculo).
-  const cat = cats[r.categoria]    || cats['Outros'];
+  const cat = cats[r.categoria] || cats['Outros'];
   const st  = status[r.status]     || status.aberto;
   const foto = r.fotoUrl
     ? `<img src="${escapeHTML(otimizarImagem(r.fotoUrl, 150))}" alt="Foto do relato" loading="lazy" style="width:72px;height:100%;object-fit:cover;">`

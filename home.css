@@ -137,7 +137,7 @@ body {
   align-items: center;
   justify-content: center;
   height: 100px;
-  min-width: 60px;
+  min-width: 90px;
   max-width: 150px;
 }
 
@@ -853,6 +853,7 @@ body {
 .badge-ilum   { background: var(--laran-bg); color: var(--laranja); }
 .badge-lixo   { background: var(--verde-claro); color: var(--verde); }
 .badge-agua   { background: var(--azul-claro); color: var(--azul-escuro); }
+.badge-outros { background: #BFBFBF; color: #2F2F2F; }
 
 .status {
   display: inline-flex;
@@ -1144,12 +1145,12 @@ body {
   }
 
   .empresa-logo {
-    height: 45px;
-    max-width: 70px;
+    height: 52px;
+    max-width: 88px;
   }
 
   .empresa-logo img {
-    max-width: 70px;
+    max-width: 88px;
   }
 
   .logo {
@@ -1438,6 +1439,11 @@ html[data-theme="dark"] .filter-btn.active .fcount {
 html[data-theme="dark"] .filter-btn:focus-visible {
   outline: 3px solid #93c5fd;
   outline-offset: 2px;
+}
+
+html[data-theme="dark"] .badge-outros {
+  background: #6B7280;
+  color: #FFFFFF;
 }
 /* Menu mobile compartilhado */
 @media (max-width: 640px) {
