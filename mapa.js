@@ -1,15 +1,12 @@
 // ── Pro Povo — mapa.js ──
 import { ouvirRelatos } from "./db.js";
 import { initNavbar } from "./navbar.js";
-import { escapeHTML } from "./escapeHtml.js";
+import { escapeHTML } from "./escapehtml.js";
 
 // ── Navbar (login/cadastro/nome do usuário/sair/perfil) ──
 initNavbar();
 
 // ── Menu mobile ──
-document.getElementById('hamburger')?.addEventListener('click', () => {
-  document.getElementById('mobile-menu').classList.toggle('open');
-});
 
 // ── Cores por categoria ──
 const CORES = {

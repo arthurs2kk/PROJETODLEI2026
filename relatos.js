@@ -3,7 +3,7 @@ import { ouvirRelatos } from "./db.js";
 import { initNavbar } from "./navbar.js";
 import { otimizarImagem } from "./cloudinary.js";
 import { normalizar } from "./populacao.js";
-import { escapeHTML } from "./escapeHtml.js";
+import { escapeHTML } from "./escapehtml.js";
 
 // ── Navbar (login/cadastro/nome do usuário/sair/perfil) ──
 initNavbar();
@@ -60,12 +60,6 @@ document.getElementById('filtro-cidade')?.addEventListener('change', (e) => {
   state.cidade = e.target.value;
   render();
 });
-
-// ── Menu mobile ──
-document.getElementById('hamburger')?.addEventListener('click', () => {
-  document.getElementById('mobile-menu').classList.toggle('open');
-});
-
 // ── Configurações visuais por categoria/status ──
 const CATS = {
   'Buraco / Via danificada': { label: 'Buraco',       badge: 'badge-buraco' },

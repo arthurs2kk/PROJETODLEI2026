@@ -56,9 +56,14 @@
 </a>
       <a href="index.html"><button class="btn-outline">Voltar ao início</button></a>
     </div>
-    <button class="hamburger" id="hamburger" aria-label="Abrir menu">
-      <i class="ti ti-menu-2"></i>
-    </button>
+    <button class="hamburger" id="hamburger"
+        aria-label="Abrir menu"
+        aria-expanded="false"
+        type="button">
+  <span></span>
+  <span></span>
+  <span></span>
+</button>
   </nav>
 
   <!-- MOBILE MENU -->
@@ -261,7 +266,7 @@
   <!-- TOAST -->
   <div class="toast" id="toast"></div>
   <script src="theme.js"></script>
-   <script type="module" src="home.js"></script>
+  <script src="menu.js"></script>
   <script type="module" src="login.js"></script>
 </body>
 </html>

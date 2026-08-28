@@ -41,10 +41,7 @@ document.getElementById('btn-sair-mobile')?.addEventListener('click', async () =
   window.location.href = 'AdmLogin.html';
 });
 
-// ── Menu mobile ──
-document.getElementById('hamburger')?.addEventListener('click', () => {
-  document.getElementById('mobile-menu').classList.toggle('open');
-});
+
 
 // ── Extrai cidade e bairro de um relato ──
 // Relatos criados a partir de agora já vêm com cidade/bairro salvos direto do

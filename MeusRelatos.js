@@ -2,17 +2,14 @@
 import { auth, onAuthStateChanged } from "./firebase.js";
 import { ouvirRelatosDoUsuario, atualizarRelatoDoUsuario, excluirRelato } from "./db.js";
 import { initNavbar } from "./navbar.js";
-import { escapeHTML } from "./escapeHtml.js";
+import { escapeHTML } from "./escapehtml.js";
 
 const state = { todos: [], busca: '', status: 'todos', relatoEditando: null };
 
 // ── Navbar (login/cadastro/nome do usuário/sair/perfil) ──
 initNavbar();
 
-// ── Menu mobile ──
-document.getElementById('hamburger')?.addEventListener('click', () => {
-  document.getElementById('mobile-menu').classList.toggle('open');
-});
+
 
 // ── Exige login para acessar esta página ──
 onAuthStateChanged(auth, (user) => {

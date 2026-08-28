@@ -4,7 +4,7 @@ import { criarRelato, ouvirRelatos, votar, jaVotou, tempoRestanteParaEnviar } fr
 import { buscarComDebounce, estaNaParaiba } from "./endereco.js";
 import { otimizarImagem } from "./cloudinary.js";
 import { initNavbar } from "./navbar.js";
-import { escapeHTML } from "./escapeHtml.js";
+import { escapeHTML } from "./escapehtml.js";
 
 
 // ── Estado ──
@@ -427,12 +427,6 @@ document.getElementById('btn-limpar')?.addEventListener('click', () => {
   document.querySelectorAll('#status-filters .filter-btn').forEach((b, i) => b.classList.toggle('active', i === 0));
   renderCards();
 });
-
-document.getElementById('hamburger')?.addEventListener('click', () => {
-  document.getElementById('mobile-menu').classList.toggle('open');
-  document.getElementById('hamburger').classList.toggle('active');
-});
-
 // ── Toast ──
 function showToast(msg) {
   const t = document.getElementById('toast');

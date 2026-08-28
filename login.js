@@ -252,10 +252,6 @@ document.getElementById('modal-google-overlay')?.addEventListener('click', (e) =
   if (e.target.id === 'modal-google-overlay') document.getElementById('google-cancelar')?.click();
 });
 
-// ── Menu mobile ──
-document.getElementById('hamburger')?.addEventListener('click', () => {
-  document.getElementById('mobile-menu').classList.toggle('open');
-});
 
 // ── Toast ──
 function showToast(msg) {

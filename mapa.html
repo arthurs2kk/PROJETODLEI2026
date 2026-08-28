@@ -55,9 +55,14 @@
       <button class="btn-outline" id="btn-entrar">Entrar</button>
       <button class="btn-primary" id="btn-cadastrar">Criar conta</button>
     </div>
-    <button class="hamburger" id="hamburger" aria-label="Abrir menu">
-      <i class="ti ti-menu-2"></i>
-    </button>
+    <button class="hamburger" id="hamburger"
+        aria-label="Abrir menu"
+        aria-expanded="false"
+        type="button">
+  <span></span>
+  <span></span>
+  <span></span>
+</button>
   </nav>
 
   <div class="mobile-menu" id="mobile-menu">
@@ -92,8 +97,8 @@
   <div class="toast" id="toast"></div>
 
   <script src="theme.js"></script>
-<script type="module" src="home.js"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script type="module" src="mapa.js"></script>
+<script src="menu.js"></script>
 </body>
 </html>

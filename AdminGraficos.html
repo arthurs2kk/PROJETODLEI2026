@@ -62,9 +62,14 @@
         <span class="admin-user-tag" id="admin-user-tag"><i class="ti ti-user-shield"></i> Carregando...</span>
         <button class="btn-outline" id="btn-sair">Sair</button>
       </div>
-      <button class="hamburger" id="hamburger" aria-label="Abrir menu">
-        <i class="ti ti-menu-2"></i>
-      </button>
+      <button class="hamburger" id="hamburger"
+        aria-label="Abrir menu"
+        aria-expanded="false"
+        type="button">
+  <span></span>
+  <span></span>
+  <span></span>
+</button>
     </nav>
 
     <div class="mobile-menu" id="mobile-menu">
@@ -72,6 +77,9 @@
       <div class="mobile-divider"></div>
       <a href="AdminPage.html" class="mobile-link"><i class="ti ti-list-details"></i> Gestão de relatos</a>
       <a href="AdminGraficos.html" class="mobile-link"><i class="ti ti-chart-bar"></i> Gráficos</a>
+      <a href="#" class="mobile-link" id="theme-toggle-mobile">
+        <i class="ti ti-moon"></i> Modo escuro
+      </a>
       <div class="mobile-divider"></div>
       <button class="btn-outline w100" id="btn-sair-mobile">Sair</button>
     </div>
@@ -120,7 +128,7 @@
 
   <div class="toast" id="toast"></div>
   <script src="theme.js"></script>
-  <script type="module" src="home.js"></script>
+   <script src="menu.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script type="module" src="AdminGraficos.js"></script>
 </body>

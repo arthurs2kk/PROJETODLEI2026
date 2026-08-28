@@ -3,7 +3,7 @@ import { auth, onAuthStateChanged, signOut } from "./firebase.js";
 import { ehAdmin, ouvirRelatos, atualizarStatus, salvarResposta, excluirRelato, buscarUsuario } from "./db.js";
 import { otimizarImagem } from "./cloudinary.js";
 import { notificarMudancaStatus, notificarNovaResposta } from "./notificacoes.js";
-import { escapeHTML } from "./escapeHtml.js";
+import { escapeHTML } from "./escapehtml.js";
 
 const state = { todos: [], busca: '', status: 'todos' };
 
@@ -76,10 +76,6 @@ document.getElementById('btn-sair-mobile')?.addEventListener('click', async () =
   window.location.href = 'AdmLogin.html';
 });
 
-// ── Menu mobile ──
-document.getElementById('hamburger')?.addEventListener('click', () => {
-  document.getElementById('mobile-menu').classList.toggle('open');
-});
 
 // ── Busca e filtro ──
 document.getElementById('busca-input')?.addEventListener('input', (e) => {

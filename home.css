@@ -223,6 +223,14 @@ body {
   transition: transform 0.35s ease, opacity 0.25s ease;
 }
 
+.hamburger i {
+  color: #fff;
+  font-size: 27px;
+  line-height: 1;
+  pointer-events: none;
+  transition: transform 0.35s ease;
+}
+
 
 /* vira X */
 .hamburger.active span:nth-child(1) {
@@ -235,6 +243,10 @@ body {
 
 .hamburger.active span:nth-child(3) {
   transform: translateY(-9px) rotate(-45deg);
+}
+
+.hamburger.active i {
+  transform: rotate(90deg);
 }
 
 /* ── Botões ── */
@@ -336,8 +348,8 @@ body {
   padding: 12px 16px;
   background: var(--azul-escuro);
   border-bottom: 3px solid var(--amarelo);
-  position: absolute;
-  top: 62px;
+  position: fixed;
+  top: 100px;
   left: 0;
   right: 0;
   z-index: 99;
@@ -345,17 +357,21 @@ body {
 
   opacity: 0;
   visibility: hidden;
+  pointer-events: none;
   transform: translateY(-10px);
 
   transition:
     opacity 0.35s ease,
     transform 0.35s cubic-bezier(.22,1,.36,1),
-    visibility 0.35s;
+    visibility 0.35s,
+    background-color .22s var(--ease),
+    border-color .22s var(--ease);
 }
 /* Estado aberto */
 .mobile-menu.open {
   opacity: 1;
   visibility: visible;
+  pointer-events: auto;
   transform: translateY(0);
 }
 
@@ -533,7 +549,7 @@ body {
   padding: 14px 18px;
   flex: 1;
   min-width: 180px;
-  transition: transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast), background-color .22s var(--ease);
 }
 
 .step:hover {
@@ -592,7 +608,7 @@ body {
   border-radius: var(--radius-lg);
   padding: 16px;
   box-shadow: var(--shadow);
-  transition: box-shadow var(--transition-fast);
+  transition: box-shadow var(--transition-fast), background-color .22s var(--ease), border-color .22s var(--ease);
 }
 
 .sidebar-box:hover { box-shadow: var(--shadow-md); }
@@ -699,7 +715,7 @@ body {
   overflow: hidden;
   margin-bottom: 14px;
   box-shadow: var(--shadow);
-  transition: box-shadow var(--transition), transform var(--transition);
+  transition: box-shadow var(--transition), transform var(--transition), background-color .22s var(--ease), border-color .22s var(--ease);
   animation: fadeInUp .35s var(--ease) both;
 }
 
@@ -895,7 +911,7 @@ body {
   border-top: 5px solid var(--azul);
   transform: translateY(18px) scale(.97);
   opacity: 0;
-  transition: transform var(--transition), opacity var(--transition);
+  transition: transform var(--transition), opacity var(--transition), background-color .22s var(--ease), border-color .22s var(--ease);
 }
 
 .modal-overlay.open .modal {
@@ -990,7 +1006,7 @@ body {
   font-size: 13px;
   text-align: center;
   cursor: pointer;
-  transition: border-color var(--transition-fast), background var(--transition-fast), transform var(--transition-fast);
+  transition: border-color var(--transition-fast), background var(--transition-fast), transform var(--transition-fast), color .22s var(--ease);
 }
 
 .upload-area:hover { border-color: var(--azul); background: var(--azul-claro); transform: translateY(-1px); }
@@ -1160,10 +1176,6 @@ body {
     margin-left: auto;
   }
 
-  .mobile-menu {
-  top: 80px;
-}
-
 }
 
 /* ── Resposta da prefeitura no card/detalhe (visível em qualquer tamanho de tela) ── */
@@ -1252,16 +1264,10 @@ html[data-theme="dark"] {
 }
 
 body,
-.card,
-.sidebar-box,
-.modal,
 .how-it-works,
 .site-footer,
 .navbar,
-.mobile-menu,
 .empty-state,
-.step,
-.upload-area,
 .form-input,
 .filtro-select,
 .busca-input,
@@ -1396,4 +1402,66 @@ html[data-theme="dark"] .vote-btn.voted {
 html[data-theme="dark"] .vote-btn:disabled {
   opacity: 0.75 !important;
   color: #dbeafe !important;
+}
+
+/* Filtros por tipo no modo escuro */
+html[data-theme="dark"] .filter-btn {
+  color: #f1f5f9 !important;
+}
+
+html[data-theme="dark"] .filter-btn:hover {
+  background: #263b52 !important;
+  color: #ffffff !important;
+}
+
+html[data-theme="dark"] .filter-btn.active {
+  background: #244d80 !important;
+  color: #ffffff !important;
+}
+
+html[data-theme="dark"] .filter-btn.active i,
+html[data-theme="dark"] .filter-btn.active span,
+html[data-theme="dark"] .filter-btn.active .fcount {
+  color: #ffffff !important;
+}
+
+html[data-theme="dark"] .filter-btn .fcount {
+  background: #343b46 !important;
+  color: #dbeafe !important;
+}
+
+html[data-theme="dark"] .filter-btn.active .fcount {
+  background: #386aa3 !important;
+  color: #ffffff !important;
+}
+
+html[data-theme="dark"] .filter-btn:focus-visible {
+  outline: 3px solid #93c5fd;
+  outline-offset: 2px;
+}
+/* Menu mobile compartilhado */
+@media (max-width: 640px) {
+  .hamburger {
+    display: flex;
+    position: relative;
+    z-index: 101;
+  }
+
+  .mobile-menu {
+    top: 100px;
+    z-index: 100;
+  }
+
+  .mobile-menu.open {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+}
+
+@media (min-width: 641px) {
+  .mobile-menu {
+    display: none !important;
+  }
 }
