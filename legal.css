@@ -1,0 +1,219 @@
+/* ── Pro Povo — legal.css ── */
+/* Estilos das páginas de Termos de Uso e Política de Privacidade.
+   Reaproveita as variáveis e o padrão visual já definidos em home.css. */
+
+/* ── Cabeçalho ── */
+.legal-header {
+  background: linear-gradient(135deg, var(--azul) 0%, var(--azul-escuro) 100%);
+  border-bottom: 4px solid var(--amarelo);
+  padding: 32px 20px 26px;
+}
+
+.legal-header-inner { max-width: 860px; margin: 0 auto; }
+
+.legal-title {
+  font-size: 26px;
+  font-weight: 700;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.legal-title i { color: var(--amarelo); }
+
+.legal-subtitle {
+  font-size: 14px;
+  color: rgba(255,255,255,0.82);
+  margin-bottom: 14px;
+}
+
+.legal-updated {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #fff;
+  background: rgba(255,255,255,0.14);
+  border: 1px solid rgba(255,255,255,0.28);
+  border-radius: 99px;
+  padding: 5px 13px;
+}
+
+/* ── Corpo ── */
+.legal-wrapper {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 24px 20px 60px;
+}
+
+/* Aviso de contexto (projeto acadêmico) */
+.legal-disclaimer {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: #FFF8D0;
+  border: 1px solid #F0DE8A;
+  color: #6B4F00;
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  font-size: 13.5px;
+  line-height: 1.6;
+  margin-bottom: 20px;
+  animation: fadeInUp .3s var(--ease) both;
+}
+
+.legal-disclaimer i { font-size: 18px; margin-top: 1px; flex-shrink: 0; }
+.legal-disclaimer strong { display: block; margin-bottom: 3px; }
+
+/* Cartão de conteúdo */
+.legal-card {
+  background: var(--branco);
+  border: 1px solid var(--borda);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  padding: 8px 32px 32px;
+  animation: fadeInUp .4s var(--ease) both;
+}
+
+/* Sumário */
+.legal-toc {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 20px 0 24px;
+  border-bottom: 1px solid var(--borda);
+  margin-bottom: 24px;
+}
+
+.legal-toc a {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--azul);
+  background: var(--azul-claro);
+  text-decoration: none;
+  border-radius: 99px;
+  padding: 6px 12px;
+  transition: background var(--transition-fast), transform var(--transition-fast);
+}
+
+.legal-toc a:hover { background: var(--azul); color: #fff; transform: translateY(-1px); }
+
+/* Seções */
+.legal-section {
+  margin-bottom: 30px;
+  scroll-margin-top: 20px;
+}
+
+.legal-section:last-child { margin-bottom: 0; }
+
+.legal-section h2 {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--azul-escuro);
+  margin-bottom: 12px;
+  padding-left: 12px;
+  border-left: 4px solid var(--azul);
+}
+
+.legal-section h3 {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--cinza-5);
+  margin: 16px 0 8px;
+}
+
+.legal-section p {
+  font-size: 14px;
+  line-height: 1.75;
+  color: var(--cinza-5);
+  margin-bottom: 10px;
+}
+
+.legal-section ul, .legal-section ol {
+  margin: 8px 0 14px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.legal-section li {
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--cinza-5);
+}
+
+.legal-section li strong { color: var(--cinza-5); }
+
+.legal-section a { color: var(--azul); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+.legal-section a:hover { color: var(--azul-hover); }
+
+/* Caixa de destaque (ex: dados que ficam públicos) */
+.legal-box {
+  background: var(--cinza-1);
+  border: 1px solid var(--borda);
+  border-left: 4px solid var(--azul);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  margin: 10px 0 16px;
+}
+
+.legal-box p:last-child { margin-bottom: 0; }
+
+.legal-box.legal-box-atencao { border-left-color: var(--vermelho); background: var(--verm-bg); }
+
+/* Tabela simples (dados x finalidade) */
+.legal-table-wrap { overflow-x: auto; margin: 10px 0 16px; }
+
+.legal-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.legal-table th, .legal-table td {
+  text-align: left;
+  padding: 9px 12px;
+  border: 1px solid var(--borda);
+  vertical-align: top;
+}
+
+.legal-table th {
+  background: var(--cinza-1);
+  color: var(--cinza-5);
+  font-weight: 700;
+}
+
+.legal-table td { color: var(--cinza-4); line-height: 1.5; }
+
+/* Rodapé de contato dentro do card */
+.legal-contato {
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid var(--borda);
+  font-size: 13.5px;
+  color: var(--cinza-4);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.legal-contato i { color: var(--azul); }
+.legal-contato a { color: var(--azul); font-weight: 600; text-decoration: underline; }
+
+@media (max-width: 640px) {
+  .legal-card { padding: 4px 18px 24px; }
+  .legal-toc { padding: 16px 0 18px; }
+}
+
+/* ── Modo escuro ── */
+html[data-theme="dark"] .legal-disclaimer {
+  background: #3a2f05;
+  border-color: #6b5a17;
+  color: #ffe9a8;
+}
+
+html[data-theme="dark"] .legal-box { background: var(--cinza-2); }
+html[data-theme="dark"] .legal-box.legal-box-atencao { background: #3a1310; }

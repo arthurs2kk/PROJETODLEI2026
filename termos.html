@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Termos de Uso — Pro Povo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://pro--povo-default-rtdb.firebaseio.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.44.0/dist/tabler-icons.min.css" />
+  <script>
+  (() => {
+    const tema = localStorage.getItem('theme');
+    if (tema === 'dark' ||
+      (!tema && matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.dataset.theme = 'dark';
+    }
+  })();
+</script>
+  <link rel="stylesheet" href="home.css" />
+  <link rel="stylesheet" href="legal.css" />
+  <link rel="icon" type="image/png" href="Images/flavinconProPovo.png">
+</head>
+<body>
+
+  <div class="gov-bar">
+    <span><i class="ti ti-shield-check"></i> Plataforma cidadã independente · Pro Povo</span>
+  </div>
+
+  <nav class="navbar">
+    <div class="navbar-left">
+      <div class="empresa-logo">
+        <img src="Images/LogoProPovo.png" alt="Logo da empresa" id="logo-empresa" />
+      </div>
+      <div class="navbar-divider"></div>
+      <div class="logo">
+        <div class="logo-text-group">
+          <span class="logo-title">Pro Povo -</span>
+          <span class="logo-sub">Do povo, pro povo</span>
+        </div>
+      </div>
+    </div>
+    <div class="nav-links">
+      <a href="index.html" class="nav-link">Início</a>
+      <a href="relatos.html" class="nav-link">Relatos</a>
+      <a href="mapa.html" class="nav-link">Mapa</a>
+      <a href="MeusRelatos.html" class="nav-link" id="nav-meus-relatos" style="display:none;">Meus relatos</a>
+    </div>
+    <div class="nav-btns">
+      <a href="#" class="mobile-link" id="theme-toggle-mobile">
+        <i class="ti ti-moon"></i> Modo escuro
+      </a>
+      <button class="btn-outline" id="btn-entrar">Entrar</button>
+      <button class="btn-primary" id="btn-cadastrar">Criar conta</button>
+    </div>
+    <button class="hamburger" id="hamburger"
+      aria-label="Abrir menu"
+      aria-expanded="false"
+      type="button">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+  </nav>
+
+  <div class="mobile-menu" id="mobile-menu">
+    <a href="index.html" class="mobile-link"><i class="ti ti-home"></i> Início</a>
+    <a href="relatos.html" class="mobile-link"><i class="ti ti-list"></i> Relatos</a>
+    <a href="mapa.html" class="mobile-link"><i class="ti ti-map-2"></i> Mapa</a>
+    <a href="MeusRelatos.html" class="mobile-link" id="mobile-meus-relatos" style="display:none;"><i class="ti ti-user-check"></i> Meus relatos</a>
+    <a href="#" class="mobile-link" id="theme-toggle-mobile">
+      <i class="ti ti-moon"></i> Modo escuro
+    </a>
+  </div>
+
+  <!-- CABEÇALHO -->
+  <div class="legal-header">
+    <div class="legal-header-inner">
+      <h1 class="legal-title"><i class="ti ti-file-text"></i> Termos de Uso</h1>
+      <p class="legal-subtitle">As regras para usar a plataforma Pro Povo</p>
+      <span class="legal-updated"><i class="ti ti-calendar"></i> Última atualização: 29 de agosto de 2026</span>
+    </div>
+  </div>
+
+  <div class="legal-wrapper">
+
+    <div class="legal-card">
+      <nav class="legal-toc" aria-label="Sumário">
+        <a href="#aceitacao">1. Aceitação</a>
+        <a href="#servico">2. O serviço</a>
+        <a href="#conta">3. Conta e cadastro</a>
+        <a href="#relatos">4. Envio de relatos</a>
+        <a href="#fotos">5. Fotos</a>
+        <a href="#votos">6. Votos</a>
+        <a href="#publicidade">7. Publicidade dos relatos</a>
+        <a href="#prefeitura">8. Painel administrativo</a>
+        <a href="#propriedade">9. Propriedade intelectual</a>
+        <a href="#responsabilidade">10. Limitação de responsabilidade</a>
+        <a href="#suspensao">11. Suspensão e exclusão</a>
+        <a href="#alteracoes">12. Alterações</a>
+        <a href="#lei">13. Lei aplicável</a>
+        <a href="#contato">14. Contato</a>
+      </nav>
+
+      <section id="aceitacao" class="legal-section">
+        <h2>1. Aceitação dos termos</h2>
+        <p>
+          Ao criar uma conta, acessar ou usar o Pro Povo de qualquer forma, você concorda integralmente com
+          estes Termos de Uso e com a nossa <a href="privacidade.html">Política de Privacidade</a>. Se você
+          não concordar com algum ponto, pedimos que não utilize a plataforma.
+        </p>
+        <p>
+          Caso você seja menor de 18 anos, o uso do Pro Povo só é permitido com o consentimento e a
+          supervisão de um responsável legal, conforme detalhado na nossa Política de Privacidade.
+        </p>
+      </section>
+
+      <section id="servico" class="legal-section">
+        <h2>2. O que é o Pro Povo</h2>
+        <p>
+          O Pro Povo é uma plataforma de participação cidadã que permite a qualquer pessoa relatar problemas
+          de infraestrutura e serviços públicos observados em municípios da Paraíba — como buracos na via,
+          falta de iluminação pública, acúmulo de lixo e problemas de água/esgoto — para que a comunidade
+          vote nos problemas mais urgentes e a prefeitura responsável possa tomar conhecimento e agir.
+        </p>
+        <p>
+          O Pro Povo funciona como um canal de comunicação entre cidadãos e a administração pública. A
+          plataforma não é um órgão público, não substitui os canais oficiais de ouvidoria e não tem poder
+          para determinar, fiscalizar ou executar a resolução dos problemas relatados.
+        </p>
+      </section>
+
+      <section id="conta" class="legal-section">
+        <h2>3. Conta e cadastro</h2>
+        <p>Para relatar problemas, votar ou acompanhar relatos, é necessário criar uma conta. Ao se cadastrar, você concorda em:</p>
+        <ul>
+          <li>Fornecer nome, e-mail e cidade verdadeiros e mantê-los atualizados;</li>
+          <li>Confirmar seu e-mail antes de enviar relatos — essa etapa existe para reduzir contas falsas e envios automatizados;</li>
+          <li>Manter sua senha em sigilo e ser responsável por qualquer atividade realizada na sua conta;</li>
+          <li>Manter apenas uma conta por pessoa. Criar múltiplas contas para burlar o limite de envios, o sistema de votos ou qualquer outra regra destes Termos não é permitido;</li>
+          <li>Usar um e-mail que você realmente acesse, já que ele pode ser usado para notificações sobre seus relatos e para redefinição de senha.</li>
+        </ul>
+        <p>
+          Você também pode entrar com uma conta Google. Nesse caso, usamos o nome e o e-mail associados à
+          sua conta Google para criar seu cadastro, e pedimos apenas a cidade para completá-lo.
+        </p>
+      </section>
+
+      <section id="relatos" class="legal-section">
+        <h2>4. Envio de relatos</h2>
+        <p>Ao enviar um relato, você declara que as informações são verdadeiras e se compromete a:</p>
+        <ul>
+          <li>Descrever problemas reais de infraestrutura ou serviços públicos, com título e descrição condizentes com a situação relatada;</li>
+          <li>Informar um endereço válido dentro do estado da Paraíba, selecionado a partir das sugestões apresentadas durante o preenchimento;</li>
+          <li>Não publicar conteúdo ofensivo, discriminatório, difamatório, ilegal, ou que exponha dados pessoais de terceiros sem consentimento (por exemplo, fotos com pessoas identificáveis focadas na imagem, placas de veículo em destaque, etc.);</li>
+          <li>Não usar a plataforma para spam, propaganda, autopromoção ou qualquer finalidade alheia ao propósito de relatar problemas públicos;</li>
+          <li>Não enviar relatos falsos, duplicados de propósito ou criados apenas para prejudicar terceiros.</li>
+        </ul>
+        <p>
+          Por padrão, aplicamos um filtro simples de linguagem imprópria e um intervalo mínimo de 5 minutos
+          entre um envio e outro, para reduzir abusos. A administração pública responsável pode moderar,
+          responder oficialmente, atualizar o status ou excluir relatos que violem estes Termos.
+        </p>
+        <p>
+          Você pode editar ou excluir um relato enviado por você enquanto o status dele for
+          <strong>"Aberto"</strong>. Depois que o status muda para "Em andamento" ou "Resolvido", o relato
+          fica bloqueado para edição e exclusão pelo autor, para preservar o histórico do atendimento.
+        </p>
+      </section>
+
+      <section id="fotos" class="legal-section">
+        <h2>5. Envio de fotos</h2>
+        <p>
+          O envio de foto é opcional, limitado a 10 MB, nos formatos JPG, PNG, WEBP ou HEIC. Ao enviar uma
+          foto, você declara ter o direito de utilizá-la e autoriza sua exibição pública na plataforma,
+          vinculada ao relato correspondente. Evite fotos que exponham rostos ou dados pessoais de outras
+          pessoas sem necessidade.
+        </p>
+      </section>
+
+      <section id="votos" class="legal-section">
+        <h2>6. Sistema de votos</h2>
+        <p>
+          Cada conta pode votar uma única vez em cada relato, podendo desfazer o voto a qualquer momento. Os
+          votos servem para indicar à administração pública quais problemas a comunidade considera mais
+          urgentes. Manipular o sistema de votos — por meio de múltiplas contas, scripts automatizados ou
+          qualquer outro artifício — é proibido e pode resultar na suspensão da conta.
+        </p>
+      </section>
+
+      <section id="publicidade" class="legal-section">
+        <h2>7. Publicidade dos relatos</h2>
+        <div class="legal-box legal-box-atencao">
+          <p>
+            <strong>Importante:</strong> os relatos enviados são públicos. Título, categoria, descrição,
+            endereço, foto (se houver), status, quantidade de votos, localização no mapa e o nome que você
+            usa na plataforma ficam visíveis para qualquer visitante do site, mesmo sem estar logado. Evite
+            incluir na descrição ou na foto qualquer dado sensível seu ou de terceiros.
+          </p>
+        </div>
+      </section>
+
+      <section id="prefeitura" class="legal-section">
+        <h2>8. Painel administrativo</h2>
+        <p>
+          O acesso ao painel administrativo é restrito a servidores públicos previamente autorizados. Contas
+          administrativas podem visualizar todos os relatos e os dados de contato de quem os enviou,
+          atualizar o status de um relato, publicar uma resposta oficial e excluir relatos, sempre para fins
+          de gestão dos problemas relatados pela comunidade.
+        </p>
+      </section>
+
+      <section id="propriedade" class="legal-section">
+        <h2>9. Propriedade intelectual</h2>
+        <p>
+          A marca "Pro Povo", o layout, os textos institucionais e o código-fonte da plataforma pertencem à
+          equipe responsável pelo projeto. Ao enviar um relato, uma descrição ou uma foto, você continua
+          sendo o titular desse conteúdo, mas concede ao Pro Povo uma licença gratuita, não exclusiva, para
+          exibi-lo publicamente na plataforma e compartilhá-lo com a administração pública responsável, com
+          a finalidade de dar andamento ao seu relato.
+        </p>
+      </section>
+
+      <section id="responsabilidade" class="legal-section">
+        <h2>10. Limitação de responsabilidade</h2>
+        <ul>
+          <li>O Pro Povo é oferecido "como está", sem garantia de disponibilidade contínua ou ausência de falhas, por se tratar de um projeto acadêmico;</li>
+          <li>Não garantimos que um relato enviado será solucionado, respondido ou sequer analisado pela administração pública dentro de qualquer prazo;</li>
+          <li>Usamos serviços de terceiros — como o OpenStreetMap/Nominatim para sugestão e validação de endereços, e o IBGE para dados públicos de municípios e população — e não nos responsabilizamos por eventuais imprecisões nesses dados;</li>
+          <li>Não somos responsáveis pela veracidade do conteúdo enviado por outros usuários, embora contemos com mecanismos de moderação.</li>
+        </ul>
+      </section>
+
+      <section id="suspensao" class="legal-section">
+        <h2>11. Suspensão e exclusão de conta</h2>
+        <p>
+          Podemos suspender ou excluir contas que violem estes Termos — por exemplo, ao enviar relatos
+          falsos, manipular votos, criar múltiplas contas ou publicar conteúdo ofensivo. Você também pode
+          solicitar a exclusão da sua conta a qualquer momento, conforme descrito na nossa
+          <a href="privacidade.html">Política de Privacidade</a>.
+        </p>
+      </section>
+
+      <section id="alteracoes" class="legal-section">
+        <h2>12. Alterações nestes Termos</h2>
+        <p>
+          Podemos atualizar estes Termos de Uso de tempos em tempos, por exemplo para refletir novas
+          funcionalidades da plataforma. A data no topo desta página indica a versão mais recente. O uso
+          continuado do Pro Povo após uma alteração significa que você concorda com os novos termos.
+        </p>
+      </section>
+
+      <section id="lei" class="legal-section">
+        <h2>13. Lei aplicável e foro</h2>
+        <p>
+          Estes Termos são regidos pelas leis da República Federativa do Brasil. Fica eleito o foro da
+          comarca do responsável pelo projeto, no estado da Paraíba, para dirimir quaisquer controvérsias
+          decorrentes deste documento, com renúncia a qualquer outro, por mais privilegiado que seja.
+        </p>
+      </section>
+
+      <section id="contato" class="legal-section">
+        <h2>14. Contato</h2>
+        <p>Dúvidas sobre estes Termos de Uso podem ser enviadas para o e-mail de suporte abaixo.</p>
+        <div class="legal-contato">
+          <i class="ti ti-mail"></i> <a href="mailto:propovopb@gmail.com">propovopb@gmail.com</a>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <!-- RODAPÉ -->
+  <footer class="site-footer">
+    <p>
+      <i class="ti ti-headset"></i>
+      Precisa de ajuda? Fale com o suporte:
+      <a href="mailto:suporte@propovo.com.br">propovopb@gmail.com</a>
+      &nbsp;·&nbsp;
+      <a href="termos.html">Termos de Uso</a>
+      &nbsp;·&nbsp;
+      <a href="privacidade.html">Política de Privacidade</a>
+    </p>
+  </footer>
+
+  <div class="toast" id="toast"></div>
+  <script src="theme.js"></script>
+  <script src="menu.js"></script>
+  <script type="module" src="legal.js"></script>
+</body>
+</html>

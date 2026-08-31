@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Política de Privacidade — Pro Povo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://pro--povo-default-rtdb.firebaseio.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.44.0/dist/tabler-icons.min.css" />
+  <script>
+  (() => {
+    const tema = localStorage.getItem('theme');
+    if (tema === 'dark' ||
+      (!tema && matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.dataset.theme = 'dark';
+    }
+  })();
+</script>
+  <link rel="stylesheet" href="home.css" />
+  <link rel="stylesheet" href="legal.css" />
+  <link rel="icon" type="image/png" href="Images/flavinconProPovo.png">
+</head>
+<body>
+
+  <div class="gov-bar">
+    <span><i class="ti ti-shield-check"></i> Plataforma cidadã independente · Pro Povo</span>
+  </div>
+
+  <nav class="navbar">
+    <div class="navbar-left">
+      <div class="empresa-logo">
+        <img src="Images/LogoProPovo.png" alt="Logo da empresa" id="logo-empresa" />
+      </div>
+      <div class="navbar-divider"></div>
+      <div class="logo">
+        <div class="logo-text-group">
+          <span class="logo-title">Pro Povo -</span>
+          <span class="logo-sub">Do povo, pro povo</span>
+        </div>
+      </div>
+    </div>
+    <div class="nav-links">
+      <a href="index.html" class="nav-link">Início</a>
+      <a href="relatos.html" class="nav-link">Relatos</a>
+      <a href="mapa.html" class="nav-link">Mapa</a>
+      <a href="MeusRelatos.html" class="nav-link" id="nav-meus-relatos" style="display:none;">Meus relatos</a>
+    </div>
+    <div class="nav-btns">
+      <a href="#" class="mobile-link" id="theme-toggle-mobile">
+        <i class="ti ti-moon"></i> Modo escuro
+      </a>
+      <button class="btn-outline" id="btn-entrar">Entrar</button>
+      <button class="btn-primary" id="btn-cadastrar">Criar conta</button>
+    </div>
+    <button class="hamburger" id="hamburger"
+      aria-label="Abrir menu"
+      aria-expanded="false"
+      type="button">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+  </nav>
+
+  <div class="mobile-menu" id="mobile-menu">
+    <a href="index.html" class="mobile-link"><i class="ti ti-home"></i> Início</a>
+    <a href="relatos.html" class="mobile-link"><i class="ti ti-list"></i> Relatos</a>
+    <a href="mapa.html" class="mobile-link"><i class="ti ti-map-2"></i> Mapa</a>
+    <a href="MeusRelatos.html" class="mobile-link" id="mobile-meus-relatos" style="display:none;"><i class="ti ti-user-check"></i> Meus relatos</a>
+    <a href="#" class="mobile-link" id="theme-toggle-mobile">
+      <i class="ti ti-moon"></i> Modo escuro
+    </a>
+  </div>
+
+  <!-- CABEÇALHO -->
+  <div class="legal-header">
+    <div class="legal-header-inner">
+      <h1 class="legal-title"><i class="ti ti-shield-lock"></i> Política de Privacidade</h1>
+      <p class="legal-subtitle">Como o Pro Povo coleta, usa e protege os seus dados</p>
+      <span class="legal-updated"><i class="ti ti-calendar"></i> Última atualização: 29 de agosto de 2026</span>
+    </div>
+  </div>
+
+  <div class="legal-wrapper">
+
+    <div class="legal-card">
+      <nav class="legal-toc" aria-label="Sumário">
+        <a href="#introducao">1. Introdução</a>
+        <a href="#dados-coletados">2. Dados coletados</a>
+        <a href="#finalidades">3. Para que usamos</a>
+        <a href="#compartilhamento">4. Compartilhamento</a>
+        <a href="#publicos">5. Dados públicos</a>
+        <a href="#localstorage">6. Armazenamento local</a>
+        <a href="#seguranca">7. Segurança</a>
+        <a href="#direitos">8. Seus direitos</a>
+        <a href="#retencao">9. Retenção de dados</a>
+        <a href="#menores">10. Crianças e adolescentes</a>
+        <a href="#alteracoes">11. Alterações</a>
+        <a href="#contato">12. Contato</a>
+      </nav>
+
+      <section id="introducao" class="legal-section">
+        <h2>1. Introdução</h2>
+        <p>
+          Esta Política de Privacidade explica quais dados o Pro Povo coleta quando você usa a plataforma,
+          para que eles são usados, com quem podem ser compartilhados e quais direitos você tem sobre eles.
+          Ao usar o Pro Povo, você concorda com as práticas descritas aqui e nos nossos
+          <a href="termos.html">Termos de Uso</a>.
+        </p>
+        <p>
+          A equipe responsável pelo projeto Pro Povo atua como controladora dos dados pessoais tratados na
+          plataforma, nos termos da LGPD.
+        </p>
+      </section>
+
+      <section id="dados-coletados" class="legal-section">
+        <h2>2. Quais dados coletamos</h2>
+
+        <h3>a) Dados de cadastro</h3>
+        <p>Ao criar uma conta com e-mail e senha, coletamos: nome completo, e-mail e cidade (Paraíba).</p>
+
+        <h3>b) Dados de login com Google</h3>
+        <p>
+          Se você entrar com sua conta Google, recebemos o nome e o e-mail associados a ela, e pedimos
+          apenas a cidade para completar seu cadastro.
+        </p>
+
+        <h3>c) Dados dos relatos que você envia</h3>
+        <p>
+          Título, categoria, descrição, endereço (texto, cidade e bairro), coordenadas de latitude e
+          longitude do endereço selecionado, foto (opcional) e a data de envio. O relato também fica
+          associado ao seu nome e ao identificador da sua conta.
+        </p>
+
+        <h3>d) Dados de interação</h3>
+        <p>Quais relatos você votou (para impedir voto duplicado) e o histórico de respostas oficiais recebidas.</p>
+
+        <h3>e) Dados enviados a serviços de terceiros durante o uso</h3>
+        <p>
+          Ao digitar um endereço no formulário de relato, o texto digitado é enviado ao serviço
+          Nominatim/OpenStreetMap, para que ele sugira e valide o endereço. Não enviamos seu nome, e-mail ou
+          qualquer outro dado de identificação nessa consulta — apenas o texto do endereço.
+        </p>
+
+        <div class="legal-box">
+          <p>
+            <strong>Não coletamos:</strong> dados de geolocalização automática do seu dispositivo,
+            cookies de rastreamento publicitário, nem usamos ferramentas de analytics de terceiros no site.
+          </p>
+        </div>
+      </section>
+
+      <section id="finalidades" class="legal-section">
+        <h2>3. Para que usamos seus dados</h2>
+        <div class="legal-table-wrap">
+          <table class="legal-table">
+            <thead>
+              <tr><th>Finalidade</th><th>Dados envolvidos</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Criar e autenticar sua conta</td><td>Nome, e-mail, senha (gerenciada pelo Firebase Authentication)</td></tr>
+              <tr><td>Publicar e exibir seus relatos</td><td>Título, descrição, categoria, endereço, foto, nome exibido</td></tr>
+              <tr><td>Permitir que a prefeitura responda e atualize o status</td><td>Conteúdo do relato e dados de contato do autor</td></tr>
+              <tr><td>Avisar sobre mudança de status ou resposta oficial</td><td>Nome e e-mail (envio de notificação por e-mail)</td></tr>
+              <tr><td>Evitar abusos (contas falsas, envios em massa)</td><td>Confirmação de e-mail, intervalo entre envios</td></tr>
+              <tr><td>Gerar estatísticas para a gestão pública</td><td>Dados agregados dos relatos (sem identificar autores individualmente nos gráficos)</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="compartilhamento" class="legal-section">
+        <h2>4. Com quem compartilhamos dados</h2>
+        <p>Não vendemos nem alugamos seus dados pessoais. Compartilhamos dados apenas com:</p>
+        <ul>
+          <li><strong>Firebase (Google):</strong> hospeda nosso banco de dados e cuida da autenticação de contas. Os servidores podem estar localizados fora do Brasil;</li>
+          <li><strong>Cloudinary:</strong> armazena as fotos enviadas nos relatos;</li>
+          <li><strong>OpenStreetMap/Nominatim:</strong> recebe o texto do endereço digitado, para sugerir e validar localizações dentro da Paraíba;</li>
+          <li><strong>IBGE:</strong> fornece dados públicos de municípios e estimativas de população, usados para comparar relatos entre cidades. Esse serviço não recebe nenhum dado pessoal seu, apenas é consultado por nós;</li>
+          <li><strong>EmailJS:</strong> usado para enviar e-mails de notificação sobre seus relatos, quando esse recurso estiver ativo — recebe seu nome e e-mail apenas no momento do envio;</li>
+          <li><strong>Administração pública responsável:</strong> servidores autorizados no painel administrativo podem visualizar todos os relatos e os dados de contato de quem os enviou, para fins de gestão.</li>
+        </ul>
+      </section>
+
+      <section id="publicos" class="legal-section">
+        <h2>5. Dados que ficam públicos</h2>
+        <div class="legal-box legal-box-atencao">
+          <p>
+            Os relatos enviados são exibidos publicamente nas páginas de relatos e no mapa da plataforma,
+            visíveis para qualquer visitante, mesmo sem login. Ficam públicos: o nome que você usa na
+            plataforma, o título e a descrição do relato, a categoria, o endereço e a localização no mapa,
+            a foto (se enviada), o status e a quantidade de votos.
+          </p>
+          <p>
+            Seu e-mail e sua senha nunca são exibidos publicamente. Recomendamos não incluir dados sensíveis
+            seus ou de terceiros na descrição ou na foto de um relato.
+          </p>
+        </div>
+      </section>
+
+      <section id="localstorage" class="legal-section">
+        <h2>6. Armazenamento local no seu navegador</h2>
+        <p>
+          Usamos o <em>localStorage</em> do seu navegador para guardar sua preferência de tema (claro/escuro)
+          e para controlar o intervalo mínimo entre envios de relatos e pedidos de redefinição de senha
+          (proteção contra abuso). Essas informações ficam apenas no seu dispositivo, não são enviadas aos
+          nossos servidores e não são usadas para rastrear sua navegação em outros sites.
+        </p>
+      </section>
+
+      <section id="seguranca" class="legal-section">
+        <h2>7. Segurança dos dados</h2>
+        <p>
+          Sua senha é gerenciada inteiramente pelo Firebase Authentication e nunca é armazenada em texto
+          simples pela nossa aplicação. O acesso aos dados no banco é controlado por regras que restringem,
+          por exemplo, quem pode editar seu perfil ou seus relatos. Apesar dessas medidas, nenhum sistema é
+          totalmente livre de riscos, e trabalhamos continuamente para manter a plataforma segura.
+        </p>
+      </section>
+
+      <section id="direitos" class="legal-section">
+        <h2>8. Seus direitos como titular dos dados</h2>
+        <p>De acordo com a LGPD, você tem direito a:</p>
+        <ul>
+          <li>Confirmar se tratamos algum dado seu e acessar esses dados;</li>
+          <li>Corrigir dados incompletos, inexatos ou desatualizados — pode ser feito diretamente em "Meu perfil", para nome e cidade;</li>
+          <li>Solicitar a anonimização, o bloqueio ou a eliminação de dados desnecessários ou tratados em desacordo com a lei;</li>
+          <li>Solicitar a portabilidade dos seus dados a outro fornecedor de serviço;</li>
+          <li>Ser informado sobre com quem compartilhamos seus dados;</li>
+          <li>Revogar o consentimento e solicitar a exclusão da sua conta e dos dados pessoais associados a ela.</li>
+        </ul>
+        <p>
+          Alterações de nome e cidade podem ser feitas por você mesmo, a qualquer momento, pela opção
+          "Meu perfil" no site. Para exclusão de conta ou qualquer outra solicitação relacionada aos seus
+          dados, entre em contato pelo e-mail informado no fim desta página.
+        </p>
+      </section>
+
+      <section id="retencao" class="legal-section">
+        <h2>9. Retenção de dados</h2>
+        <p>
+          Mantemos seus dados de cadastro enquanto sua conta estiver ativa. Relatos que você enviou podem
+          continuar visíveis publicamente mesmo após a resolução do problema, como registro histórico de
+          transparência entre a comunidade e a administração pública — por isso, relatos com status
+          diferente de "Aberto" não podem mais ser excluídos pelo autor. Caso você solicite a exclusão da
+          sua conta, avaliaremos o pedido em relação aos relatos já publicados, podendo mantê-los de forma
+          desvinculada da sua identificação pessoal quando necessário para preservar o histórico público.
+        </p>
+      </section>
+
+      <section id="menores" class="legal-section">
+        <h2>10. Crianças e adolescentes</h2>
+        <p>
+          O Pro Povo não é direcionado a crianças e seu uso por adolescentes menores de 18 anos deve ocorrer
+          com o consentimento e a supervisão de um responsável legal, conforme exige a LGPD para o
+          tratamento de dados de menores. Caso identifiquemos uma conta de menor de idade cadastrada sem
+          esse consentimento, ela poderá ser suspensa ou excluída.
+        </p>
+      </section>
+
+      <section id="alteracoes" class="legal-section">
+        <h2>11. Alterações nesta política</h2>
+        <p>
+          Podemos atualizar esta Política de Privacidade de tempos em tempos, por exemplo para refletir
+          novas funcionalidades ou novos serviços de terceiros usados pela plataforma. A data no topo desta
+          página indica a versão mais recente. Mudanças relevantes serão comunicadas de forma visível no
+          site.
+        </p>
+      </section>
+
+      <section id="contato" class="legal-section">
+        <h2>12. Contato</h2>
+        <p>
+          Para dúvidas sobre esta política ou para exercer qualquer um dos seus direitos como titular de
+          dados, entre em contato:
+        </p>
+        <div class="legal-contato">
+          <i class="ti ti-mail"></i> <a href="mailto:propovopb@gmail.com">propovopb@gmail.com</a>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <!-- RODAPÉ -->
+  <footer class="site-footer">
+    <p>
+      <i class="ti ti-headset"></i>
+      Precisa de ajuda? Fale com o suporte:
+      <a href="mailto:suporte@propovo.com.br">propovopb@gmail.com</a>
+      &nbsp;·&nbsp;
+      <a href="termos.html">Termos de Uso</a>
+      &nbsp;·&nbsp;
+      <a href="privacidade.html">Política de Privacidade</a>
+    </p>
+  </footer>
+
+  <div class="toast" id="toast"></div>
+  <script src="theme.js"></script>
+  <script src="menu.js"></script>
+  <script type="module" src="legal.js"></script>
+</body>
+</html>

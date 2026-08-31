@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Como usar — Pro Povo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://pro--povo-default-rtdb.firebaseio.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.44.0/dist/tabler-icons.min.css" />
+  <script>
+  (() => {
+    const tema = localStorage.getItem('theme');
+    if (tema === 'dark' ||
+      (!tema && matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.dataset.theme = 'dark';
+    }
+  })();
+</script>
+  <link rel="stylesheet" href="home.css" />
+  <link rel="stylesheet" href="legal.css" />
+  <link rel="stylesheet" href="tutorial.css" />
+  <link rel="icon" type="image/png" href="Images/flavinconProPovo.png">
+</head>
+<body>
+
+  <div class="gov-bar">
+    <span><i class="ti ti-shield-check"></i> Plataforma cidadã independente · Pro Povo</span>
+  </div>
+
+  <nav class="navbar">
+    <div class="navbar-left">
+      <div class="empresa-logo">
+        <img src="Images/LogoProPovo.png" alt="Logo da empresa" id="logo-empresa" />
+      </div>
+      <div class="navbar-divider"></div>
+      <div class="logo">
+        <div class="logo-text-group">
+          <span class="logo-title">Pro Povo -</span>
+          <span class="logo-sub">Do povo, pro povo</span>
+        </div>
+      </div>
+    </div>
+    <div class="nav-links">
+      <a href="index.html" class="nav-link">Início</a>
+      <a href="relatos.html" class="nav-link">Relatos</a>
+      <a href="mapa.html" class="nav-link">Mapa</a>
+      <a href="MeusRelatos.html" class="nav-link" id="nav-meus-relatos" style="display:none;">Meus relatos</a>
+    </div>
+    <div class="nav-btns">
+      <a href="#" class="mobile-link" id="theme-toggle-mobile">
+        <i class="ti ti-moon"></i> Modo escuro
+      </a>
+      <button class="btn-outline" id="btn-entrar">Entrar</button>
+      <button class="btn-primary" id="btn-cadastrar">Criar conta</button>
+    </div>
+    <button class="hamburger" id="hamburger"
+      aria-label="Abrir menu"
+      aria-expanded="false"
+      type="button">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+  </nav>
+
+  <div class="mobile-menu" id="mobile-menu">
+    <a href="index.html" class="mobile-link"><i class="ti ti-home"></i> Início</a>
+    <a href="relatos.html" class="mobile-link"><i class="ti ti-list"></i> Relatos</a>
+    <a href="mapa.html" class="mobile-link"><i class="ti ti-map-2"></i> Mapa</a>
+    <a href="MeusRelatos.html" class="mobile-link" id="mobile-meus-relatos" style="display:none;"><i class="ti ti-user-check"></i> Meus relatos</a>
+    <a href="#" class="mobile-link" id="theme-toggle-mobile">
+      <i class="ti ti-moon"></i> Modo escuro
+    </a>
+  </div>
+
+  <!-- CABEÇALHO -->
+  <div class="legal-header">
+    <div class="legal-header-inner">
+      <h1 class="legal-title"><i class="ti ti-list-numbers"></i> Como usar o Pro Povo</h1>
+      <p class="legal-subtitle">Um guia passo a passo, da criação da conta ao acompanhamento da resposta da prefeitura</p>
+      <span class="legal-updated"><i class="ti ti-calendar"></i> Atualizado em 30 de agosto de 2026</span>
+    </div>
+  </div>
+
+  <div class="legal-wrapper">
+
+    <div class="legal-card">
+      <nav class="legal-toc" aria-label="Sumário">
+        <a href="#criando-conta">Criando sua conta</a>
+        <a href="#relatando">Relatando um problema</a>
+        <a href="#comunidade">Participando da comunidade</a>
+        <a href="#acompanhando">Acompanhando seus relatos</a>
+        <a href="#personalizando">Personalizando</a>
+      </nav>
+
+      <div class="tutorial-intro">
+        <p>
+          O Pro Povo tem dois lados: o cidadão relata problemas de infraestrutura da cidade e acompanha o
+          andamento, e a comunidade vota nos relatos mais urgentes para ajudar a prefeitura a priorizar. Este
+          guia mostra o caminho completo, na ordem em que você normalmente vai usar o site.
+        </p>
+      </div>
+
+      <!-- ═══ SEÇÃO 1 ═══ -->
+      <section id="criando-conta" class="legal-section">
+        <h2>Criando sua conta</h2>
+
+        <div class="tutorial-steps">
+
+          <div class="tutorial-step">
+            <div class="tutorial-step-num">1</div>
+            <div class="tutorial-step-body">
+              <h3>Crie sua conta</h3>
+              <p>
+                Na página inicial, clique em <strong>"Entrar"</strong> na barra de navegação e depois na aba
+                <strong>"Criar conta"</strong>. Preencha nome, e-mail, cidade e senha (mínimo de 8
+                caracteres), aceite os termos de uso e clique em <strong>"Criar minha conta"</strong>. Também
+                é possível se cadastrar com um clique usando <strong>"Cadastrar com Google"</strong>.
+              </p>
+              <div class="tutorial-img-slot">
+                <div class="tutorial-img-fallback">
+                  <i class="ti ti-photo"></i>
+                  <span>Print da tela: aba "Criar conta"</span>
+                  <code>Images/tutorial/passo-01-criar-conta.png</code>
+                </div>
+                <img class="tutorial-img" alt="Tela de cadastro do Pro Povo, aba Criar conta"
+                     src="Images/tutorial/criarConta.png.png"
+                     onload="this.previousElementSibling.style.display='none'; this.style.display='block';"
+                     onerror="this.remove();">
+              </div>
+            </div>
+          </div>
+
+          <div class="tutorial-step">
+            <div class="tutorial-step-num">2</div>
+            <div class="tutorial-step-body">
+              <h3>Confirme seu e-mail</h3>
+              <p>
+                Após o cadastro, você recebe um e-mail de confirmação (confira também a caixa de spam). A
+                confirmação é obrigatória: sem ela, o site não permite enviar um relato. Você pode reenviar o
+                e-mail de confirmação a qualquer momento pela opção <strong>"Meu perfil"</strong>.
+              </p>
+              <div class="tutorial-img-slot">
+                <div class="tutorial-img-fallback">
+                  <i class="ti ti-photo"></i>
+                  <span>Print: aviso de e-mail não verificado / e-mail de confirmação</span>
+                  <code>Images/tutorial/passo-02-confirmar-email.png</code>
+                </div>
+                <img class="tutorial-img" alt="Aviso de confirmação de e-mail no Pro Povo"
+                     src="Images/tutorial/verificarEmail.png.png"
+                     onload="this.previousElementSibling.style.display='none'; this.style.display='block';"
+                     onerror="this.remove();">
+              </div>
+            </div>
+          </div>
+
+
+        </div>
+      </section>
+
+      <!-- ═══ SEÇÃO 2 ═══ -->
+      <section id="relatando" class="legal-section">
+        <h2>Relatando um problema</h2>
+
+        <div class="tutorial-steps">
+
+          <div class="tutorial-step">
+            <div class="tutorial-step-num">3</div>
+            <div class="tutorial-step-body">
+              <h3>Abra o formulário de relato</h3>
+              <p>
+                Clique em <strong>"Relatar um problema"</strong>, disponível no topo da página inicial e
+                também na barra lateral esquerda. É necessário estar logado e com o e-mail confirmado para
+                abrir o formulário.
+              </p>
+              <div class="tutorial-img-slot">
+                <div class="tutorial-img-fallback">
+                  <i class="ti ti-photo"></i>
+                  <span>Print: botão "Relatar um problema" na home</span>
+                  <code>Images/tutorial/passo-04-abrir-formulario.png</code>
+                </div>
+                <img class="tutorial-img" alt="Botão Relatar um problema na página inicial"
+                     src="Images/tutorial/criarRelatoo.png.png"
+                     onload="this.previousElementSibling.style.display='none'; this.style.display='block';"
+                     onerror="this.remove();">
+              </div>
+            </div>
+          </div>
+
+          <div class="tutorial-step">
+            <div class="tutorial-step-num">5</div>
+            <div class="tutorial-step-body">
+              <h3>Preencha o formulário</h3>
+              <p>
+                Dê um título curto e claro ao problema (mínimo 5 caracteres), escolha a categoria mais
+                próxima — Buraco/Via danificada, Iluminação pública, Lixo/Entulho, Água/Esgoto, Áreas verdes
+                ou Outros — e descreva o problema com detalhes (mínimo 10 caracteres). Depois, digite o
+                endereço e escolha uma das sugestões da lista (só aparecem endereços dentro da Paraíba — é
+                obrigatório selecionar um item da lista). Por fim, anexe uma foto do problema, se quiser
+                (JPG, PNG, WEBP ou HEIC, até 10 MB) — esse campo é opcional.
+              </p>
+
+              <span class="tutorial-img-label">Título, categoria e descrição</span>
+              <div class="tutorial-img-slot">
+                <div class="tutorial-img-fallback">
+                  <i class="ti ti-photo"></i>
+                  <span>Print: campos de título, categoria e descrição preenchidos</span>
+                  <code>Images/tutorial/passo-05a-dados-problema.png</code>
+                </div>
+                <img class="tutorial-img" alt="Formulário de relato preenchido com título, categoria e descrição"
+                     src="Images/tutorial/prenceherRelato.png.png"
+                     onload="this.previousElementSibling.style.display='none'; this.style.display='block';"
+                     onerror="this.remove();">
+              </div>
+            </div>
+          </div>
+
+          
+      </section>
+
+      <!-- ═══ SEÇÃO 3 ═══ -->
+      <section id="comunidade" class="legal-section">
+        <h2>Participando da comunidade</h2>
+
+        <div class="tutorial-steps">
+
+          <div class="tutorial-step">
+            <div class="tutorial-step-num">6</div>
+            <div class="tutorial-step-body">
+              <h3>Vote nos problemas mais urgentes</h3>
+              <p>
+                Em qualquer relato, clique em <strong>"pessoas apoiam"</strong> para votar. O botão fica
+                destacado quando você já votou, e um novo clique remove o voto. Quanto mais votos, maior a
+                prioridade percebida pela prefeitura.
+              </p>
+              <div class="tutorial-img-slot">
+                <div class="tutorial-img-fallback">
+                  <i class="ti ti-photo"></i>
+                  <span>Print: card de relato com o botão de voto marcado</span>
+                  <code>Images/tutorial/passo-07-votar.png</code>
+                </div>
+                <img class="tutorial-img" alt="Botão de voto marcado em um card de relato"
+                     src="Images/tutorial/curtirRelato.png.png"
+                     onload="this.previousElementSibling.style.display='none'; this.style.display='block';"
+                     onerror="this.remove();">
+              </div>
+            </div>
+          </div>
+
+          <div class="tutorial-step">
+            <div class="tutorial-step-num">9</div>
+            <div class="tutorial-step-body">
+              <h3>Veja todos os relatos</h3>
+              <p>
+                A página inicial mostra só os relatos mais votados. Clique em <strong>"Relatos"</strong> na
+                barra de navegação para ver a tabela completa, com busca por título/endereço e filtro por
+                status.
+              </p>
+              <div class="tutorial-img-slot">
+                <div class="tutorial-img-fallback">
+                  <i class="ti ti-photo"></i>
+                  <span>Print: tabela de relatos com busca e filtro</span>
+                  <code>Images/tutorial/passo-09-lista-relatos.png</code>
+                </div>
+                <img class="tutorial-img" alt="Tabela completa de relatos com busca e filtro de status"
+                     src="Images/tutorial/Relatos.png.png"
+                     onload="this.previousElementSibling.style.display='none'; this.style.display='block';"
+                     onerror="this.remove();">
+              </div>
+            </div>
+          </div>
+
+          <div class="tutorial-step">
+            <div class="tutorial-step-num">10</div>
+            <div class="tutorial-step-body">
+              <h3>Explore o mapa da Paraíba</h3>
+              <p>
+                Clique em <strong>"Mapa"</strong> para ver todos os relatos com endereço geolocalizado,
+                marcados por cor conforme a categoria. Clique em um marcador para ver um resumo do relato.
+              </p>
+              <div class="tutorial-img-slot">
+                <div class="tutorial-img-fallback">
+                  <i class="ti ti-photo"></i>
+                  <span>Print: mapa da Paraíba com marcadores e um popup aberto</span>
+                  <code>Images/tutorial/passo-10-mapa.png</code>
+                </div>
+                <img class="tutorial-img" alt="Mapa interativo da Paraíba com relatos marcados"
+                     src="Images/tutorial/Mapa.png.png"
+                     onload="this.previousElementSibling.style.display='none'; this.style.display='block';"
+                     onerror="this.remove();">
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ═══ SEÇÃO 4 ═══ -->
+      <section id="acompanhando" class="legal-section">
+        <h2>Acompanhando seus relatos</h2>
+
+        <div class="tutorial-steps">
+
+          <div class="tutorial-step">
+            <div class="tutorial-step-num">11</div>
+            <div class="tutorial-step-body">
+              <h3>Acesse "Meus relatos"</h3>
+              <p>
+                Com a conta logada, clique em <strong>"Meus relatos"</strong> na barra de navegação para ver
+                só os problemas que você mesmo enviou, com busca e filtro por status.
+              </p>
+              <div class="tutorial-img-slot">
+                <div class="tutorial-img-fallback">
+                  <i class="ti ti-photo"></i>
+                  <span>Print: página "Meus relatos" com a lista do usuário</span>
+                  <code>Images/tutorial/passo-11-meus-relatos.png</code>
+                </div>
+                <img class="tutorial-img" alt="Página Meus Relatos listando os relatos do usuário"
+                     src="Images/tutorial/MeueRelatos.png.png"
+                     onload="this.previousElementSibling.style.display='none'; this.style.display='block';"
+                     onerror="this.remove();">
+              </div>
+            </div>
+          </div>
+          </div>
+          </div>
+
+      </section>
+  <!-- RODAPÉ -->
+  <footer class="site-footer">
+    <p>
+      <i class="ti ti-headset"></i>
+      Precisa de ajuda? Fale com o suporte:
+      <a href="mailto:suporte@propovo.com.br">propovopb@gmail.com</a>
+      &nbsp;·&nbsp;
+      <a href="ComoUsar.html">Como usar</a>
+      &nbsp;·&nbsp;
+      <a href="termos.html">Termos de Uso</a>
+      &nbsp;·&nbsp;
+      <a href="privacidade.html">Política de Privacidade</a>
+    </p>
+  </footer>
+
+  <div class="toast" id="toast"></div>
+  <script src="theme.js"></script>
+  <script src="menu.js"></script>
+  <script type="module" src="legal.js"></script>
+</body>
+</html>
