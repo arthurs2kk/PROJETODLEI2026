@@ -1,10 +1,10 @@
 // ── Pro Povo — app.js ──
-import { auth, onAuthStateChanged } from "./firebase.js";
-import { criarRelato, ouvirRelatos, votar, jaVotou, tempoRestanteParaEnviar } from "./db.js";
-import { buscarComDebounce, estaNaParaiba } from "./endereco.js";
-import { otimizarImagem } from "./cloudinary.js";
-import { initNavbar } from "./navbar.js";
-import { escapeHTML } from "./escapeHtml.js";
+import { auth, onAuthStateChanged } from "./js/firebase.js";
+import { criarRelato, ouvirRelatos, votar, jaVotou, tempoRestanteParaEnviar } from "./js/db.js";
+import { buscarComDebounce, estaNaParaiba } from "./js/endereco.js";
+import { otimizarImagem } from "./js/cloudinary.js";
+import { initNavbar } from "./js/navbar.js";
+import { escapeHTML } from "./js/escapeHtml.js";
 
 
 // ── Estado ──
@@ -42,7 +42,7 @@ onAuthStateChanged(auth, (user) => {
 async function openModal() {
   if (!state.usuario) {
     showToast('⚠️ Você precisa estar logado para relatar. Redirecionando para login...');
-    setTimeout(() => window.location.href = 'login.html', 1000);
+    setTimeout(() => window.location.href = 'pages/userPages/login.html', 1000);
     return;
   }
 

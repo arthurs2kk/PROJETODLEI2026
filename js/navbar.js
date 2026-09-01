@@ -219,7 +219,7 @@ export function initNavbar() {
         b.title = '';
         b.onclick = async () => {
           await signOut(auth);
-          window.location.href = 'index.html';
+          window.location.href = '../../index.html';
         };
       });
 
@@ -232,14 +232,14 @@ export function initNavbar() {
         if (!b) return;
         b.textContent = 'Entrar';
         b.title = '';
-        b.onclick = () => window.location.href = 'login.html';
+        b.onclick = () => window.location.href = '../../pages/userPages/login.html';
       });
 
       [btnCadastrar, btnCadastrarMobile].forEach(b => {
         if (!b) return;
         b.textContent = 'Criar conta';
         b.title = '';
-        b.onclick = () => window.location.href = 'login.html';
+        b.onclick = () => window.location.href = '../../pages/userPages/login.html';
       });
 
       fecharPerfil();

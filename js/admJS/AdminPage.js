@@ -1,9 +1,9 @@
 // ── Pro Povo — admin-painel.js ──
-import { auth, onAuthStateChanged, signOut } from "./firebase.js";
-import { ehAdmin, ouvirRelatos, atualizarStatus, salvarResposta, excluirRelato, buscarUsuario } from "./db.js";
-import { otimizarImagem } from "./cloudinary.js";
-import { notificarMudancaStatus, notificarNovaResposta } from "./notificacoes.js";
-import { escapeHTML } from "./escapeHtml.js";
+import { auth, onAuthStateChanged, signOut } from "../firebase.js";
+import { ehAdmin, ouvirRelatos, atualizarStatus, salvarResposta, excluirRelato, buscarUsuario } from "../db.js";
+import { otimizarImagem } from "../cloudinary.js";
+import { notificarMudancaStatus, notificarNovaResposta } from "../notificacoes.js";
+import { escapeHTML } from "../escapeHtml.js";
 
 const state = { todos: [], busca: '', status: 'todos' };
 

@@ -18,7 +18,7 @@
 // Etapa 2 do plano), o formato antigo continua sendo aceito e tratado como
 // superadmin — assim ninguém fica bloqueado do painel no meio da transição.
 
-import { db, ref, get } from "./firebase.js";
+import { db, ref, get } from "../firebase.js";
 
 // ── Busca os dados administrativos do uid. Retorna null se não for admin
 // (ou se o admin estiver desativado). ──

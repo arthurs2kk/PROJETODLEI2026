@@ -1,6 +1,6 @@
 // ── Pro Povo — admin-login.js ──
-import { auth, signInWithEmailAndPassword, signOut } from "./firebase.js";
-import { ehAdmin } from "./db.js";
+import { auth, signInWithEmailAndPassword, signOut } from "../firebase.js";
+import { ehAdmin } from "../db.js";
 
 // ── Mostrar/ocultar senha ──
 document.getElementById('toggle-admin-senha')?.addEventListener('click', () => {

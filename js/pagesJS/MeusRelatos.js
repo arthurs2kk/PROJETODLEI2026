@@ -1,9 +1,9 @@
 // ── Pro Povo — meus-relatos.js ──
-import { auth, onAuthStateChanged } from "./firebase.js";
-import { ouvirRelatosDoUsuario, atualizarRelatoDoUsuario, excluirRelato } from "./db.js";
-import { initNavbar } from "./navbar.js";
-import { escapeHTML } from "./escapeHtml.js";
-import { otimizarImagem } from "./cloudinary.js";
+import { auth, onAuthStateChanged } from "../firebase.js";
+import { ouvirRelatosDoUsuario, atualizarRelatoDoUsuario, excluirRelato } from "../db.js";
+import { initNavbar } from "../navbar.js";
+import { escapeHTML } from "../escapeHtml.js";
+import { otimizarImagem } from "../cloudinary.js";
 
 const state = { todos: [], busca: '', status: 'todos', relatoEditando: null };
 

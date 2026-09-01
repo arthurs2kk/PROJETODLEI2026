@@ -1,8 +1,8 @@
 // ── Pro Povo — login.js ──
-import { auth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, provider, signOut, onAuthStateChanged, updateProfile, sendPasswordResetEmail, sendEmailVerification } from "./firebase.js";
-import { salvarUsuario, buscarUsuario } from "./db.js";
-import { carregarCidadesPB } from "./cidades.js";
-import { segundosRestantes, registrarEnvio } from "./cooldown.js";
+import { auth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, provider, signOut, onAuthStateChanged, updateProfile, sendPasswordResetEmail, sendEmailVerification } from "../firebase.js";
+import { salvarUsuario, buscarUsuario } from "../db.js";
+import { carregarCidadesPB } from "../cidades.js";
+import { segundosRestantes, registrarEnvio } from "../cooldown.js";
 
 // ── Se já estiver logado, vai direto pro index ──
 // (exceto durante o login com Google, onde pode faltar completar o
@@ -10,7 +10,7 @@ import { segundosRestantes, registrarEnvio } from "./cooldown.js";
 let googleFlowEmAndamento = false;
 
 onAuthStateChanged(auth, (user) => {
-  if (user && !googleFlowEmAndamento) window.location.href = "index.html";
+  if (user && !googleFlowEmAndamento) window.location.href = "../../index.html";
 });
 
 // ── Carregar cidades da Paraíba no select de cadastro ──
@@ -137,7 +137,7 @@ document.getElementById('btn-login')?.addEventListener('click', async () => {
   try {
     await signInWithEmailAndPassword(auth, email, senha);
     showToast('✅ Login realizado! Redirecionando...');
-    setTimeout(() => window.location.href = 'index.html', 1000);
+    setTimeout(() => window.location.href = '../../index.html', 1000);
   } catch (e) {
     showToast('❌ ' + traduzirErro(e.code));
     setBtnLoading('btn-login', false, '<i class="ti ti-login"></i> Entrar');
@@ -173,7 +173,7 @@ document.getElementById('btn-cadastrar')?.addEventListener('click', async () => 
     }
 
     showToast('✅ Conta criada! Enviamos um e-mail de confirmação — não esqueça de checar a caixa de spam/lixo eletrônico.');
-    setTimeout(() => window.location.href = 'index.html', 3000);
+    setTimeout(() => window.location.href = '../../index.html', 3000);
   } catch (e) {
     showToast('❌ ' + traduzirErro(e.code));
     setBtnLoading('btn-cadastrar', false, '<i class="ti ti-user-plus"></i> Criar minha conta');
@@ -191,7 +191,7 @@ async function entrarComGoogle() {
 
     if (perfilExistente) {
       showToast('✅ Login realizado com Google!');
-      setTimeout(() => window.location.href = 'index.html', 800);
+      setTimeout(() => window.location.href = '../../index.html', 800);
       return;
     }
 
@@ -231,7 +231,7 @@ function abrirModalGoogle(user) {
         cidade
       });
       showToast('✅ Cadastro completo! Redirecionando...');
-      setTimeout(() => window.location.href = 'index.html', 800);
+      setTimeout(() => window.location.href = '../../index.html', 800);
     } catch (e) {
       console.error(e);
       showToast('❌ Não foi possível concluir o cadastro. Tente novamente.');

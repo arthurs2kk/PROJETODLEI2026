@@ -1,9 +1,9 @@
 // ── Pro Povo — relatos.js ──
-import { ouvirRelatos } from "./db.js";
-import { initNavbar } from "./navbar.js";
-import { otimizarImagem } from "./cloudinary.js";
-import { normalizar } from "./populacao.js";
-import { escapeHTML } from "./escapeHtml.js";
+import { ouvirRelatos } from "../db.js";
+import { initNavbar } from "../navbar.js";
+import { otimizarImagem } from "../cloudinary.js";
+import { normalizar } from "../populacao.js";
+import { escapeHTML } from "../escapeHtml.js";
 
 // ── Navbar (login/cadastro/nome do usuário/sair/perfil) ──
 initNavbar();

@@ -1,8 +1,8 @@
 // ── Pro Povo — AdminGraficos.js ──
-import { auth, onAuthStateChanged, signOut } from "./firebase.js";
-import { ehAdmin, ouvirRelatos } from "./db.js";
-import { obterPopulacaoPB, normalizar } from "./populacao.js";
-import { escapeHTML } from "./escapeHtml.js";
+import { auth, onAuthStateChanged, signOut } from "../firebase.js";
+import { ehAdmin, ouvirRelatos } from "../db.js";
+import { obterPopulacaoPB, normalizar } from "../populacao.js";
+import { escapeHTML } from "../escapeHtml.js";
 
 const state = { relatos: [], popMap: new Map(), dadosExport: null };
 let chartAtual = null;
