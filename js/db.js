@@ -151,14 +151,45 @@ export async function atualizarRelatoDoUsuario(relatoId, dados) {
 }
 
 // ── Verificar se o usuário é administrador ──
+// Mantida por compatibilidade (checagem simples, sem papel/cidade). Os
+// painéis administrativos agora usam buscarAdmin() em adminAuth.js, que
+// cobre os dois formatos (legado e novo) e já traz papel/cityId/organizacaoId.
 export async function ehAdmin(uid) {
   const snapshot = await get(ref(db, `admins/${uid}`));
   return snapshot.exists() && snapshot.val() === true;
 }
 
+// ── Buscar dados de uma organização (prefeitura) pelo seu id ──
+export async function buscarOrganizacao(orgId) {
+  if (!orgId) return null;
+  const snapshot = await get(ref(db, `organizacoes/${orgId}`));
+  return snapshot.exists() ? snapshot.val() : null;
+}
+
 // ── Ouvir relatos em tempo real ──
 export function ouvirRelatos(callback) {
   onValue(ref(db, "relatos"), (snapshot) => {
+    const dados = snapshot.val();
+    if (!dados) { callback([]); return; }
+    const lista = Object.entries(dados).map(([id, relato]) => ({ id, ...relato }));
+    lista.sort((a, b) => b.votos - a.votos);
+    callback(lista);
+  });
+}
+
+// ── Ouvir relatos para os painéis administrativos, já escopados por cidade ──
+// Superadmin (cityId null, incluindo o formato legado) continua vendo todos
+// os relatos, igual antes. Um admin de prefeitura (cityId preenchido) só
+// recebe os relatos da própria cidade — a consulta usa o índice "cityId"
+// (adicionado nas regras na Etapa 0) em vez de filtrar tudo no navegador.
+export function ouvirRelatosGestao(admin, callback) {
+  if (!admin || admin.cityId == null) {
+    ouvirRelatos(callback);
+    return;
+  }
+
+  const consulta = query(ref(db, "relatos"), orderByChild("cityId"), equalTo(admin.cityId));
+  onValue(consulta, (snapshot) => {
     const dados = snapshot.val();
     if (!dados) { callback([]); return; }
     const lista = Object.entries(dados).map(([id, relato]) => ({ id, ...relato }));

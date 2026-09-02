@@ -89,6 +89,9 @@
       <div class="relatos-header-inner">
         <h1 class="relatos-title"><i class="ti ti-building-community"></i> Gestão de relatos</h1>
         <p class="relatos-subtitle">Atualize o status, responda e gerencie os relatos da população</p>
+        <span class="painel-escopo-badge" id="painel-escopo-badge">
+          <i class="ti ti-loader-2" style="animation:spin 0.8s linear infinite"></i> Carregando escopo...
+        </span>
       </div>
     </div>
 
@@ -126,6 +129,22 @@
         <i class="ti ti-search busca-icon"></i>
         <input type="text" id="busca-input" class="busca-input" placeholder="Buscar por título ou endereço..." />
       </div>
+
+      <!-- Só aparece pro superadmin — o admin de cidade já vê só a própria cidade -->
+      <select class="filtro-select" id="filtro-cidade" style="display:none;">
+        <option value="">Todas as cidades</option>
+      </select>
+
+      <select class="filtro-select" id="filtro-categoria">
+        <option value="todos">Todas as categorias</option>
+        <option value="Buraco / Via danificada">Buraco / Via danificada</option>
+        <option value="Iluminação pública">Iluminação pública</option>
+        <option value="Lixo / Entulho">Lixo / Entulho</option>
+        <option value="Água / Esgoto">Água / Esgoto</option>
+        <option value="Áreas verdes">Áreas verdes</option>
+        <option value="Outros">Outros</option>
+      </select>
+
       <select class="filtro-select" id="filtro-status">
         <option value="todos">Todos os status</option>
         <option value="aberto">Aberto</option>

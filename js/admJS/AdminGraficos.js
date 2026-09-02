@@ -1,31 +1,71 @@
 // ── Pro Povo — AdminGraficos.js ──
 import { auth, onAuthStateChanged, signOut } from "../firebase.js";
-import { ehAdmin, ouvirRelatos } from "../db.js";
+import { ouvirRelatosGestao, buscarOrganizacao } from "../db.js";
+import { buscarAdmin, ehSuperAdmin } from "./adminAuth.js";
 import { obterPopulacaoPB, normalizar } from "../populacao.js";
 import { escapeHTML } from "../escapeHtml.js";
 
-const state = { relatos: [], popMap: new Map(), dadosExport: null };
+const state = { relatos: [], popMap: new Map(), dadosExport: null, admin: null };
 let chartAtual = null;
 
-// ── Verificação de acesso (mesmo padrão do AdminPage.js) ──
+// ── Esconde/trava opções que não fazem sentido pra um admin restrito a uma
+// única cidade. A visão "cidades com mais relatos por habitante" compara
+// municípios entre si, então some do seletor. O seletor de cidade da visão
+// "bairros" já fica naturalmente restrito (ouvirRelatosGestao só entrega
+// relatos da própria cidade) — aqui só desabilitamos o campo pra deixar isso
+// visualmente claro, sem escrever nenhuma lógica nova de filtragem. ──
+function aplicarRestricoesPorCidade(admin) {
+  if (ehSuperAdmin(admin)) return;
+
+  const selectTipo = document.getElementById('grafico-tipo');
+  selectTipo?.querySelector('option[value="cidades"]')?.remove();
+  if (selectTipo && selectTipo.value === 'cidades') {
+    selectTipo.value = 'bairros';
+  }
+
+  document.getElementById('grafico-filtro-cidade')?.setAttribute('disabled', 'disabled');
+}
+
+// ── Verificação de acesso + escopo por cidade ──
 onAuthStateChanged(auth, async (user) => {
   if (!user) { window.location.href = 'AdmLogin.html'; return; }
 
-  const autorizado = await ehAdmin(user.uid);
-  if (!autorizado) {
+  const admin = await buscarAdmin(user.uid);
+  if (!admin) {
     await signOut(auth);
     window.location.href = 'AdmLogin.html';
     return;
   }
+  state.admin = admin;
 
-  document.getElementById('admin-user-tag').innerHTML =
-    `<i class="ti ti-user-shield"></i> ${escapeHTML(user.displayName || user.email)}`;
-  document.getElementById('admin-user-tag-mobile').innerHTML =
-    `<i class="ti ti-user-shield"></i> ${escapeHTML(user.displayName || user.email)}`;
+  // Busca o nome da prefeitura (quando o admin pertence a uma organização) só
+  // uma vez aqui, e reaproveita tanto no "crachá" quanto no selo de escopo.
+  let org = null;
+  if (admin.organizacaoId) {
+    try {
+      org = await buscarOrganizacao(admin.organizacaoId);
+    } catch (e) {
+      console.warn('Não foi possível carregar os dados da organização:', e);
+    }
+  }
+
+  const tagHTML = `<i class="ti ti-user-shield"></i> ${escapeHTML(user.displayName || user.email)}${org?.nome ? escapeHTML(' · ' + org.nome) : ''}`;
+  document.getElementById('admin-user-tag').innerHTML = tagHTML;
+  document.getElementById('admin-user-tag-mobile').innerHTML = tagHTML;
+
+  const badgeEl = document.getElementById('painel-escopo-badge');
+  if (badgeEl) {
+    badgeEl.innerHTML = ehSuperAdmin(admin)
+      ? '<i class="ti ti-world"></i> Visão de todas as cidades'
+      : `<i class="ti ti-map-pin"></i> ${escapeHTML(org?.cidadeNome || 'Cidade não identificada')}`;
+  }
+
   document.getElementById('verificando').style.display = 'none';
   document.getElementById('painel-conteudo').style.display = 'block';
 
-  ouvirRelatos((relatos) => {
+  aplicarRestricoesPorCidade(admin);
+
+  ouvirRelatosGestao(admin, (relatos) => {
     state.relatos = relatos;
     atualizarSeletorCidades();
     renderizar();

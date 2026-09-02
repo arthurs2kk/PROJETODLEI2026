@@ -1,6 +1,6 @@
 // ── Pro Povo — admin-login.js ──
 import { auth, signInWithEmailAndPassword, signOut } from "../firebase.js";
-import { ehAdmin } from "../db.js";
+import { buscarAdmin } from "./adminAuth.js";
 
 // ── Mostrar/ocultar senha ──
 document.getElementById('toggle-admin-senha')?.addEventListener('click', () => {
@@ -39,9 +39,13 @@ document.getElementById('btn-admin-login')?.addEventListener('click', async () =
 
   try {
     const cred = await signInWithEmailAndPassword(auth, email, senha);
-    const autorizado = await ehAdmin(cred.user.uid);
 
-    if (!autorizado) {
+    // buscarAdmin() aceita tanto o formato novo (objeto com papel/cityId/ativo)
+    // quanto o formato legado (admins/{uid} === true, tratado como superadmin).
+    // Retorna null se a conta não for admin OU se o admin estiver desativado.
+    const admin = await buscarAdmin(cred.user.uid);
+
+    if (!admin) {
       await signOut(auth);
       showToast('🚫 Essa conta não tem permissão de administrador.');
       btn.disabled = false;
