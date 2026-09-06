@@ -1,5 +1,5 @@
 // ── Pro Povo — relatos.js ──
-import { ouvirRelatos } from "../db.js";
+import { buscarRelatosPagina, obterCidadesComRelatos, ouvirContadores } from "../db.js";
 import { initNavbar } from "../navbar.js";
 import { otimizarImagem } from "../cloudinary.js";
 import { normalizar } from "../populacao.js";
@@ -8,14 +8,19 @@ import { escapeHTML } from "../escapeHtml.js";
 // ── Navbar (login/cadastro/nome do usuário/sair/perfil) ──
 initNavbar();
 
+const TAMANHO_PAGINA = 30;
+
 const state = {
-  todos: [],
+  todos: [],          // relatos já carregados (todas as páginas somadas)
+  totalGeral: 0,       // total real, vindo de metadados/contadores
   busca: '',
   cidade: '',
   categoria: 'todos',
   status: 'todos',
-  sortCol: 'votos',
-  sortDir: 'desc'
+  sortCol: 'dataCriacao',
+  sortDir: 'desc',
+  temMais: false,
+  carregando: false
 };
 
 // ── Extrai a cidade de um relato ──
@@ -30,37 +35,6 @@ function extrairCidade(r) {
   return idxPB > 0 ? (partes[idxPB - 1] || null) : null;
 }
 
-// ── Monta a lista de cidades com relatos, para o seletor ──
-function listaCidadesComRelatos(relatos) {
-  const set = new Set();
-  relatos.forEach(r => {
-    const cidade = extrairCidade(r);
-    if (cidade) set.add(cidade);
-  });
-  return [...set].sort((a, b) => a.localeCompare(b, 'pt-BR'));
-}
-
-// ── Atualiza as opções do seletor de cidade, mantendo a seleção atual se possível ──
-function atualizarSeletorCidades() {
-  const select = document.getElementById('filtro-cidade');
-  if (!select) return;
-
-  const cidades = listaCidadesComRelatos(state.todos);
-  select.replaceChildren();
-  cidades.forEach(cidade => select.appendChild(new Option(cidade, cidade)));
-
-  if (cidades.includes(state.cidade)) {
-    select.value = state.cidade;
-  } else {
-    state.cidade = cidades[0] || '';
-    select.value = state.cidade;
-  }
-}
-
-document.getElementById('filtro-cidade')?.addEventListener('change', (e) => {
-  state.cidade = e.target.value;
-  render();
-});
 // ── Configurações visuais por categoria/status ──
 const CATS = {
   'Buraco / Via danificada': { label: 'Buraco',       badge: 'badge-buraco' },
@@ -77,10 +51,25 @@ const STATUS = {
   resolvido: { label: 'Resolvido',    css: 'status-resolvido' },
 };
 
-// ── Carregar dados em tempo real ──
-ouvirRelatos((relatos) => {
-  state.todos = relatos;
-  atualizarSeletorCidades();
+// ── Seletor de cidade: vem de metadados/cidades, não da página carregada ──
+// (assim ele já mostra todas as cidades desde o início, sem depender de
+// quantas páginas de relatos já foram baixadas)
+async function preencherSeletorCidades() {
+  const select = document.getElementById('filtro-cidade');
+  if (!select) return;
+
+  try {
+    const cidades = (await obterCidadesComRelatos()).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+    select.replaceChildren(new Option('Todas as cidades', ''));
+    cidades.forEach(cidade => select.appendChild(new Option(cidade, cidade)));
+    select.value = state.cidade;
+  } catch (e) {
+    console.warn('Não foi possível carregar a lista de cidades:', e);
+  }
+}
+
+document.getElementById('filtro-cidade')?.addEventListener('change', (e) => {
+  state.cidade = e.target.value;
   render();
 });
 
@@ -115,6 +104,47 @@ document.querySelectorAll('th[data-sort]').forEach(th => {
   });
 });
 
+// ── Paginação: carrega em lotes de TAMANHO_PAGINA, do mais recente pro mais
+// antigo. Isso substitui o antigo "baixar a tabela inteira de uma vez". ──
+async function carregarProximaPagina() {
+  if (state.carregando || (!state.temMais && state.todos.length > 0)) return;
+  state.carregando = true;
+  atualizarBotaoCarregarMais();
+
+  const ultimo = state.todos[state.todos.length - 1];
+  const cursor = ultimo ? { dataCriacao: ultimo.dataCriacao, id: ultimo.id } : null;
+
+  try {
+    const { itens, temMais } = await buscarRelatosPagina(cursor, TAMANHO_PAGINA);
+    state.todos.push(...itens);
+    state.temMais = temMais;
+  } catch (e) {
+    console.error('Não foi possível carregar os relatos:', e);
+  } finally {
+    state.carregando = false;
+    render();
+  }
+}
+
+function atualizarBotaoCarregarMais() {
+  const btn = document.getElementById('btn-carregar-mais');
+  if (!btn) return;
+  const mostrar = state.temMais || state.carregando;
+  btn.style.display = mostrar ? 'inline-flex' : 'none';
+  btn.disabled = state.carregando;
+  btn.innerHTML = state.carregando
+    ? '<i class="ti ti-loader-2" style="animation:spin 0.8s linear infinite"></i> Carregando...'
+    : '<i class="ti ti-chevron-down"></i> Carregar mais relatos';
+}
+
+document.getElementById('btn-carregar-mais')?.addEventListener('click', carregarProximaPagina);
+
+// ── Total real de relatos (não depende de quanto já foi carregado) ──
+ouvirContadores((contadores) => {
+  state.totalGeral = contadores.total || 0;
+  render();
+});
+
 // ── Renderização principal ──
 function render() {
   let lista = [...state.todos];
@@ -145,7 +175,13 @@ function render() {
   const empty = document.getElementById('tabela-empty');
   const contagem = document.getElementById('relatos-contagem');
 
-  contagem.textContent = `Mostrando ${lista.length} relato${lista.length !== 1 ? 's' : ''} de ${state.todos.length} no total`;
+  const filtroAtivo = Boolean(state.busca || state.categoria !== 'todos' || state.status !== 'todos' || state.cidade);
+
+  let texto = `Mostrando ${lista.length} de ${state.todos.length} relato${state.todos.length !== 1 ? 's' : ''} carregado${state.todos.length !== 1 ? 's' : ''}`;
+  if (state.totalGeral) texto += ` (${state.totalGeral} no total)`;
+  if (filtroAtivo && state.temMais) texto += ' — clique em "Carregar mais" pra incluir relatos mais antigos nesse filtro';
+  contagem.textContent = texto;
+
   empty.style.display = lista.length === 0 ? 'block' : 'none';
 
   tbody.innerHTML = lista.map(linhaHTML).join('');
@@ -153,6 +189,8 @@ function render() {
   tbody.querySelectorAll('.btn-tabela-detalhe').forEach((btn, i) => {
     btn.addEventListener('click', () => abrirDetalhe(lista[i]));
   });
+
+  atualizarBotaoCarregarMais();
 }
 
 // ── Linha da tabela ──
@@ -201,3 +239,12 @@ document.getElementById('detalhe-fechar-btn')?.addEventListener('click', fecharD
 function fecharDetalhe() {
   document.getElementById('modal-detalhe-overlay').classList.remove('open');
 }
+
+// ── Spinner (usado no botão "Carregar mais") ──
+const s = document.createElement('style');
+s.textContent = `@keyframes spin { to { transform: rotate(360deg); } }`;
+document.head.appendChild(s);
+
+// ── Inicialização ──
+preencherSeletorCidades();
+carregarProximaPagina(); // primeira página

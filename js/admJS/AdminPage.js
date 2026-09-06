@@ -1,13 +1,11 @@
 // ── Pro Povo — admin-painel.js ──
 import { auth, onAuthStateChanged, signOut } from "../firebase.js";
-import { ouvirRelatosGestao, atualizarStatus, salvarResposta, excluirRelato, buscarUsuario, buscarOrganizacao } from "../db.js";
-import { buscarAdmin, ehSuperAdmin } from "./adminAuth.js";
+import { ehAdmin, ouvirRelatos, atualizarStatus, salvarResposta, excluirRelato, buscarUsuario } from "../db.js";
 import { otimizarImagem } from "../cloudinary.js";
 import { notificarMudancaStatus, notificarNovaResposta } from "../notificacoes.js";
 import { escapeHTML } from "../escapeHtml.js";
-import { normalizar } from "../populacao.js";
 
-const state = { todos: [], busca: '', status: 'todos', categoria: 'todos', cidade: '', bairro: '', admin: null };
+const state = { todos: [], busca: '', status: 'todos' };
 
 // ── SLA: depois de quantos dias sem solução um relato é considerado atrasado ──
 // Contado a partir da data de criação do relato. Fica isolado aqui pra ser
@@ -44,133 +42,26 @@ function notificarAutor(relato, enviar) {
     .catch(erro => console.warn('Não foi possível carregar os dados do autor pra notificar:', erro));
 }
 
-// ── Extrai cidade e bairro "legíveis" de um relato. Mesmo padrão de fallback
-// usado em relatos.js e AdminGraficos.js: prioriza os campos cidade/bairro
-// (já vêm do Nominatim em relatos novos), com fallback lendo o texto do
-// endereço pros relatos antigos que não têm esses campos. ──
-function extrairCidadeBairro(r) {
-  if (r.cidade) return { cidade: r.cidade, bairro: r.bairro || null };
-
-  const partes = (r.endereco || '').split(',').map(p => p.trim()).filter(Boolean);
-  const idxPB = partes.findIndex(p => normalizar(p).includes('paraiba'));
-  if (idxPB > 0) {
-    const cidade = partes[idxPB - 1] || null;
-    const bairro = idxPB - 2 >= 0 ? partes[idxPB - 2] : null;
-    return { cidade, bairro };
-  }
-  return { cidade: null, bairro: null };
-}
-
-function extrairCidade(r) {
-  return extrairCidadeBairro(r).cidade;
-}
-
-function listaCidadesComRelatos(relatos) {
-  const set = new Set();
-  relatos.forEach(r => {
-    const cidade = extrairCidade(r);
-    if (cidade) set.add(cidade);
-  });
-  return [...set].sort((a, b) => a.localeCompare(b, 'pt-BR'));
-}
-
-// ── Atualiza as opções do filtro de cidade — só relevante pro superadmin,
-// já que um admin de cidade só recebe relatos da própria cidade mesmo
-// (o select fica escondido no HTML pra ele, então isso é um no-op nesse caso). ──
-function atualizarSeletorCidades() {
-  if (!ehSuperAdmin(state.admin)) return;
-
-  const select = document.getElementById('filtro-cidade');
-  if (!select) return;
-
-  const atual = select.value;
-  const cidades = listaCidadesComRelatos(state.todos);
-
-  select.replaceChildren(new Option('Todas as cidades', ''));
-  cidades.forEach(cidade => select.appendChild(new Option(cidade, cidade)));
-  select.value = cidades.includes(atual) ? atual : '';
-}
-
-// ── Lista os bairros com relatos, opcionalmente restrita a uma cidade.
-// Pro admin de cidade (state.cidade sempre '', já que o seletor de cidade
-// nem aparece pra ele), considera todos os relatos — que já vêm só da
-// própria cidade via ouvirRelatosGestao. Pro superadmin, se uma cidade
-// estiver selecionada no filtro, só entram os bairros dessa cidade. ──
-function listaBairrosComRelatos(relatos, cidadeFiltro) {
-  const set = new Set();
-  relatos.forEach(r => {
-    const { cidade, bairro } = extrairCidadeBairro(r);
-    if (cidadeFiltro && normalizar(cidade) !== normalizar(cidadeFiltro)) return;
-    if (bairro) set.add(bairro);
-  });
-  return [...set].sort((a, b) => a.localeCompare(b, 'pt-BR'));
-}
-
-// ── Atualiza as opções do filtro de bairro, sempre reagindo à cidade
-// selecionada no momento (ou a todos os relatos visíveis, se nenhuma
-// cidade estiver selecionada — caso do admin de cidade, ou do superadmin
-// olhando "todas as cidades"). ──
-function atualizarSeletorBairros() {
-  const select = document.getElementById('filtro-bairro');
-  if (!select) return;
-
-  const atual = select.value;
-  const bairros = listaBairrosComRelatos(state.todos, state.cidade);
-
-  select.replaceChildren(new Option('Todos os bairros', ''));
-  bairros.forEach(bairro => select.appendChild(new Option(bairro, bairro)));
-  select.value = bairros.includes(atual) ? atual : '';
-  if (select.value !== atual) state.bairro = select.value;
-}
-
-// ── Verificação de acesso + escopo por cidade ──
+// ── Verificação de acesso ──
 onAuthStateChanged(auth, async (user) => {
   if (!user) { window.location.href = 'AdmLogin.html'; return; }
 
-  const admin = await buscarAdmin(user.uid);
-  if (!admin) {
+  const autorizado = await ehAdmin(user.uid);
+  if (!autorizado) {
     await signOut(auth);
     window.location.href = 'AdmLogin.html';
     return;
   }
-  state.admin = admin;
 
-  // Busca o nome da prefeitura (quando o admin pertence a uma organização) só
-  // uma vez aqui, e reaproveita tanto no "crachá" quanto no selo de escopo.
-  let org = null;
-  if (admin.organizacaoId) {
-    try {
-      org = await buscarOrganizacao(admin.organizacaoId);
-    } catch (e) {
-      console.warn('Não foi possível carregar os dados da organização:', e);
-    }
-  }
-
-  const tagHTML = `<i class="ti ti-user-shield"></i> ${escapeHTML(user.displayName || user.email)}${org?.nome ? escapeHTML(' · ' + org.nome) : ''}`;
-  document.getElementById('admin-user-tag').innerHTML = tagHTML;
-  document.getElementById('admin-user-tag-mobile').innerHTML = tagHTML;
-
-  const badgeEl = document.getElementById('painel-escopo-badge');
-  if (badgeEl) {
-    badgeEl.innerHTML = ehSuperAdmin(admin)
-      ? '<i class="ti ti-world"></i> Visão de todas as cidades'
-      : `<i class="ti ti-map-pin"></i> ${escapeHTML(org?.cidadeNome || 'Cidade não identificada')}`;
-  }
-
-  // O filtro de cidade só faz sentido pra quem vê mais de uma cidade
-  if (ehSuperAdmin(admin)) {
-    document.getElementById('filtro-cidade')?.style.setProperty('display', '');
-  }
-
+  document.getElementById('admin-user-tag').innerHTML =
+    `<i class="ti ti-user-shield"></i> ${escapeHTML(user.displayName || user.email)}`;
+  document.getElementById('admin-user-tag-mobile').innerHTML =
+    `<i class="ti ti-user-shield"></i> ${escapeHTML(user.displayName || user.email)}`;
   document.getElementById('verificando').style.display = 'none';
   document.getElementById('painel-conteudo').style.display = 'block';
 
-  // ouvirRelatosGestao já filtra por cityId automaticamente quando o admin
-  // não é superadmin — o resto do painel não precisa saber disso.
-  ouvirRelatosGestao(admin, (relatos) => {
+  ouvirRelatos((relatos) => {
     state.todos = relatos;
-    atualizarSeletorCidades();
-    atualizarSeletorBairros();
     render();
   });
 });
@@ -186,27 +77,13 @@ document.getElementById('btn-sair-mobile')?.addEventListener('click', async () =
 });
 
 
-// ── Busca e filtros ──
+// ── Busca e filtro ──
 document.getElementById('busca-input')?.addEventListener('input', (e) => {
   state.busca = e.target.value.trim().toLowerCase();
   render();
 });
 document.getElementById('filtro-status')?.addEventListener('change', (e) => {
   state.status = e.target.value;
-  render();
-});
-document.getElementById('filtro-categoria')?.addEventListener('change', (e) => {
-  state.categoria = e.target.value;
-  render();
-});
-document.getElementById('filtro-cidade')?.addEventListener('change', (e) => {
-  state.cidade = e.target.value;
-  state.bairro = ''; // bairro pertence a uma cidade específica — troca de cidade invalida a seleção anterior
-  atualizarSeletorBairros();
-  render();
-});
-document.getElementById('filtro-bairro')?.addEventListener('change', (e) => {
-  state.bairro = e.target.value;
   render();
 });
 
@@ -223,16 +100,6 @@ function render() {
     );
   }
 
-  if (state.categoria !== 'todos') lista = lista.filter(r => r.categoria === state.categoria);
-
-  if (state.cidade) {
-    lista = lista.filter(r => normalizar(extrairCidade(r)) === normalizar(state.cidade));
-  }
-
-  if (state.bairro) {
-    lista = lista.filter(r => normalizar(extrairCidadeBairro(r).bairro) === normalizar(state.bairro));
-  }
-
   // "atrasados" não é um status de verdade — é calculado, então trata à parte
   if (state.status === 'atrasados') {
     lista = lista.filter(estaAtrasado);
@@ -242,9 +109,7 @@ function render() {
 
   lista.sort((a, b) => b.dataCriacao - a.dataCriacao);
 
-  // Resumo (sempre com todos os relatos, não filtrado — mas já vem escopado
-  // por cidade quando aplicável, então "todos" aqui já significa "todos os
-  // relatos que esse admin tem permissão de ver")
+  // Resumo (sempre com todos os relatos, não filtrado)
   const atrasados  = state.todos.filter(estaAtrasado);
   const tempoMedio = calcularTempoMedioResolucao(state.todos);
 
@@ -270,7 +135,7 @@ function render() {
 
     document.getElementById(`status-${r.id}`)?.addEventListener('change', async (e) => {
       const novoStatus = e.target.value;
-      await atualizarStatus(r.id, novoStatus);
+      await atualizarStatus(r.id, novoStatus, r.status);
       showToast('✅ Status atualizado.');
       notificarAutor(r, (usuario) => notificarMudancaStatus(usuario, r, novoStatus));
     });
@@ -289,7 +154,7 @@ function render() {
 
     document.getElementById(`btn-excluir-${r.id}`)?.addEventListener('click', async () => {
       if (confirm(`Excluir o relato "${r.titulo}"? Essa ação não pode ser desfeita.`)) {
-        await excluirRelato(r.id);
+        await excluirRelato(r.id, r);
         showToast('🗑️ Relato excluído.');
       }
     });

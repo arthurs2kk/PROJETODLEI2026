@@ -13,6 +13,16 @@ export function normalizar(s) {
     .toLowerCase().trim();
 }
 
+// Transforma um texto (categoria, cidade, etc.) numa chave segura pra usar como
+// nó no Realtime Database. Chaves do Firebase não podem conter ".", "#", "$",
+// "[", "]" nem, de preferência, espaços — por isso normalizamos e trocamos
+// qualquer caractere fora de a-z0-9 por "_".
+// Ex: "Buraco / Via danificada" → "buraco_via_danificada"
+export function paraChaveFirebase(s) {
+  const chave = normalizar(s).replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+  return chave || 'outros';
+}
+
 // Retorna um Map: nome normalizado da cidade → população estimada (número).
 // Em caso de falha na API, retorna um Map vazio (o gráfico degrada de forma graciosa).
 export async function obterPopulacaoPB() {

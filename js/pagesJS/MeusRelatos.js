@@ -69,7 +69,7 @@ function render() {
     document.getElementById(`btn-editar-${r.id}`)?.addEventListener('click', () => abrirEdicao(r));
     document.getElementById(`btn-excluir-${r.id}`)?.addEventListener('click', async () => {
       if (confirm(`Excluir o relato "${r.titulo}"? Essa ação não pode ser desfeita.`)) {
-        await excluirRelato(r.id);
+        await excluirRelato(r.id, r);
         showToast('🗑️ Relato excluído.');
       }
     });

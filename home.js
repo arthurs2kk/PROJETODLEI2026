@@ -1,10 +1,11 @@
 // ── Pro Povo — app.js ──
 import { auth, onAuthStateChanged } from "./js/firebase.js";
-import { criarRelato, ouvirRelatos, votar, jaVotou, tempoRestanteParaEnviar } from "./js/db.js";
+import { criarRelato, ouvirRelatosDestaque, ouvirRelatosRecentes, ouvirContadores, votar, jaVotou, tempoRestanteParaEnviar } from "./js/db.js";
 import { buscarComDebounce, estaNaParaiba } from "./js/endereco.js";
 import { otimizarImagem } from "./js/cloudinary.js";
 import { initNavbar } from "./js/navbar.js";
 import { escapeHTML } from "./js/escapeHtml.js";
+import { paraChaveFirebase } from "./js/populacao.js";
 
 
 // ── Estado ──
@@ -217,23 +218,41 @@ function limparFormulario() {
   if (area) area.innerHTML = `<i class="ti ti-photo"></i><strong>Clique para adicionar uma foto</strong><span>JPG, PNG ou HEIC · máx. 10 MB</span><input type="file" id="f-foto" accept="image/*" style="display:none" />`;
 }
 
-// ── Carregar relatos do banco em tempo real ──
-ouvirRelatos(async (relatos) => {
-  state.relatosDoBanco = relatos;
-  await renderCards();
-  atualizarEstatisticas(relatos);
-  atualizarContadoresCategoria(relatos);
+// ── Feed em destaque: busca só um lote limitado, não a tabela inteira ──
+// A home sempre baixa, no máximo, TAMANHO_FEED relatos (os mais votados ou os
+// mais recentes, dependendo do "Ordenar por"). Isso evita que a página
+// inicial — a mais visitada do site — baixe o banco inteiro a cada visita.
+const TAMANHO_FEED = 50;
+let pararDeOuvirFeed = null;
+
+function carregarFeed() {
+  if (pararDeOuvirFeed) pararDeOuvirFeed();
+
+  const ouvir = state.sort === 'recentes' ? ouvirRelatosRecentes : ouvirRelatosDestaque;
+  pararDeOuvirFeed = ouvir(async (relatos) => {
+    state.relatosDoBanco = relatos;
+    await renderCards();
+  }, TAMANHO_FEED);
+}
+
+carregarFeed();
+
+// ── Contadores agregados: total, por status e por categoria ──
+// Vêm de metadados/contadores (mantido em db.js), então continuam mostrando o
+// número REAL mesmo a amostra do feed acima sendo limitada a TAMANHO_FEED.
+ouvirContadores((contadores) => {
+  atualizarEstatisticas(contadores);
+  atualizarContadoresCategoria(contadores);
 });
 
-function atualizarContadoresCategoria(relatos) {
+function atualizarContadoresCategoria(contadores) {
   const todos = document.querySelector('#cat-filters .filter-btn[data-cat="todos"] .fcount');
-  if (todos) todos.textContent = relatos.length;
+  if (todos) todos.textContent = contadores.total || 0;
 
   document.querySelectorAll('#cat-filters .filter-btn[data-cat]:not([data-cat="todos"])').forEach(btn => {
-    const cat = btn.dataset.cat;
-    const count = relatos.filter(r => r.categoria === cat).length;
+    const chave = paraChaveFirebase(btn.dataset.cat);
     const span = btn.querySelector('.fcount');
-    if (span) span.textContent = count;
+    if (span) span.textContent = (contadores.porCategoria && contadores.porCategoria[chave]) || 0;
   });
 }
 
@@ -345,10 +364,6 @@ function cardHTML(r) {
     resolvido: { label: 'Resolvido',    css: 'status-resolvido', icon: 'ti-circle-check'  },
   };
 
-  // "cats.outros" (minúsculo) nunca existia como chave — se um relato tivesse uma
-  // categoria fora da lista (rules do banco só validam tamanho, não valor), isso
-  // deixava `cat` undefined e quebrava a renderização da home inteira. Corrigido
-  // para usar a chave real ("Outros", com O maiúsculo).
   const cat = cats[r.categoria] || cats['Outros'];
   const st  = status[r.status]     || status.aberto;
   const foto = r.fotoUrl
@@ -398,15 +413,11 @@ function tempoRelativo(ts) {
   return `Há ${d} dia${d > 1 ? 's' : ''}`;
 }
 
-// ── Atualizar estatísticas do hero ──
-function atualizarEstatisticas(relatos) {
-  const total     = relatos.length;
-  const resolvidos = relatos.filter(r => r.status === 'resolvido').length;
-  const andamento  = relatos.filter(r => r.status === 'andamento').length;
-
-  animarNumero('stat-relatos',   total);
-  animarNumero('stat-resolvidos', resolvidos);
-  animarNumero('stat-andamento',  andamento);
+// ── Atualizar estatísticas do hero (a partir dos contadores agregados) ──
+function atualizarEstatisticas(contadores) {
+  animarNumero('stat-relatos',    contadores.total || 0);
+  animarNumero('stat-resolvidos', (contadores.porStatus && contadores.porStatus.resolvido) || 0);
+  animarNumero('stat-andamento',  (contadores.porStatus && contadores.porStatus.andamento) || 0);
 }
 
 function animarNumero(id, target) {
@@ -443,7 +454,7 @@ document.getElementById('status-filters')?.addEventListener('click', (e) => {
 
 document.getElementById('sort-select')?.addEventListener('change', (e) => {
   state.sort = e.target.value;
-  renderCards();
+  carregarFeed();
 });
 
 document.getElementById('btn-limpar')?.addEventListener('click', () => {
