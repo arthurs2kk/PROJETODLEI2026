@@ -12,7 +12,7 @@ const TAMANHO_PAGINA = 30;
 
 const state = {
   todos: [],          // relatos já carregados (todas as páginas somadas)
-  totalGeral: 0,       // total real, vindo de metadados/contadores
+  totalGeral: 0,       // total real, calculado a partir dos relatos públicos
   busca: '',
   cidade: '',
   categoria: 'todos',
@@ -51,7 +51,7 @@ const STATUS = {
   resolvido: { label: 'Resolvido',    css: 'status-resolvido' },
 };
 
-// ── Seletor de cidade: vem de metadados/cidades, não da página carregada ──
+// ── Seletor de cidade: derivado dos relatos públicos, não só da página carregada ──
 // (assim ele já mostra todas as cidades desde o início, sem depender de
 // quantas páginas de relatos já foram baixadas)
 async function preencherSeletorCidades() {
@@ -197,6 +197,7 @@ function render() {
 function linhaHTML(r) {
   const cat = CATS[r.categoria]  || CATS['Outros'];
   const st  = STATUS[r.status]   || STATUS.aberto;
+  const votos = Number.isFinite(Number(r.votos)) ? Math.max(0, Number(r.votos)) : 0;
   const data = new Date(r.dataCriacao).toLocaleDateString('pt-BR');
 
   return `
@@ -205,7 +206,7 @@ function linhaHTML(r) {
       <td data-label="Categoria"><span class="badge ${cat.badge}">${cat.label}</span></td>
       <td data-label="Status"><span class="status ${st.css}">${st.label}</span></td>
       <td class="td-endereco" data-label="Endereço">${escapeHTML(r.endereco)}</td>
-      <td class="td-votos" data-label="Votos">${r.votos || 0}</td>
+      <td class="td-votos" data-label="Votos">${votos}</td>
       <td data-label="Data">${data}</td>
       <td class="td-acao" data-label=""><button class="btn-tabela-detalhe">Ver detalhes</button></td>
     </tr>`;

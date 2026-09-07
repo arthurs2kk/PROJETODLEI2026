@@ -3,10 +3,11 @@
 
 import {
   auth, db,
-  ref, push, set, get, onValue, update, runTransaction,
+  ref, set, get, onValue, update, push,
   query, orderByChild, equalTo, limitToLast, endAt
 } from "./firebase.js";
 import { uploadImagem } from "./cloudinary.js";
+import { resolverCityId } from "./cidades.js";
 import { paraChaveFirebase } from "./populacao.js";
 
 // ── Salvar usuário após cadastro ──
@@ -55,30 +56,55 @@ export async function tempoRestanteParaEnviar(uid) {
   return restante > 0 ? restante : 0;
 }
 
-// ── Contadores agregados (metadados/contadores) ──
-// Guardam o total de relatos e quantos existem por status e por categoria, pra
-// telas como a home mostrarem números certos sem baixar (e somar) a tabela
-// inteira. Atualizados via transaction — o mesmo padrão já usado no contador
-// de votos — então funcionam com vários usuários mexendo ao mesmo tempo.
-//
-// IMPORTANTE: isso exige que as regras do Firebase permitam usuários
-// autenticados escreverem em metadados/contadores/* (só ±1 por vez, ou
-// qualquer valor na primeira gravação — veja a regra sugerida à parte).
-// Se a regra ainda não existir, essas transactions falham silenciosamente
-// (viram um aviso no console) sem quebrar a criação do relato em si.
-function incrementarContador(caminho, delta) {
-  return runTransaction(ref(db, caminho), (atual) => (atual || 0) + delta)
-    .catch(e => console.warn(`Não foi possível atualizar o contador em "${caminho}" (confira as regras do Firebase):`, e));
-}
-
+// ── Contadores calculados a partir dos relatos públicos ──
+// Sem backend não existe um agregador confiável para manter contadores gravados.
+// Por isso eles são derivados, somente em memória, da fonte de verdade protegida.
 export function ouvirContadores(callback) {
-  return onValue(ref(db, "metadados/contadores"), (snapshot) => {
-    callback(snapshot.val() || { total: 0, porStatus: {}, porCategoria: {} });
+  return onValue(ref(db, "relatos"), (snapshot) => {
+    const contadores = { total: 0, porStatus: {}, porCategoria: {} };
+    for (const relato of Object.values(snapshot.val() || {})) {
+      contadores.total += 1;
+      const status = paraChaveFirebase(relato.status);
+      const categoria = paraChaveFirebase(relato.categoria);
+      contadores.porStatus[status] = (contadores.porStatus[status] || 0) + 1;
+      contadores.porCategoria[categoria] = (contadores.porCategoria[categoria] || 0) + 1;
+    }
+    callback(contadores);
+  }, (erro) => {
+    console.warn("Não foi possível carregar os contadores:", erro);
+    callback({ total: 0, porStatus: {}, porCategoria: {} });
   });
 }
 
 // ── Criar novo relato ──
 export async function criarRelato(dados, fotoFile) {
+  if (!auth.currentUser || auth.currentUser.uid !== dados.autorId) {
+    throw new Error('Usuário autenticado inválido.');
+  }
+
+  // Atualiza a claim email_verified usada pelas regras do banco.
+  await auth.currentUser.getIdToken(true);
+
+  const cityId = dados.cityId || await resolverCityId(dados.cidade);
+  if (!cityId) {
+    const erro = new Error('Selecione uma cidade válida da Paraíba.');
+    erro.code = 'CIDADE_INVALIDA';
+    throw erro;
+  }
+
+  const perfil = await buscarUsuario(dados.autorId);
+  if (!perfil?.nome) {
+    throw new Error('Complete seu perfil antes de enviar um relato.');
+  }
+
+  // Evita um upload órfão no fluxo normal; a verificação definitiva e imune a
+  // concorrência continua sendo feita pelas Rules na gravação atômica abaixo.
+  if (await tempoRestanteParaEnviar(dados.autorId) > 0) {
+    const erro = new Error('Aguarde antes de enviar outro relato.');
+    erro.code = 'LIMITE_ENVIO';
+    throw erro;
+  }
+
   let fotoUrl = null;
 
   // Upload da foto via Cloudinary (se houver)
@@ -86,53 +112,46 @@ export async function criarRelato(dados, fotoFile) {
     fotoUrl = await uploadImagem(fotoFile);
   }
 
-  const novoRef = push(ref(db, "relatos"));
   const agora = Date.now();
-
-  const dadosRelato = {
+  const novoRef = push(ref(db, 'relatos'));
+  const relato = {
     titulo:      dados.titulo,
     categoria:   dados.categoria,
     descricao:   dados.descricao,
     endereco:    dados.endereco,
-    lat:         dados.lat || null,
-    lng:         dados.lng || null,
-    cidade:      dados.cidade || null,
-    bairro:      dados.bairro || null,
-    fotoUrl:     fotoUrl,
-    status:      "aberto",
+    lat:         dados.lat,
+    lng:         dados.lng,
+    cidade:      dados.cidade,
+    cityId,
+    status:      'aberto',
     votos:       0,
     autorId:     dados.autorId,
-    autorNome:   dados.autorNome,
+    autorNome:   perfil.nome,
     dataCriacao: agora
   };
+  if (dados.bairro) relato.bairro = dados.bairro;
+  if (fotoUrl) relato.fotoUrl = fotoUrl;
 
-  const atualizacoes = {
-    [`relatos/${novoRef.key}`]:        dadosRelato,
-    [`limitesEnvio/${dados.autorId}`]: agora
-  };
-
-  // Mantém metadados/cidades atualizado (é só um "set" idempotente, barato) pra
-  // a tela "Todos os relatos" ter a lista de cidades sem escanear o banco todo.
-  if (dados.cidade) {
-    atualizacoes[`metadados/cidades/${paraChaveFirebase(dados.cidade)}`] = dados.cidade;
-  }
-
+  // As Rules só aceitam a criação se relato e cooldown forem atualizados juntos.
+  // O cliente não consegue criar um relato isolado, forjar votos/status nem
+  // reutilizar um timestamp para contornar o intervalo mínimo.
   try {
-    await update(ref(db), atualizacoes);
-  } catch (e) {
-    if (e.code === 'PERMISSION_DENIED') {
-      const erro = new Error('Você precisa aguardar antes de enviar outro relato.');
-      erro.code = 'LIMITE_ENVIO';
-      throw erro;
+    await update(ref(db), {
+      [`relatos/${novoRef.key}`]: relato,
+      [`limitesEnvio/${dados.autorId}`]: agora
+    });
+  } catch (erro) {
+    if (String(erro.code || '').includes('permission-denied')) {
+      try {
+        if (await tempoRestanteParaEnviar(dados.autorId) > 0) {
+          erro.code = 'LIMITE_ENVIO';
+        }
+      } catch (_) {
+        // Mantém o erro original quando nem o cooldown pode ser consultado.
+      }
     }
-    throw e;
+    throw erro;
   }
-
-  // Contadores agregados. Cada um é uma transaction separada — se uma delas
-  // falhar por qualquer motivo, o relato em si já está salvo e visível.
-  incrementarContador('metadados/contadores/total', 1);
-  incrementarContador('metadados/contadores/porStatus/aberto', 1);
-  incrementarContador(`metadados/contadores/porCategoria/${paraChaveFirebase(dados.categoria)}`, 1);
 
   return novoRef.key;
 }
@@ -183,17 +202,15 @@ export async function atualizarRelatoDoUsuario(relatoId, dados) {
   });
 }
 
-// ── Verificar se o usuário é administrador ──
-export async function ehAdmin(uid) {
-  const snapshot = await get(ref(db, `admins/${uid}`));
-  return snapshot.exists() && snapshot.val() === true;
+export async function buscarOrganizacao(organizacaoId) {
+  if (!organizacaoId) return null;
+  const snapshot = await get(ref(db, `organizacoes/${organizacaoId}`));
+  return snapshot.exists() ? snapshot.val() : null;
 }
 
 // ── Ouvir TODOS os relatos em tempo real ──
-// Usado hoje só pelo mapa e pelo painel administrativo (mapa.js, AdminPage.js,
-// AdminGraficos.js) — telas que legitimamente precisam enxergar o conjunto
-// inteiro (ou quase) e que têm um público muito menor que a home/relatos
-// públicos. Para as páginas de maior tráfego, use as funções paginadas abaixo.
+// Usado pelo mapa público e por superadministradores. Administradores municipais
+// devem usar ouvirRelatosGestao, que limita a consulta ao cityId autorizado.
 export function ouvirRelatos(callback) {
   return onValue(ref(db, "relatos"), (snapshot) => {
     const dados = snapshot.val();
@@ -241,8 +258,8 @@ const TAMANHO_PAGINA_PADRAO = 30;
 // quando dois deles têm exatamente o mesmo timestamp.
 export async function buscarRelatosPagina(cursor = null, tamanho = TAMANHO_PAGINA_PADRAO) {
   const consulta = cursor
-    ? query(ref(db, "relatos"), orderByChild("dataCriacao"), endAt(cursor.dataCriacao, cursor.id), limitToLast(tamanho + 1))
-    : query(ref(db, "relatos"), orderByChild("dataCriacao"), limitToLast(tamanho));
+    ? query(ref(db, "relatos"), orderByChild("dataCriacao"), endAt(cursor.dataCriacao, cursor.id), limitToLast(tamanho + 2))
+    : query(ref(db, "relatos"), orderByChild("dataCriacao"), limitToLast(tamanho + 1));
 
   const snapshot = await get(consulta);
   const dados = snapshot.val();
@@ -251,7 +268,9 @@ export async function buscarRelatosPagina(cursor = null, tamanho = TAMANHO_PAGIN
   let lista = Object.entries(dados).map(([id, r]) => ({ id, ...r }));
   if (cursor) lista = lista.filter(r => r.id !== cursor.id); // o endAt inclui de novo o cursor
 
-  lista.sort((a, b) => b.dataCriacao - a.dataCriacao); // mais recente primeiro
+  lista.sort((a, b) =>
+    (b.dataCriacao - a.dataCriacao) || b.id.localeCompare(a.id)
+  ); // mais recente primeiro; a chave desempata timestamps iguais
 
   const temMais = lista.length > tamanho;
   if (temMais) lista = lista.slice(0, tamanho);
@@ -259,13 +278,15 @@ export async function buscarRelatosPagina(cursor = null, tamanho = TAMANHO_PAGIN
   return { itens: lista, temMais };
 }
 
-// ── Lista (rápida) de cidades que já têm pelo menos um relato ──
-// Vem de metadados/cidades (mantido em criarRelato), não de uma varredura na
-// tabela de relatos — por isso o seletor de cidade da tela "Todos os
-// relatos" não depende de quantas páginas já foram carregadas.
+// ── Cidades que já têm pelo menos um relato ──
+// Sem agregador no backend, a lista é derivada dos relatos públicos.
 export async function obterCidadesComRelatos() {
-  const snapshot = await get(ref(db, "metadados/cidades"));
-  return snapshot.exists() ? Object.values(snapshot.val()) : [];
+  const snapshot = await get(ref(db, "relatos"));
+  const cidades = new Set();
+  for (const relato of Object.values(snapshot.val() || {})) {
+    if (relato.cidade) cidades.add(relato.cidade);
+  }
+  return [...cidades];
 }
 
 // ── Votar num relato (sem voto duplo) ──
@@ -273,20 +294,35 @@ export async function votar(relatoId, userId) {
   if (!auth.currentUser || auth.currentUser.uid !== userId) {
     throw new Error('Usuário autenticado inválido.');
   }
-  const votoRef  = ref(db, `votos/${relatoId}/${userId}`);
-  const snapshot = await get(votoRef);
+  await auth.currentUser.getIdToken(true);
 
-  if (snapshot.exists()) {
-    // Já votou — remove o voto
-    await set(votoRef, null);
-    await runTransaction(ref(db, `relatos/${relatoId}/votos`), v => (v || 1) - 1);
-    return false; // desvotou
-  } else {
-    // Voto novo
-    await set(votoRef, true);
-    await runTransaction(ref(db, `relatos/${relatoId}/votos`), v => (v || 0) + 1);
-    return true; // votou
+  // A atualização atômica mantém o voto individual e o total sincronizados.
+  // Em concorrência, as Rules rejeitam um total obsoleto; a nova tentativa lê
+  // o valor atual sem permitir contagem dupla ou alteração arbitrária.
+  for (let tentativa = 0; tentativa < 3; tentativa += 1) {
+    const [votoSnapshot, totalSnapshot] = await Promise.all([
+      get(ref(db, `votos/${relatoId}/${userId}`)),
+      get(ref(db, `relatos/${relatoId}/votos`))
+    ]);
+    if (!totalSnapshot.exists()) throw new Error('Relato não encontrado.');
+
+    const jaExiste = votoSnapshot.exists();
+    const totalAtual = Number(totalSnapshot.val()) || 0;
+    const atualizacoes = {
+      [`votos/${relatoId}/${userId}`]: jaExiste ? null : true,
+      [`relatos/${relatoId}/votos`]: jaExiste ? Math.max(0, totalAtual - 1) : totalAtual + 1
+    };
+
+    try {
+      await update(ref(db), atualizacoes);
+      return !jaExiste;
+    } catch (erro) {
+      const concorrencia = String(erro.code || '').includes('permission-denied');
+      if (!concorrencia || tentativa === 2) throw erro;
+    }
   }
+
+  throw new Error('Não foi possível registrar o voto.');
 }
 
 // ── Verificar se usuário já votou ──
@@ -296,20 +332,12 @@ export async function jaVotou(relatoId, userId) {
 }
 
 // ── Atualizar status de um relato ──
-// "statusAnterior" é opcional, mas sem ele os contadores de metadados/contadores
-// não são ajustados (ficam levemente desatualizados até o próximo backfill). Os
-// lugares que chamam essa função hoje sempre têm o status anterior à mão, então
-// sempre passam esse terceiro argumento.
-export async function atualizarStatus(relatoId, novoStatus, statusAnterior = null) {
+export async function atualizarStatus(relatoId, novoStatus) {
   await update(ref(db, `relatos/${relatoId}`), {
     status: novoStatus,
     dataResolucao: novoStatus === 'resolvido' ? Date.now() : null
   });
 
-  if (statusAnterior && statusAnterior !== novoStatus) {
-    incrementarContador(`metadados/contadores/porStatus/${statusAnterior}`, -1);
-    incrementarContador(`metadados/contadores/porStatus/${novoStatus}`, 1);
-  }
 }
 
 // ── Salvar resposta oficial da prefeitura ──
@@ -321,15 +349,32 @@ export async function salvarResposta(relatoId, resposta) {
 }
 
 // ── Excluir relato ──
-// "relato" (o objeto completo, não só o id) é opcional, mas sem ele os
-// contadores agregados não são decrementados. Passe sempre que puder — os
-// lugares que chamam essa função já têm o objeto completo em mãos.
-export async function excluirRelato(relatoId, relato = null) {
-  await set(ref(db, `relatos/${relatoId}`), null);
+export async function excluirRelato(relatoId) {
+  await update(ref(db), {
+    [`relatos/${relatoId}`]: null,
+    [`votos/${relatoId}`]: null
+  });
+}
 
-  if (relato) {
-    incrementarContador('metadados/contadores/total', -1);
-    if (relato.status)    incrementarContador(`metadados/contadores/porStatus/${relato.status}`, -1);
-    if (relato.categoria) incrementarContador(`metadados/contadores/porCategoria/${paraChaveFirebase(relato.categoria)}`, -1);
+// Administradores municipais recebem somente os relatos de sua cidade.
+// Superadministradores mantêm a visão global necessária para gerir a rede.
+export function ouvirRelatosGestao(admin, callback) {
+  if (!admin) throw new Error('Administrador não identificado.');
+
+  if (admin.papel === 'superadmin') {
+    return ouvirRelatos(callback);
   }
+
+  if (!admin.cityId) {
+    throw new Error('Administrador municipal sem cidade vinculada.');
+  }
+
+  const consulta = query(ref(db, "relatos"), orderByChild("cityId"), equalTo(admin.cityId));
+  return onValue(consulta, (snapshot) => {
+    const dados = snapshot.val();
+    if (!dados) { callback([]); return; }
+    const lista = Object.entries(dados).map(([id, relato]) => ({ id, ...relato }));
+    lista.sort((a, b) => (b.dataCriacao || 0) - (a.dataCriacao || 0));
+    callback(lista);
+  });
 }

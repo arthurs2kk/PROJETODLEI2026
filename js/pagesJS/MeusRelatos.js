@@ -69,8 +69,13 @@ function render() {
     document.getElementById(`btn-editar-${r.id}`)?.addEventListener('click', () => abrirEdicao(r));
     document.getElementById(`btn-excluir-${r.id}`)?.addEventListener('click', async () => {
       if (confirm(`Excluir o relato "${r.titulo}"? Essa ação não pode ser desfeita.`)) {
-        await excluirRelato(r.id, r);
-        showToast('🗑️ Relato excluído.');
+        try {
+          await excluirRelato(r.id);
+          showToast('🗑️ Relato excluído.');
+        } catch (erro) {
+          console.error(erro);
+          showToast('⚠️ Não foi possível excluir este relato.');
+        }
       }
     });
   });
@@ -79,6 +84,9 @@ function render() {
 // ── Card de um relato do usuário ──
 function cardHTML(r) {
   const cat  = CATS[r.categoria] || CATS['Outros'];
+  const relatoId = escapeHTML(r.id);
+  const status = ['aberto', 'andamento', 'resolvido'].includes(r.status) ? r.status : 'aberto';
+  const votos = Number.isFinite(Number(r.votos)) ? Math.max(0, Number(r.votos)) : 0;
   const data = new Date(r.dataCriacao).toLocaleDateString('pt-BR');
   const podeEditar = r.status === 'aberto';
 
@@ -88,18 +96,18 @@ function cardHTML(r) {
 
   const controles = podeEditar
     ? `<div class="meu-relato-controles">
-         <button class="btn-meu-relato btn-meu-editar" id="btn-editar-${r.id}"><i class="ti ti-edit"></i> Editar</button>
-         <button class="btn-meu-relato btn-meu-excluir" id="btn-excluir-${r.id}"><i class="ti ti-trash"></i> Excluir</button>
+         <button class="btn-meu-relato btn-meu-editar" id="btn-editar-${relatoId}"><i class="ti ti-edit"></i> Editar</button>
+         <button class="btn-meu-relato btn-meu-excluir" id="btn-excluir-${relatoId}"><i class="ti ti-trash"></i> Excluir</button>
        </div>`
     : `<div class="meu-relato-bloqueado">
-         <i class="ti ti-lock"></i> Este relato já está "${STATUS_LABEL[r.status]}" e não pode mais ser editado ou excluído.
+         <i class="ti ti-lock"></i> Este relato já está "${STATUS_LABEL[status]}" e não pode mais ser editado ou excluído.
        </div>`;
 
   return `
-    <article class="meu-relato-card" data-status="${escapeHTML(r.status)}">
+    <article class="meu-relato-card" data-status="${status}">
       <div class="meu-relato-top">
         <span class="meu-relato-titulo">${escapeHTML(r.titulo)}</span>
-        <span class="status ${STATUS_CSS[r.status]}">${STATUS_LABEL[r.status]}</span>
+        <span class="status ${STATUS_CSS[status]}">${STATUS_LABEL[status]}</span>
       </div>
       <div class="card-tags"><span class="badge ${cat.badge}"><i class="ti ti-tag"></i> ${cat.label}</span></div>
       ${otimizarImagem(r.fotoUrl, 700) ? `<img src="${escapeHTML(otimizarImagem(r.fotoUrl, 700))}" alt="Foto do relato" loading="lazy" class="meu-relato-foto">` : ''}
@@ -108,7 +116,7 @@ function cardHTML(r) {
       <div class="meu-relato-meta">
         <span><i class="ti ti-map-pin"></i> ${escapeHTML(r.endereco)}</span>
         <span><i class="ti ti-clock"></i> ${data}</span>
-        <span><i class="ti ti-thumb-up"></i> ${r.votos || 0} votos</span>
+        <span><i class="ti ti-thumb-up"></i> ${votos} votos</span>
       </div>
       ${controles}
     </article>`;

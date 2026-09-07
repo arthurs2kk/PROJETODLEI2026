@@ -164,8 +164,7 @@
             <tbody>
               <tr><td>Criar e autenticar sua conta</td><td>Nome, e-mail, senha (gerenciada pelo Firebase Authentication)</td></tr>
               <tr><td>Publicar e exibir seus relatos</td><td>Título, descrição, categoria, endereço, foto, nome exibido</td></tr>
-              <tr><td>Permitir que a prefeitura responda e atualize o status</td><td>Conteúdo do relato e dados de contato do autor</td></tr>
-              <tr><td>Avisar sobre mudança de status ou resposta oficial</td><td>Nome e e-mail (envio de notificação por e-mail)</td></tr>
+              <tr><td>Permitir que a prefeitura responda e atualize o status</td><td>Conteúdo público do relato e município associado</td></tr>
               <tr><td>Evitar abusos (contas falsas, envios em massa)</td><td>Confirmação de e-mail, intervalo entre envios</td></tr>
               <tr><td>Gerar estatísticas para a gestão pública</td><td>Dados agregados dos relatos (sem identificar autores individualmente nos gráficos)</td></tr>
             </tbody>
@@ -181,8 +180,7 @@
           <li><strong>Cloudinary:</strong> armazena as fotos enviadas nos relatos;</li>
           <li><strong>OpenStreetMap/Nominatim:</strong> recebe o texto do endereço digitado, para sugerir e validar localizações dentro da Paraíba;</li>
           <li><strong>IBGE:</strong> fornece dados públicos de municípios e estimativas de população, usados para comparar relatos entre cidades. Esse serviço não recebe nenhum dado pessoal seu, apenas é consultado por nós;</li>
-          <li><strong>EmailJS:</strong> usado para enviar e-mails de notificação sobre seus relatos, quando esse recurso estiver ativo — recebe seu nome e e-mail apenas no momento do envio;</li>
-          <li><strong>Administração pública responsável:</strong> servidores autorizados no painel administrativo podem visualizar todos os relatos e os dados de contato de quem os enviou, para fins de gestão.</li>
+          <li><strong>Administração pública responsável:</strong> servidores autorizados no painel administrativo podem visualizar e gerir os relatos públicos vinculados ao seu município. O painel municipal não recebe o e-mail cadastrado do autor.</li>
         </ul>
       </section>
 

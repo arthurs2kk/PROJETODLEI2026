@@ -152,6 +152,11 @@ document.getElementById('btn-enviar')?.addEventListener('click', async () => {
     return;
   }
 
+  if (titulo.length < 5 || descricao.length < 10) {
+    showToast('⚠️ Use pelo menos 5 caracteres no título e 10 na descrição.');
+    return;
+  }
+
   const erroConteudo = verificarConteudo(titulo, descricao);
   if (erroConteudo) {
     showToast('⚠️ ' + erroConteudo);
@@ -186,9 +191,9 @@ document.getElementById('btn-enviar')?.addEventListener('click', async () => {
       lat: state.enderecoSelecionado.lat,
       lng: state.enderecoSelecionado.lng,
       cidade: state.enderecoSelecionado.cidade,
+      cityId: state.enderecoSelecionado.cityId,
       bairro: state.enderecoSelecionado.bairro,
-      autorId:   state.usuario.uid,
-      autorNome: state.usuario.displayName || state.usuario.email.split('@')[0]
+      autorId:   state.usuario.uid
     }, state.fotoFile);
 
     closeModal();
@@ -237,9 +242,9 @@ function carregarFeed() {
 
 carregarFeed();
 
-// ── Contadores agregados: total, por status e por categoria ──
-// Vêm de metadados/contadores (mantido em db.js), então continuam mostrando o
-// número REAL mesmo a amostra do feed acima sendo limitada a TAMANHO_FEED.
+// ── Contadores: total, por status e por categoria ──
+// São calculados em memória a partir dos relatos públicos; assim o lote do feed
+// pode continuar limitado sem depender de Cloud Functions ou metadados graváveis.
 ouvirContadores((contadores) => {
   atualizarEstatisticas(contadores);
   atualizarContadoresCategoria(contadores);
@@ -289,9 +294,14 @@ async function renderCards() {
   // Marcar votos do usuário logado
   if (state.usuario) {
     relatos.forEach(async (r) => {
-      const votei = await jaVotou(r.id, state.usuario.uid);
-      const btn = document.querySelector(`.vote-btn[data-id="${r.id}"]`);
-      if (btn && votei) btn.classList.add('voted');
+      try {
+        const votei = await jaVotou(r.id, state.usuario.uid);
+        const btn = [...lista.querySelectorAll('.vote-btn')]
+          .find(el => el.dataset.id === r.id);
+        if (btn && votei) btn.classList.add('voted');
+      } catch (erro) {
+        console.warn('Não foi possível consultar o voto:', erro);
+      }
     });
   }
 
@@ -366,6 +376,7 @@ function cardHTML(r) {
 
   const cat = cats[r.categoria] || cats['Outros'];
   const st  = status[r.status]     || status.aberto;
+  const votos = Number.isFinite(Number(r.votos)) ? Math.max(0, Number(r.votos)) : 0;
   const foto = r.fotoUrl
     ? `<img src="${escapeHTML(otimizarImagem(r.fotoUrl, 150))}" alt="Foto do relato" loading="lazy" style="width:72px;height:100%;object-fit:cover;">`
     : `<div class="card-side ${cat.side}"><i class="ti ${cat.icon}"></i></div>`;
@@ -392,8 +403,8 @@ function cardHTML(r) {
           <span><i class="ti ti-user"></i> ${escapeHTML(r.autorNome)}</span>
         </div>
         <div class="card-footer">
-          <button class="vote-btn" data-id="${r.id}">
-            <i class="ti ti-thumb-up"></i> <span class="vcount">${r.votos || 0}</span> pessoas apoiam
+          <button class="vote-btn" data-id="${escapeHTML(r.id)}">
+            <i class="ti ti-thumb-up"></i> <span class="vcount">${votos}</span> pessoas apoiam
           </button>
           <button class="detail-btn">Ver detalhes <i class="ti ti-arrow-right"></i></button>
         </div>

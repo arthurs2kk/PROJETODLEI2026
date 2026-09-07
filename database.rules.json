@@ -1,0 +1,82 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "relatos": {
+      ".read": true,
+      ".indexOn": ["autorId", "status", "dataCriacao", "cityId", "votos"],
+      "$relatoId": {
+        ".write": "auth != null && ((!data.exists() && auth.token.email_verified === true && newData.hasChild('cityId') && newData.child('autorId').val() === auth.uid && newData.child('autorNome').val() === root.child('usuarios').child(auth.uid).child('nome').val() && newData.child('status').val() === 'aberto' && newData.child('votos').val() === 0 && !newData.hasChild('respostaOficial') && !newData.hasChild('dataResposta') && !newData.hasChild('dataResolucao') && !newData.hasChild('dataEdicao') && newData.child('dataCriacao').val() > now - 120000 && newData.child('dataCriacao').val() <= now + 120000 && newData.parent().parent().child('limitesEnvio').child(auth.uid).val() === newData.child('dataCriacao').val() && (!root.child('limitesEnvio').child(auth.uid).exists() || newData.child('dataCriacao').val() - root.child('limitesEnvio').child(auth.uid).val() >= 300000)) || (data.exists() && data.child('autorId').val() === auth.uid && data.child('status').val() === 'aberto' && ((!newData.exists() && !newData.parent().parent().child('votos').child($relatoId).exists()) || (newData.child('autorId').val() === data.child('autorId').val() && newData.child('autorNome').val() === data.child('autorNome').val() && newData.child('status').val() === data.child('status').val() && newData.child('votos').val() === data.child('votos').val() && newData.child('dataCriacao').val() === data.child('dataCriacao').val() && newData.child('respostaOficial').val() === data.child('respostaOficial').val() && newData.child('dataResolucao').val() === data.child('dataResolucao').val() && newData.child('dataResposta').val() === data.child('dataResposta').val() && newData.child('fotoUrl').val() === data.child('fotoUrl').val() && newData.child('endereco').val() === data.child('endereco').val() && newData.child('lat').val() === data.child('lat').val() && newData.child('lng').val() === data.child('lng').val() && newData.child('cidade').val() === data.child('cidade').val() && newData.child('cityId').val() === data.child('cityId').val() && newData.child('bairro').val() === data.child('bairro').val() && newData.hasChild('dataEdicao')))) || (data.exists() && (root.child('admins').child(auth.uid).val() === true || (root.child('admins').child(auth.uid).child('ativo').val() === true && (root.child('admins').child(auth.uid).child('papel').val() === 'superadmin' || (root.child('admins').child(auth.uid).child('papel').val() === 'admin' && root.child('admins').child(auth.uid).child('cityId').val() === data.child('cityId').val())))) && ((!newData.exists() && !newData.parent().parent().child('votos').child($relatoId).exists()) || (newData.child('titulo').val() === data.child('titulo').val() && newData.child('categoria').val() === data.child('categoria').val() && newData.child('descricao').val() === data.child('descricao').val() && newData.child('endereco').val() === data.child('endereco').val() && newData.child('lat').val() === data.child('lat').val() && newData.child('lng').val() === data.child('lng').val() && newData.child('cidade').val() === data.child('cidade').val() && newData.child('cityId').val() === data.child('cityId').val() && newData.child('bairro').val() === data.child('bairro').val() && newData.child('fotoUrl').val() === data.child('fotoUrl').val() && newData.child('autorId').val() === data.child('autorId').val() && newData.child('autorNome').val() === data.child('autorNome').val() && newData.child('dataCriacao').val() === data.child('dataCriacao').val() && newData.child('dataEdicao').val() === data.child('dataEdicao').val() && newData.child('votos').val() === data.child('votos').val()))) || (data.exists() && newData.exists() && auth.token.email_verified === true && newData.child('titulo').val() === data.child('titulo').val() && newData.child('categoria').val() === data.child('categoria').val() && newData.child('descricao').val() === data.child('descricao').val() && newData.child('endereco').val() === data.child('endereco').val() && newData.child('lat').val() === data.child('lat').val() && newData.child('lng').val() === data.child('lng').val() && newData.child('cidade').val() === data.child('cidade').val() && newData.child('cityId').val() === data.child('cityId').val() && newData.child('bairro').val() === data.child('bairro').val() && newData.child('fotoUrl').val() === data.child('fotoUrl').val() && newData.child('status').val() === data.child('status').val() && newData.child('autorId').val() === data.child('autorId').val() && newData.child('autorNome').val() === data.child('autorNome').val() && newData.child('dataCriacao').val() === data.child('dataCriacao').val() && newData.child('dataEdicao').val() === data.child('dataEdicao').val() && newData.child('dataResolucao').val() === data.child('dataResolucao').val() && newData.child('respostaOficial').val() === data.child('respostaOficial').val() && newData.child('dataResposta').val() === data.child('dataResposta').val() && ((!root.child('votos').child($relatoId).child(auth.uid).exists() && newData.parent().parent().child('votos').child($relatoId).child(auth.uid).val() === true && newData.child('votos').val() === data.child('votos').val() + 1) || (root.child('votos').child($relatoId).child(auth.uid).val() === true && !newData.parent().parent().child('votos').child($relatoId).child(auth.uid).exists() && newData.child('votos').val() === data.child('votos').val() - 1 && newData.child('votos').val() >= 0))))",
+        ".validate": "newData.hasChildren(['titulo','categoria','descricao','endereco','lat','lng','cidade','cityId','status','votos','autorId','autorNome','dataCriacao']) && (newData.child('status').val() === 'resolvido' ? (newData.child('dataResolucao').isNumber() || (data.child('status').val() === 'resolvido' && !data.hasChild('dataResolucao'))) : !newData.hasChild('dataResolucao')) && (newData.hasChild('respostaOficial') ? newData.child('dataResposta').isNumber() : !newData.hasChild('dataResposta'))",
+        "titulo": { ".validate": "newData.isString() && newData.val().length >= 5 && newData.val().length <= 100" },
+        "categoria": { ".validate": "newData.isString() && (newData.val() === 'Buraco / Via danificada' || newData.val() === 'Iluminação pública' || newData.val() === 'Lixo / Entulho' || newData.val() === 'Água / Esgoto' || newData.val() === 'Áreas verdes' || newData.val() === 'Outros')" },
+        "descricao": { ".validate": "newData.isString() && newData.val().length >= 10 && newData.val().length <= 2000" },
+        "endereco": { ".validate": "newData.isString() && newData.val().length >= 3 && newData.val().length <= 300" },
+        "lat": { ".validate": "newData.isNumber() && newData.val() >= -8.31 && newData.val() <= -6.02" },
+        "lng": { ".validate": "newData.isNumber() && newData.val() >= -38.85 && newData.val() <= -34.79" },
+        "cidade": { ".validate": "newData.isString() && newData.val().length >= 2 && newData.val().length <= 100" },
+        "cityId": { ".validate": "newData.isString() && newData.val().matches(/^25[0-9]{5}$/)" },
+        "bairro": { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 120" },
+        "fotoUrl": { ".validate": "newData.isString() && newData.val().length <= 1000 && newData.val().matches(/^https:\\/\\/res\\.cloudinary\\.com\\/dk8uky6m\\/image\\/upload\\/.+$/)" },
+        "status": { ".validate": "newData.isString() && (newData.val() === 'aberto' || newData.val() === 'andamento' || newData.val() === 'resolvido')" },
+        "votos": { ".validate": "newData.isNumber() && newData.val() >= 0" },
+        "autorId": { ".validate": "newData.isString() && newData.val().length > 0" },
+        "autorNome": { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 100" },
+        "dataCriacao": { ".validate": "newData.isNumber() && newData.val() <= now + 120000" },
+        "dataEdicao": { ".validate": "newData.isNumber() && (newData.val() === data.val() || (newData.val() > now - 120000 && newData.val() <= now + 120000))" },
+        "dataResolucao": { ".validate": "newData.isNumber() && (newData.val() === data.val() || (newData.val() > now - 120000 && newData.val() <= now + 120000))" },
+        "respostaOficial": { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 2000" },
+        "dataResposta": { ".validate": "newData.isNumber() && (newData.val() === data.val() || (newData.val() > now - 120000 && newData.val() <= now + 120000))" },
+        "$other": { ".validate": false }
+      }
+    },
+    "limitesEnvio": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid && auth.token.email_verified === true && newData.isNumber() && newData.val() > now - 120000 && newData.val() <= now + 120000 && (!data.exists() || newData.val() - data.val() >= 300000)",
+        ".validate": "newData.isNumber()"
+      }
+    },
+    "votos": {
+      "$relatoId": {
+        ".write": "auth != null && data.exists() && !newData.exists() && root.child('relatos').child($relatoId).exists() && ((root.child('relatos').child($relatoId).child('autorId').val() === auth.uid && root.child('relatos').child($relatoId).child('status').val() === 'aberto') || root.child('admins').child(auth.uid).val() === true || (root.child('admins').child(auth.uid).child('ativo').val() === true && (root.child('admins').child(auth.uid).child('papel').val() === 'superadmin' || (root.child('admins').child(auth.uid).child('papel').val() === 'admin' && root.child('admins').child(auth.uid).child('cityId').val() === root.child('relatos').child($relatoId).child('cityId').val()))))",
+        "$uid": {
+          ".read": "auth != null && auth.uid === $uid",
+          ".write": "auth != null && auth.uid === $uid && auth.token.email_verified === true && root.child('relatos').child($relatoId).exists() && ((!data.exists() && newData.val() === true && newData.parent().parent().parent().child('relatos').child($relatoId).child('votos').val() === root.child('relatos').child($relatoId).child('votos').val() + 1) || (data.val() === true && !newData.exists() && newData.parent().parent().parent().child('relatos').child($relatoId).child('votos').val() === root.child('relatos').child($relatoId).child('votos').val() - 1))",
+          ".validate": "newData.val() === true"
+        }
+      }
+    },
+    "usuarios": {
+      "$uid": {
+        ".read": "auth != null && (auth.uid === $uid || root.child('admins').child(auth.uid).val() === true || (root.child('admins').child(auth.uid).child('ativo').val() === true && root.child('admins').child(auth.uid).child('papel').val() === 'superadmin'))",
+        ".write": "auth != null && auth.uid === $uid",
+        ".validate": "newData.hasChildren(['nome','email','cidade','dataCadastro'])",
+        "nome": { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 100" },
+        "email": { ".validate": "newData.isString() && newData.val() === auth.token.email && newData.val().length <= 254" },
+        "cidade": { ".validate": "newData.isString() && newData.val().length >= 2 && newData.val().length <= 100" },
+        "dataCadastro": { ".validate": "newData.isNumber() && (!data.exists() ? (newData.val() > now - 120000 && newData.val() <= now + 120000) : newData.val() === data.val())" },
+        "dataAtualizacao": { ".validate": "newData.isNumber() && (newData.val() === data.val() || (newData.val() > now - 120000 && newData.val() <= now + 120000))" },
+        "$other": { ".validate": false }
+      }
+    },
+    "admins": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": false,
+        ".validate": "newData.val() === true || (newData.hasChildren(['papel','ativo']) && (newData.child('papel').val() === 'superadmin' || newData.child('papel').val() === 'admin') && newData.child('ativo').isBoolean())"
+      }
+    },
+    "organizacoes": {
+      "$orgId": {
+        ".read": "auth != null && (root.child('admins').child(auth.uid).val() === true || (root.child('admins').child(auth.uid).child('ativo').val() === true && (root.child('admins').child(auth.uid).child('papel').val() === 'superadmin' || root.child('admins').child(auth.uid).child('organizacaoId').val() === $orgId)))",
+        ".write": false,
+        ".validate": "newData.hasChildren(['nome','cityId','cidadeNome','ativo'])"
+      }
+    },
+    "metadados": {
+      ".read": true,
+      ".write": false
+    }
+  }
+}

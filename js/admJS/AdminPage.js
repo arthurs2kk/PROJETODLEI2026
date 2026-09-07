@@ -1,11 +1,11 @@
 // ── Pro Povo — admin-painel.js ──
 import { auth, onAuthStateChanged, signOut } from "../firebase.js";
-import { ehAdmin, ouvirRelatos, atualizarStatus, salvarResposta, excluirRelato, buscarUsuario } from "../db.js";
+import { ouvirRelatosGestao, buscarOrganizacao, atualizarStatus, salvarResposta, excluirRelato } from "../db.js";
+import { buscarAdmin, ehSuperAdmin } from "./adminAuth.js";
 import { otimizarImagem } from "../cloudinary.js";
-import { notificarMudancaStatus, notificarNovaResposta } from "../notificacoes.js";
 import { escapeHTML } from "../escapeHtml.js";
 
-const state = { todos: [], busca: '', status: 'todos' };
+const state = { todos: [], busca: '', status: 'todos', admin: null };
 
 // ── SLA: depois de quantos dias sem solução um relato é considerado atrasado ──
 // Contado a partir da data de criação do relato. Fica isolado aqui pra ser
@@ -34,33 +34,41 @@ function calcularTempoMedioResolucao(relatos) {
   return totalDias / resolvidos.length;
 }
 
-// ── Busca os dados do autor e dispara a notificação, sem travar a interface do
-// admin caso isso demore ou falhe (ex: EmailJS ainda não configurado) ──
-function notificarAutor(relato, enviar) {
-  buscarUsuario(relato.autorId)
-    .then(usuario => enviar(usuario))
-    .catch(erro => console.warn('Não foi possível carregar os dados do autor pra notificar:', erro));
-}
-
 // ── Verificação de acesso ──
 onAuthStateChanged(auth, async (user) => {
   if (!user) { window.location.href = 'AdmLogin.html'; return; }
 
-  const autorizado = await ehAdmin(user.uid);
-  if (!autorizado) {
+  const admin = await buscarAdmin(user.uid);
+  if (!admin) {
     await signOut(auth);
     window.location.href = 'AdmLogin.html';
     return;
   }
+  state.admin = admin;
 
-  document.getElementById('admin-user-tag').innerHTML =
-    `<i class="ti ti-user-shield"></i> ${escapeHTML(user.displayName || user.email)}`;
-  document.getElementById('admin-user-tag-mobile').innerHTML =
-    `<i class="ti ti-user-shield"></i> ${escapeHTML(user.displayName || user.email)}`;
+  let org = null;
+  if (admin.organizacaoId) {
+    try {
+      org = await buscarOrganizacao(admin.organizacaoId);
+    } catch (e) {
+      console.warn('Não foi possível carregar os dados da organização:', e);
+    }
+  }
+
+  const tagHTML = `<i class="ti ti-user-shield"></i> ${escapeHTML(user.displayName || user.email)}${org?.nome ? escapeHTML(' · ' + org.nome) : ''}`;
+  document.getElementById('admin-user-tag').innerHTML = tagHTML;
+  document.getElementById('admin-user-tag-mobile').innerHTML = tagHTML;
+
+  const badgeEl = document.getElementById('painel-escopo-badge');
+  if (badgeEl) {
+    badgeEl.innerHTML = ehSuperAdmin(admin)
+      ? '<i class="ti ti-world"></i> Visão de todas as cidades'
+      : `<i class="ti ti-map-pin"></i> ${escapeHTML(org?.cidadeNome || 'Município autorizado')}`;
+  }
   document.getElementById('verificando').style.display = 'none';
   document.getElementById('painel-conteudo').style.display = 'block';
 
-  ouvirRelatos((relatos) => {
+  ouvirRelatosGestao(admin, (relatos) => {
     state.todos = relatos;
     render();
   });
@@ -129,15 +137,20 @@ function render() {
 
   // Eventos
   lista.forEach(r => {
-    document.querySelector(`[data-relato-foto="${r.id}"]`)?.addEventListener('click', (e) => {
+    document.getElementById(`foto-${r.id}`)?.addEventListener('click', (e) => {
       abrirLightbox(e.currentTarget.dataset.fotoUrl);
     });
 
     document.getElementById(`status-${r.id}`)?.addEventListener('change', async (e) => {
       const novoStatus = e.target.value;
-      await atualizarStatus(r.id, novoStatus, r.status);
-      showToast('✅ Status atualizado.');
-      notificarAutor(r, (usuario) => notificarMudancaStatus(usuario, r, novoStatus));
+      try {
+        await atualizarStatus(r.id, novoStatus);
+        showToast('✅ Status atualizado.');
+      } catch (erro) {
+        console.error(erro);
+        e.target.value = r.status;
+        showToast('⚠️ Não foi possível atualizar este relato.');
+      }
     });
 
     document.getElementById(`btn-resp-${r.id}`)?.addEventListener('click', () => {
@@ -147,15 +160,24 @@ function render() {
     document.getElementById(`btn-resp-salvar-${r.id}`)?.addEventListener('click', async () => {
       const texto = document.getElementById(`resp-texto-${r.id}`).value.trim();
       if (!texto) { showToast('⚠️ Escreva uma resposta antes de salvar.'); return; }
-      await salvarResposta(r.id, texto);
-      showToast('✅ Resposta oficial salva.');
-      notificarAutor(r, (usuario) => notificarNovaResposta(usuario, r, texto));
+      try {
+        await salvarResposta(r.id, texto);
+        showToast('✅ Resposta oficial salva.');
+      } catch (erro) {
+        console.error(erro);
+        showToast('⚠️ Não foi possível salvar a resposta.');
+      }
     });
 
     document.getElementById(`btn-excluir-${r.id}`)?.addEventListener('click', async () => {
       if (confirm(`Excluir o relato "${r.titulo}"? Essa ação não pode ser desfeita.`)) {
-        await excluirRelato(r.id, r);
-        showToast('🗑️ Relato excluído.');
+        try {
+          await excluirRelato(r.id);
+          showToast('🗑️ Relato excluído.');
+        } catch (erro) {
+          console.error(erro);
+          showToast('⚠️ Não foi possível excluir este relato.');
+        }
       }
     });
   });
@@ -163,6 +185,9 @@ function render() {
 
 // ── Card de gestão ──
 function cardHTML(r) {
+  const relatoId = escapeHTML(r.id);
+  const status = ['aberto', 'andamento', 'resolvido'].includes(r.status) ? r.status : 'aberto';
+  const votos = Number.isFinite(Number(r.votos)) ? Math.max(0, Number(r.votos)) : 0;
   const data = new Date(r.dataCriacao).toLocaleDateString('pt-BR');
   const atrasado = estaAtrasado(r);
   const fotoUrl = otimizarImagem(r.fotoUrl, 700);
@@ -171,41 +196,41 @@ function cardHTML(r) {
     : '';
 
   return `
-    <article class="gestao-card ${atrasado ? 'gestao-card-atrasado' : ''}" data-status="${escapeHTML(r.status)}">
+    <article class="gestao-card ${atrasado ? 'gestao-card-atrasado' : ''}" data-status="${status}">
       <div class="gestao-top">
         <span class="gestao-titulo">${escapeHTML(r.titulo)}</span>
         <div class="gestao-top-badges">
           ${atrasado ? `<span class="badge-atrasado"><i class="ti ti-alert-triangle"></i> Atrasado · ${diasEmAberto(r)}d</span>` : ''}
-          <span class="status status-${r.status}">${STATUS_LABEL[r.status]}</span>
+          <span class="status status-${status}">${STATUS_LABEL[status]}</span>
         </div>
       </div>
       <div class="gestao-meta">
         <span><i class="ti ti-map-pin"></i> ${escapeHTML(r.endereco)}</span>
         <span><i class="ti ti-user"></i> ${escapeHTML(r.autorNome)}</span>
         <span><i class="ti ti-clock"></i> ${data}</span>
-        <span><i class="ti ti-thumb-up"></i> ${r.votos || 0} votos</span>
+        <span><i class="ti ti-thumb-up"></i> ${votos} votos</span>
       </div>
-      ${fotoUrl ? `<img src="${escapeHTML(fotoUrl)}" data-relato-foto="${escapeHTML(r.id)}" data-foto-url="${escapeHTML(r.fotoUrl)}" alt="Foto do relato. Clique para ampliar" loading="lazy" class="gestao-foto" tabindex="0" role="button">` : ''}
+      ${fotoUrl ? `<img id="foto-${relatoId}" src="${escapeHTML(fotoUrl)}" data-foto-url="${escapeHTML(r.fotoUrl)}" alt="Foto do relato. Clique para ampliar" loading="lazy" class="gestao-foto" tabindex="0" role="button">` : ''}
       <p class="gestao-desc">${escapeHTML(r.descricao)}</p>
 
       <div class="gestao-controles">
-        <select class="gestao-select" id="status-${r.id}">
+        <select class="gestao-select" id="status-${relatoId}">
           <option value="aberto"    ${r.status === 'aberto'    ? 'selected' : ''}>Aberto</option>
           <option value="andamento" ${r.status === 'andamento' ? 'selected' : ''}>Em andamento</option>
           <option value="resolvido" ${r.status === 'resolvido' ? 'selected' : ''}>Resolvido</option>
         </select>
-        <button class="btn-gestao btn-gestao-resposta" id="btn-resp-${r.id}">
+        <button class="btn-gestao btn-gestao-resposta" id="btn-resp-${relatoId}">
           <i class="ti ti-message-circle"></i> Responder
         </button>
-        <button class="btn-gestao btn-gestao-excluir" id="btn-excluir-${r.id}">
+        <button class="btn-gestao btn-gestao-excluir" id="btn-excluir-${relatoId}">
           <i class="ti ti-trash"></i> Excluir
         </button>
       </div>
 
-      <div class="gestao-resposta-area" id="resp-area-${r.id}">
+      <div class="gestao-resposta-area" id="resp-area-${relatoId}">
         ${resposta}
-        <textarea id="resp-texto-${r.id}" placeholder="Escreva a resposta oficial da prefeitura para este relato...">${escapeHTML(r.respostaOficial || '')}</textarea>
-        <button class="btn-gestao btn-gestao-resposta" id="btn-resp-salvar-${r.id}">
+        <textarea id="resp-texto-${relatoId}" placeholder="Escreva a resposta oficial da prefeitura para este relato...">${escapeHTML(r.respostaOficial || '')}</textarea>
+        <button class="btn-gestao btn-gestao-resposta" id="btn-resp-salvar-${relatoId}">
           <i class="ti ti-send"></i> Salvar resposta
         </button>
       </div>

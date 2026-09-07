@@ -57,6 +57,8 @@ ouvirRelatos((relatos) => {
   const comCoordenadas = relatos.filter(r => r.lat && r.lng);
 
   comCoordenadas.forEach(r => {
+    const votos = Number.isFinite(Number(r.votos)) ? Math.max(0, Number(r.votos)) : 0;
+    const statusCor = STATUS_COR[r.status] || STATUS_COR.aberto;
     const marker = L.circleMarker([r.lat, r.lng], {
       radius: 9,
       fillColor: corDaCategoria(r.categoria),
@@ -71,9 +73,9 @@ ouvirRelatos((relatos) => {
         <div class="popup-meta">
           <span><i class="ti ti-map-pin"></i> ${escapeHTML(r.endereco)}</span>
           <span><i class="ti ti-user"></i> ${escapeHTML(r.autorNome)}</span>
-          <span><i class="ti ti-thumb-up"></i> ${r.votos || 0} votos</span>
+          <span><i class="ti ti-thumb-up"></i> ${votos} votos</span>
         </div>
-        <span class="popup-status" style="background:${STATUS_COR[r.status]}22; color:${STATUS_COR[r.status]}">
+        <span class="popup-status" style="background:${statusCor}22; color:${statusCor}">
           ${escapeHTML(STATUS_LABEL[r.status] || r.status)}
         </span>
       </div>
