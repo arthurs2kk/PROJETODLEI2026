@@ -53,10 +53,7 @@ PROJETODLEI2026/
 ├── home.js                        # Core logic: real-time report listening, voting, filtering
 ├── home.css                       # Global styles, theming, responsive design
 ├── database.rules.json            # Realtime Database authorization and validation rules
-├── firebase.json                  # Firebase deploy/emulator configuration
-├── tests/                         # Local authorization regression tests (not deployed)
-├── package.json                   # Development-only dependencies for the rule tests
-├── package-lock.json              # Reproducible versions for the rule tests
+├── firebase.json                  # Firebase project configuration
 ├── README.md
 │
 ├── pages/
@@ -257,28 +254,18 @@ IBGE API | Official Brazilian census data, regularly updated population figures,
 Chart.js | Lightweight, declarative, extensive chart types
 Leaflet | Small bundle size, fast rendering, OpenStreetMap integration
 
-🔐 Security Deployment (Spark-compatible)
+🔐 Security Architecture
 
-The application does not import, deploy or depend on Cloud Functions. Publish the database rules before publishing the updated static frontend:
+The application does not depend on Cloud Functions or a dedicated application server. Firebase Authentication identifies users, while Realtime Database Security Rules enforce authorization, data validation, report-submission intervals, vote consistency and municipal access boundaries. Sensitive decisions are therefore not entrusted solely to the browser interface.
 
-```bash
-npm.cmd ci
-npx.cmd firebase-tools@15.29.0 emulators:exec --only database --project demo-pro-povo "npm.cmd run test:rules"
-npx.cmd firebase-tools@15.29.0 login
-npx.cmd firebase-tools@15.29.0 --project pro--povo deploy --only database
-# Then publish the static HTML/CSS/JS on your current host.
-```
-
-Files that should be committed include `database.rules.json`, `firebase.json`, `package.json`, `package-lock.json`, `tests/`, and the static application files. Test dependencies and `node_modules/` are development-only: `node_modules/`, `.env*`, private keys, service-account JSON, `.firebase/`, and debug logs are ignored and must not be uploaded. The Firebase web configuration in `js/firebase.js` contains public project identifiers, not an Admin SDK private key; access is controlled by Authentication and `database.rules.json`. Confirm in Google Cloud that the browser key is restricted to Firebase-related APIs.
-
-Known limitations of the backend-free design:
+Technical considerations of the backend-free design:
 
 - Dashboard totals and the city selector are calculated by reading public reports. This is safe, but costs more bandwidth as the dataset grows; a trusted aggregator would be needed at larger scale.
 - The Cloudinary unsigned upload preset cannot be cryptographically signed in a static frontend. Restrict formats, size, folder and transformations in the Cloudinary console, and treat abuse prevention there as an operational control.
 - Coordinates and the IBGE municipality pair are format/range checked, but a static client cannot prove that a user did not intentionally choose another valid municipality. A trusted reference dataset in Firebase Rules or a backend would be required for stronger geographic attestation.
 - App Check can be added as defense in depth against scripted clients, but it does not replace Authentication or Security Rules.
 
-Existing reports without `cityId` remain visible and editable by their authors, but a city-scoped administrator cannot manage them until a one-time data migration assigns the correct IBGE municipality code. Legacy `admins/{uid}: true` entries still work as superadmins and should be migrated to the structured role format before production.
+Legacy administrative records remain supported for compatibility, while the current data model uses structured roles and IBGE municipality identifiers.
 
 📈 Project Impact
 
