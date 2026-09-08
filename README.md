@@ -21,6 +21,20 @@ Main Features
 
 🛠️ Technology Stack
 
+Vercel Web Analytics
+
+All HTML pages include the official static-site integration, loading `/_vercel/insights/script.js` with `defer`. This project does not use Next.js or a bundler, so `@vercel/analytics/next` and an npm analytics dependency are unnecessary.
+
+To activate collection:
+
+1. Open the project in Vercel, go to **Analytics**, and click **Enable** if it is not already enabled.
+2. Deploy the updated site to Vercel.
+3. Visit the deployed site and navigate between pages, then check the Analytics dashboard. Browser Network tools should show the insights script and requests to `/_vercel/insights/view`.
+
+The analytics endpoint is provided by Vercel after activation and deployment; it is not served by a local static server. Include the same analytics snippet in any new HTML pages.
+
+Documentation: https://vercel.com/docs/analytics/quickstart
+
 Frontend Architecture
 HTML5 - Semantic markup and accessibility
 CSS3 - Custom styling with CSS variables for theming and dark mode support
