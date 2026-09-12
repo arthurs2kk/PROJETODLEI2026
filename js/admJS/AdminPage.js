@@ -1,11 +1,19 @@
 // ── Pro Povo — admin-painel.js ──
 import { auth, onAuthStateChanged, signOut } from "../firebase.js";
-import { ouvirRelatosGestao, buscarOrganizacao, atualizarStatus, salvarResposta, excluirRelato } from "../db.js";
+import { buscarRelatosGestaoPagina, buscarOrganizacao, atualizarStatus, salvarResposta, excluirRelato } from "../db.js";
 import { buscarAdmin, ehSuperAdmin } from "./adminAuth.js";
 import { otimizarImagem } from "../cloudinary.js";
 import { escapeHTML } from "../escapeHtml.js";
 
-const state = { todos: [], busca: '', status: 'todos', admin: null };
+const TAMANHO_PAGINA = 25;
+const state = {
+  todos: [],
+  busca: '',
+  status: 'todos',
+  admin: null,
+  temMais: true,
+  carregando: false
+};
 
 // ── SLA: depois de quantos dias sem solução um relato é considerado atrasado ──
 // Contado a partir da data de criação do relato. Fica isolado aqui pra ser
@@ -68,11 +76,66 @@ onAuthStateChanged(auth, async (user) => {
   document.getElementById('verificando').style.display = 'none';
   document.getElementById('painel-conteudo').style.display = 'block';
 
-  ouvirRelatosGestao(admin, (relatos) => {
-    state.todos = relatos;
-    render();
-  });
+  await carregarProximaPagina();
 });
+
+async function carregarProximaPagina() {
+  if (!state.admin || state.carregando || (!state.temMais && state.todos.length > 0)) return;
+  state.carregando = true;
+  atualizarControlesDePagina();
+
+  const ultimo = state.todos[state.todos.length - 1];
+  const cursor = ultimo
+    ? { id: ultimo.id, dataCriacao: ultimo.dataCriacao }
+    : null;
+
+  try {
+    const { itens, temMais } = await buscarRelatosGestaoPagina(
+      state.admin,
+      cursor,
+      TAMANHO_PAGINA
+    );
+    const idsCarregados = new Set(state.todos.map(relato => relato.id));
+    state.todos.push(...itens.filter(relato => !idsCarregados.has(relato.id)));
+    state.temMais = temMais;
+  } catch (erro) {
+    console.error('Não foi possível carregar os relatos da gestão:', erro);
+    showToast('⚠️ Não foi possível carregar os relatos.');
+  } finally {
+    state.carregando = false;
+    render();
+  }
+}
+
+async function recarregarRelatos() {
+  if (state.carregando) return;
+  state.todos = [];
+  state.temMais = true;
+  await carregarProximaPagina();
+}
+
+function atualizarControlesDePagina() {
+  const botao = document.getElementById('btn-carregar-mais-admin');
+  const atualizar = document.getElementById('btn-atualizar-relatos');
+  const info = document.getElementById('admin-lote-info');
+
+  if (botao) {
+    botao.style.display = state.temMais || state.carregando ? 'inline-flex' : 'none';
+    botao.disabled = state.carregando;
+    botao.innerHTML = state.carregando
+      ? '<i class="ti ti-loader-2" style="animation:spin 0.8s linear infinite"></i> Carregando...'
+      : '<i class="ti ti-chevron-down"></i> Carregar relatos mais antigos';
+  }
+  if (atualizar) atualizar.disabled = state.carregando;
+  if (info) {
+    info.textContent = state.temMais
+      ? `${state.todos.length} relato${state.todos.length !== 1 ? 's' : ''} carregado${state.todos.length !== 1 ? 's' : ''}; existem registros mais antigos.`
+      : `${state.todos.length} relato${state.todos.length !== 1 ? 's' : ''} carregado${state.todos.length !== 1 ? 's' : ''}.`;
+  }
+}
+
+document.getElementById('btn-carregar-mais-admin')?.addEventListener('click', carregarProximaPagina);
+document.getElementById('btn-atualizar-relatos')?.addEventListener('click', recarregarRelatos);
 
 document.getElementById('btn-sair')?.addEventListener('click', async () => {
   await signOut(auth);
@@ -117,7 +180,7 @@ function render() {
 
   lista.sort((a, b) => b.dataCriacao - a.dataCriacao);
 
-  // Resumo (sempre com todos os relatos, não filtrado)
+  // Resumo do lote carregado, não de toda a base.
   const atrasados  = state.todos.filter(estaAtrasado);
   const tempoMedio = calcularTempoMedioResolucao(state.todos);
 
@@ -134,6 +197,7 @@ function render() {
   empty.style.display = lista.length === 0 ? 'block' : 'none';
 
   container.innerHTML = lista.map(cardHTML).join('');
+  atualizarControlesDePagina();
 
   // Eventos
   lista.forEach(r => {
@@ -145,6 +209,9 @@ function render() {
       const novoStatus = e.target.value;
       try {
         await atualizarStatus(r.id, novoStatus);
+        r.status = novoStatus;
+        r.dataResolucao = novoStatus === 'resolvido' ? Date.now() : null;
+        render();
         showToast('✅ Status atualizado.');
       } catch (erro) {
         console.error(erro);
@@ -162,6 +229,9 @@ function render() {
       if (!texto) { showToast('⚠️ Escreva uma resposta antes de salvar.'); return; }
       try {
         await salvarResposta(r.id, texto);
+        r.respostaOficial = texto;
+        r.dataResposta = Date.now();
+        render();
         showToast('✅ Resposta oficial salva.');
       } catch (erro) {
         console.error(erro);
@@ -173,6 +243,8 @@ function render() {
       if (confirm(`Excluir o relato "${r.titulo}"? Essa ação não pode ser desfeita.`)) {
         try {
           await excluirRelato(r.id);
+          state.todos = state.todos.filter(relato => relato.id !== r.id);
+          render();
           showToast('🗑️ Relato excluído.');
         } catch (erro) {
           console.error(erro);

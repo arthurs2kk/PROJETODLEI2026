@@ -1,7 +1,7 @@
 // ── Pro Povo — app.js ──
 import { auth, onAuthStateChanged } from "./js/firebase.js";
-import { criarRelato, ouvirRelatosDestaque, ouvirRelatosRecentes, ouvirContadores, votar, jaVotou, tempoRestanteParaEnviar } from "./js/db.js";
-import { buscarComDebounce, estaNaParaiba } from "./js/endereco.js";
+import { criarRelato, ouvirRelatosDestaque, ouvirRelatosRecentes, votar, jaVotou, tempoRestanteParaEnviar } from "./js/db.js";
+import { buscarSugestoesEndereco, estaNaParaiba } from "./js/endereco.js";
 import { otimizarImagem } from "./js/cloudinary.js";
 import { initNavbar } from "./js/navbar.js";
 import { escapeHTML } from "./js/escapeHtml.js";
@@ -236,19 +236,27 @@ function carregarFeed() {
   const ouvir = state.sort === 'recentes' ? ouvirRelatosRecentes : ouvirRelatosDestaque;
   pararDeOuvirFeed = ouvir(async (relatos) => {
     state.relatosDoBanco = relatos;
+    const contadores = calcularContadoresDoLote(relatos);
+    atualizarEstatisticas(contadores);
+    atualizarContadoresCategoria(contadores);
     await renderCards();
   }, TAMANHO_FEED);
 }
 
 carregarFeed();
 
-// ── Contadores: total, por status e por categoria ──
-// São calculados em memória a partir dos relatos públicos; assim o lote do feed
-// pode continuar limitado sem depender de Cloud Functions ou metadados graváveis.
-ouvirContadores((contadores) => {
-  atualizarEstatisticas(contadores);
-  atualizarContadoresCategoria(contadores);
-});
+// Sem backend agregador, os contadores representam somente o lote limitado que
+// a home já baixou para montar os cards. Não há uma segunda leitura global.
+function calcularContadoresDoLote(relatos) {
+  const contadores = { total: relatos.length, porStatus: {}, porCategoria: {} };
+  relatos.forEach((relato) => {
+    const status = paraChaveFirebase(relato.status);
+    const categoria = paraChaveFirebase(relato.categoria);
+    contadores.porStatus[status] = (contadores.porStatus[status] || 0) + 1;
+    contadores.porCategoria[categoria] = (contadores.porCategoria[categoria] || 0) + 1;
+  });
+  return contadores;
+}
 
 function atualizarContadoresCategoria(contadores) {
   const todos = document.querySelector('#cat-filters .filter-btn[data-cat="todos"] .fcount');
@@ -487,55 +495,113 @@ const s = document.createElement('style');
 s.textContent = `@keyframes spin { to { transform: rotate(360deg); } }`;
 document.head.appendChild(s);
 
-/// ── Autocomplete de endereço ──
+// ── Busca manual de endereço ──
 const inputLocal = document.getElementById('f-local');
+const btnBuscarEndereco = document.getElementById('btn-buscar-endereco');
 const dropSugestoes = document.getElementById('endereco-sugestoes');
 const statusEndereco = document.getElementById('endereco-status');
 let sugestoesAtuais = [];
 
-inputLocal?.addEventListener('input', (e) => {
+function limparEnderecoSelecionado() {
   state.enderecoSelecionado = null;
-  statusEndereco.textContent = '';
+  sugestoesAtuais = [];
+  dropSugestoes?.replaceChildren();
+  dropSugestoes?.classList.remove('open');
+  inputLocal?.removeAttribute('aria-activedescendant');
   statusEndereco.className = 'endereco-status';
+}
 
-  const valor = e.target.value.trim();
-  if (valor.length < 4) {
-    dropSugestoes.classList.remove('open');
+inputLocal?.addEventListener('input', () => {
+  limparEnderecoSelecionado();
+  statusEndereco.textContent = inputLocal.value.trim()
+    ? 'Clique em Buscar para validar o endereço.'
+    : '';
+});
+
+async function executarBuscaEndereco() {
+  const valor = inputLocal?.value.trim() || '';
+
+  limparEnderecoSelecionado();
+
+  if (valor.length < 6) {
+    statusEndereco.textContent = 'Digite ao menos 6 caracteres, incluindo rua e cidade.';
+    statusEndereco.className = 'endereco-status invalido';
+    inputLocal?.focus();
     return;
   }
 
-  buscarComDebounce(valor, (sugestoes) => {
-    sugestoesAtuais = sugestoes;
-    if (sugestoes.length === 0) {
-      dropSugestoes.classList.remove('open');
+  btnBuscarEndereco.disabled = true;
+  btnBuscarEndereco.classList.add('carregando');
+  btnBuscarEndereco.querySelector('i').className = 'ti ti-loader-2';
+  btnBuscarEndereco.querySelector('span').textContent = 'Buscando';
+  statusEndereco.textContent = 'Buscando endereços na Paraíba...';
+  statusEndereco.className = 'endereco-status buscando';
+
+  try {
+    const sugestoes = await buscarSugestoesEndereco(valor);
+
+    // Ignora uma resposta antiga caso o usuário tenha alterado o texto
+    // enquanto a consulta estava em andamento.
+    if (inputLocal.value.trim() !== valor) return;
+
+    // Defesa adicional: mesmo que o serviço externo retorne algo inesperado,
+    // somente coordenadas e municípios reconhecidos da Paraíba são exibidos.
+    sugestoesAtuais = sugestoes.filter(s =>
+      s.cityId && s.cidade && estaNaParaiba(s.lat, s.lng)
+    );
+
+    if (sugestoesAtuais.length === 0) {
+      statusEndereco.textContent = 'Nenhum endereço válido foi encontrado na Paraíba.';
+      statusEndereco.className = 'endereco-status invalido';
       return;
     }
-    dropSugestoes.replaceChildren();
 
-sugestoes.forEach((s, i) => {
-  const item = document.createElement('div');
-  item.className = 'sugestao-item';
-  item.dataset.i = String(i);
+    sugestoesAtuais.forEach((s, i) => {
+      const item = document.createElement('button');
+      item.type = 'button';
+      item.className = 'sugestao-item';
+      item.dataset.i = String(i);
+      item.id = `endereco-opcao-${i}`;
+      item.setAttribute('role', 'option');
 
-  const icone = document.createElement('i');
-  icone.className = 'ti ti-map-pin';
+      const icone = document.createElement('i');
+      icone.className = 'ti ti-map-pin';
 
-  item.append(icone, document.createTextNode(` ${s.texto}`));
-  dropSugestoes.appendChild(item);
+      item.append(icone, document.createTextNode(` ${s.texto}`));
+      dropSugestoes.appendChild(item);
+    });
+
+    dropSugestoes.classList.add('open');
+    statusEndereco.textContent = 'Escolha um dos endereços encontrados.';
+    statusEndereco.className = 'endereco-status';
+  } catch (erro) {
+    console.warn('Não foi possível buscar o endereço:', erro);
+    statusEndereco.textContent = 'Não foi possível buscar agora. Tente novamente.';
+    statusEndereco.className = 'endereco-status invalido';
+  } finally {
+    btnBuscarEndereco.disabled = false;
+    btnBuscarEndereco.classList.remove('carregando');
+    btnBuscarEndereco.querySelector('i').className = 'ti ti-search';
+    btnBuscarEndereco.querySelector('span').textContent = 'Buscar';
+  }
+}
+
+btnBuscarEndereco?.addEventListener('click', executarBuscaEndereco);
+
+inputLocal?.addEventListener('keydown', (e) => {
+  if (e.key !== 'Enter') return;
+  e.preventDefault();
+  if (!btnBuscarEndereco?.disabled) executarBuscaEndereco();
 });
 
-dropSugestoes.classList.add('open');
-  });
-});
-
-// Delegação de evento — resolve o problema de clique não funcionar
-dropSugestoes?.addEventListener('mousedown', (e) => {
+dropSugestoes?.addEventListener('click', (e) => {
   const item = e.target.closest('.sugestao-item');
   if (!item) return;
-  e.preventDefault(); // evita que o input perca foco antes da hora
 
   const i = Number(item.dataset.i);
   const s = sugestoesAtuais[i];
+  if (!s || !estaNaParaiba(s.lat, s.lng)) return;
+
   inputLocal.value = s.texto;
   state.enderecoSelecionado = s;
   dropSugestoes.classList.remove('open');

@@ -1,8 +1,8 @@
 // ── Pro Povo — relatos.js ──
-import { buscarRelatosPagina, obterCidadesComRelatos, ouvirContadores } from "../db.js";
+import { buscarRelatosPagina } from "../db.js";
+import { obterMunicipiosPB } from "../cidades.js";
 import { initNavbar } from "../navbar.js";
 import { otimizarImagem } from "../cloudinary.js";
-import { normalizar } from "../populacao.js";
 import { escapeHTML } from "../escapeHtml.js";
 
 // ── Navbar (login/cadastro/nome do usuário/sair/perfil) ──
@@ -12,7 +12,6 @@ const TAMANHO_PAGINA = 30;
 
 const state = {
   todos: [],          // relatos já carregados (todas as páginas somadas)
-  totalGeral: 0,       // total real, calculado a partir dos relatos públicos
   busca: '',
   cidade: '',
   categoria: 'todos',
@@ -22,18 +21,6 @@ const state = {
   temMais: false,
   carregando: false
 };
-
-// ── Extrai a cidade de um relato ──
-// Relatos criados a partir de agora já vêm com a cidade salva direto do Nominatim.
-// Relatos antigos não têm esse campo — pra eles, cai no fallback lendo o texto do
-// endereço, que é salvo como "rua, bairro, cidade, Paraíba, Região Nordeste, Brasil".
-function extrairCidade(r) {
-  if (r.cidade) return r.cidade;
-
-  const partes = (r.endereco || '').split(',').map(p => p.trim()).filter(Boolean);
-  const idxPB = partes.findIndex(p => normalizar(p).includes('paraiba'));
-  return idxPB > 0 ? (partes[idxPB - 1] || null) : null;
-}
 
 // ── Configurações visuais por categoria/status ──
 const CATS = {
@@ -51,17 +38,15 @@ const STATUS = {
   resolvido: { label: 'Resolvido',    css: 'status-resolvido' },
 };
 
-// ── Seletor de cidade: derivado dos relatos públicos, não só da página carregada ──
-// (assim ele já mostra todas as cidades desde o início, sem depender de
-// quantas páginas de relatos já foram baixadas)
+// ── Seletor de cidade: usa a lista oficial do IBGE ──
 async function preencherSeletorCidades() {
   const select = document.getElementById('filtro-cidade');
   if (!select) return;
 
   try {
-    const cidades = (await obterCidadesComRelatos()).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+    const cidades = await obterMunicipiosPB();
     select.replaceChildren(new Option('Todas as cidades', ''));
-    cidades.forEach(cidade => select.appendChild(new Option(cidade, cidade)));
+    cidades.forEach(cidade => select.appendChild(new Option(cidade.nome, cidade.id)));
     select.value = state.cidade;
   } catch (e) {
     console.warn('Não foi possível carregar a lista de cidades:', e);
@@ -139,18 +124,12 @@ function atualizarBotaoCarregarMais() {
 
 document.getElementById('btn-carregar-mais')?.addEventListener('click', carregarProximaPagina);
 
-// ── Total real de relatos (não depende de quanto já foi carregado) ──
-ouvirContadores((contadores) => {
-  state.totalGeral = contadores.total || 0;
-  render();
-});
-
 // ── Renderização principal ──
 function render() {
   let lista = [...state.todos];
 
   if (state.cidade) {
-    lista = lista.filter(r => normalizar(extrairCidade(r)) === normalizar(state.cidade));
+    lista = lista.filter(r => r.cityId === state.cidade);
   }
 
   if (state.busca) {
@@ -178,7 +157,6 @@ function render() {
   const filtroAtivo = Boolean(state.busca || state.categoria !== 'todos' || state.status !== 'todos' || state.cidade);
 
   let texto = `Mostrando ${lista.length} de ${state.todos.length} relato${state.todos.length !== 1 ? 's' : ''} carregado${state.todos.length !== 1 ? 's' : ''}`;
-  if (state.totalGeral) texto += ` (${state.totalGeral} no total)`;
   if (filtroAtivo && state.temMais) texto += ' — clique em "Carregar mais" pra incluir relatos mais antigos nesse filtro';
   contagem.textContent = texto;
 

@@ -69,6 +69,46 @@
   padding: 0 20px;
 }
 
+.mapa-filtro {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--borda);
+  border-radius: var(--radius-md);
+  background: var(--branco);
+  box-shadow: var(--shadow);
+}
+
+.mapa-filtro label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--cinza-5);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.mapa-filtro label i { color: var(--azul); font-size: 18px; }
+
+.mapa-select {
+  flex: 1;
+  min-width: 0;
+  min-height: 42px;
+  padding: 8px 36px 8px 12px;
+  border: 1px solid var(--borda);
+  border-radius: var(--radius-sm);
+  background: var(--cinza-1);
+  color: var(--cinza-5);
+  font: inherit;
+}
+
+.mapa-select:focus {
+  outline: 3px solid color-mix(in srgb, var(--azul) 24%, transparent);
+  border-color: var(--azul);
+}
+
 #mapa-container {
   height: 580px;
   border-radius: var(--radius-lg);
@@ -134,6 +174,7 @@
   .mapa-wrapper { padding: 0 12px; margin-top: 14px; }
   #mapa-container { height: 440px; border-width: 3px; }
   .legenda-item { font-size: 12px; padding: 5px 11px; }
+  .mapa-filtro { align-items: stretch; flex-direction: column; gap: 7px; }
 }
 
 

@@ -9,7 +9,9 @@ const {
   assertSucceeds,
   assertFails,
 } = require("@firebase/rules-unit-testing");
-const { ref, set, update, get } = require("firebase/database");
+const {
+  ref, set, update, get, query, orderByChild, startAt, endAt, limitToLast
+} = require("firebase/database");
 
 let ambiente;
 const agora = Date.now();
@@ -163,4 +165,28 @@ test("regras bloqueiam adulterações e preservam operações legítimas", async
     "relatos/relatoA": null,
     "votos/relatoA": null,
   }));
+});
+
+test("consulta administrativa combina cidade e limite sem trazer outros municípios", async () => {
+  await ambiente.withSecurityRulesDisabled(async (contexto) => {
+    await update(ref(contexto.database(), "relatos"), {
+      "pagina-001": { ...relatoBase, cidade: "João Pessoa", cityId: "2507507" },
+      "pagina-002": { ...relatoBase, cidade: "João Pessoa", cityId: "2507507" },
+      "pagina-003": { ...relatoBase, cidade: "Campina Grande", cityId: "2504009" },
+    });
+  });
+
+  const publico = ambiente.unauthenticatedContext().database();
+  const consulta = query(
+    ref(publico, "relatos"),
+    orderByChild("cityId"),
+    startAt("2507507"),
+    endAt("2507507"),
+    limitToLast(2)
+  );
+  const snapshot = await assertSucceeds(get(consulta));
+  const relatos = Object.values(snapshot.val() || {});
+
+  assert.equal(relatos.length, 2);
+  assert.ok(relatos.every(relato => relato.cityId === "2507507"));
 });

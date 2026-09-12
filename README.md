@@ -12,7 +12,7 @@ Main Features
 ✅ Citizens: Report problems with photos, vote on reports, track status in real-time
 ✅ Municipality: Dedicated dashboard to manage reports, update status, and send official responses
 ✅ City-Scoped Admin Access: Each municipality's staff only sees and acts on their own city's reports; a superadmin role retains full cross-city access
-✅ Interactive Map: Visualize all geolocated problems across Paraíba state
+✅ Interactive Map: Visualize up to 500 recent geolocated reports from one selected city
 ✅ Analytics Dashboard: Statistics by city, neighborhood, problem category, and monthly trends
 ✅ Official Responses: Municipality updates and responses appear in real time in the citizen interface
 ✅ Responsive Design: Seamless experience on desktop, tablet, and mobile devices
@@ -20,6 +20,12 @@ Main Features
 ✅ User Authentication: Secure login system with email verification
 
 🛠️ Technology Stack
+
+Report loading without Cloud Functions
+
+The static frontend never reads the complete public report collection to build the home, report lists, city selector, map, or charts. The home reuses its limited 50-report feed for visible counters, the public list loads 30 reports at a time, the management panel loads 25 at a time, city selectors use the official IBGE municipality list, the map queries one city with a 500-marker cap, and charts use at most the 500 most recent authorized reports.
+
+Because Realtime Database has no browser-side aggregate query such as `COUNT()`, the numbers shown on the home describe the currently loaded batch rather than a global total. Exact global counters would require a trusted backend or a separate manually maintained data source.
 
 Vercel Web Analytics
 
@@ -48,7 +54,7 @@ Chart.js - Powerful charting library for generating analytics graphics (bar, pie
 Backend & Data Management
 Firebase Authentication - Secure user login with email/password and Google OAuth
 Firebase Realtime Database - Real-time NoSQL database for instant data synchronization across users, with security rules enforcing per-city write permissions for admins
-Firebase Realtime Database Rules - Server-side authorization, field validation, anti-spam checks, and atomic vote consistency without Cloud Functions
+Firebase Realtime Database Rules - Server-side authorization, field validation, anti-spam checks, and atomic vote consistency
 Cloudinary - Cloud-based image service for uploading, storing, and optimizing user photos
 
 External APIs & Data Sources
@@ -90,7 +96,7 @@ PROJETODLEI2026/
 │   ├── db.js                      # Database queries and atomic, rules-validated writes
 │   ├── cloudinary.js              # Image upload handler and URL optimization
 │   ├── cidades.js                 # City dropdown population from IBGE data + cityId resolution
-│   ├── endereco.js                # Address autocomplete with Nominatim debouncing
+│   ├── endereco.js                # Manual address search with Paraíba validation
 │   ├── populacao.js               # Population data fetching, caching, and name normalization
 │   ├── notificacoes.js            # Reserved notification templates (not active in the admin panel)
 │   ├── escapeHtml.js              # XSS prevention utility
@@ -140,7 +146,7 @@ Report Creation: Citizen fills form → Cloudinary uploads photo → client atom
 Real-Time Updates: Firebase listeners broadcast changes → All connected clients update instantly
 Admin Access Resolution: On login, adminAuth.js reads the admin's role and cityId once, and every subsequent panel query/action is scoped accordingly
 Admin Actions: Admin updates status → Realtime Database rules confirm that the admin's city matches the report's city (or that they are a superadmin) → citizen interface updates in real time
-Analytics: Reports are queried (already city-scoped when applicable), aggregated with IBGE population data → Charts generated
+Analytics: Up to 500 recent reports are queried (already city-scoped when applicable), aggregated with IBGE population data → Sample-based charts generated
 
 Key Modules
 Authentication Module (login.js, navbar.js) - Handles user registration, login, password recovery, and profile management
@@ -154,7 +160,7 @@ Geolocation Module (endereco.js, mapa.js) - Address search, map visualization, a
 Citizen Features
 
 Report Creation
-Rich form with address autocomplete powered by Nominatim
+Manual, user-triggered address search powered by Nominatim
 Photo upload with client-side validation (format, size)
 Automatic categorization (potholes, lighting, garbage, water, green areas, other)
 Geolocation capture and storage for map visualization, including the report's cityId
@@ -183,6 +189,7 @@ Every write action a city admin performs (status change, official response, dele
 
 Report Management Dashboard
 Queue-style interface showing incoming reports (all cities for a superadmin, one city for a city admin)
+Reports load in pages of 25, with explicit refresh and "load older" controls
 A scope badge at the top of the panel always shows whether the current view is "All cities" or the specific city being managed
 Advanced filtering by city (superadmin only), neighborhood, category and status
 SLA tracking with visual alerts for overdue reports (10+ days without update)
@@ -199,7 +206,7 @@ Neighborhoods Report: Drill-down analysis by neighborhood within a selected city
 Problem Categories: Pie chart showing distribution of problem types
 Resolution Status: Doughnut chart showing open/in-progress/resolved split
 Monthly Evolution: Line chart tracking report volume over time
-All analytics views are automatically scoped to a city admin's own city; a superadmin can browse every city
+All analytics views use a sample of up to 500 recent reports and are automatically scoped to a city admin's own city; a superadmin's sample can include every city
 
 🎯 Key Differentiators
 ✅ Real-Time Synchronization - All changes propagate instantly across connected users
@@ -249,7 +256,7 @@ Prioritize by urgency using community voting
 Trend analysis to spot emerging issues
 Performance metrics with SLA tracking
 Exportable data for reports and presentations
-Every metric is automatically scoped to a city admin's own municipality, so staff never see (or export) another city's data
+Every metric is calculated from up to 500 recent reports and automatically scoped to a city admin's own municipality, so staff never see (or export) another city's data
 
 🎨 Design Philosophy
 Clean & Minimal - Reduced cognitive load with clear visual hierarchy
@@ -263,18 +270,18 @@ Trustworthy - Transparent responses, visible vote counts, public data, and clear
 Technology | Why Used
 Firebase | Real-time updates, built-in authentication, and server-evaluated rules that enforce field integrity, vote consistency and per-city admin isolation
 Cloudinary | Automatic image optimization, CDN delivery, free tier generous
-Nominatim | Free geocoding without API keys, OpenStreetMap community data
+Nominatim | Manual, user-triggered address search for the MVP, restricted to validated Paraíba municipalities
 IBGE API | Official Brazilian census data, regularly updated population figures, and stable municipality codes used as the cityId for admin scoping
 Chart.js | Lightweight, declarative, extensive chart types
 Leaflet | Small bundle size, fast rendering, OpenStreetMap integration
 
 🔐 Security Architecture
 
-The application does not depend on Cloud Functions or a dedicated application server. Firebase Authentication identifies users, while Realtime Database Security Rules enforce authorization, data validation, report-submission intervals, vote consistency and municipal access boundaries. Sensitive decisions are therefore not entrusted solely to the browser interface.
+The application does not depend on Cloud Functions or a dedicated application server. Firebase Authentication identifies users, while Realtime Database Security Rules enforce authorization, data validation, report-submission intervals, vote consistency and municipal access boundaries.
 
 Technical considerations of the backend-free design:
 
-- Dashboard totals and the city selector are calculated by reading public reports. This is safe, but costs more bandwidth as the dataset grows; a trusted aggregator would be needed at larger scale.
+- Home counters describe only its limited feed, and city selectors use the IBGE municipality list; browsers do not read all reports to calculate either one.
 - The Cloudinary unsigned upload preset cannot be cryptographically signed in a static frontend. Restrict formats, size, folder and transformations in the Cloudinary console, and treat abuse prevention there as an operational control.
 - Coordinates and the IBGE municipality pair are format/range checked, but a static client cannot prove that a user did not intentionally choose another valid municipality. A trusted reference dataset in Firebase Rules or a backend would be required for stronger geographic attestation.
 - App Check can be added as defense in depth against scripted clients, but it does not replace Authentication or Security Rules.
@@ -288,6 +295,6 @@ Civic Tech - Technology enabling citizen participation in local governance
 Open Data - Using public IBGE data to provide fair comparisons
 Transparency - Making municipal processes visible to all citizens
 Multi-Tenant Security - Practical, rules-enforced data isolation between municipalities sharing the same platform
-Scalability - Managed real-time infrastructure supports an initial rollout; the documented client-side aggregation should be replaced if the public dataset becomes large
+Scalability - Public and administrative listings are paginated, charts use a bounded sample, and the map is city-scoped with a marker cap
 
 Pro Povo — Making your city more transparent, one report at a time. 🌍

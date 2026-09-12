@@ -109,12 +109,12 @@
       </div>
 
       <div class="hero-stats-box">
-        <div class="stats-title">Sua cidade em números</div>
+        <div class="stats-title">No lote em destaque</div>
         <div class="stat-row">
           <div class="stat-icon blue"><i class="ti ti-file-description"></i></div>
           <div class="stat-info">
             <span class="stat-num" id="stat-relatos">0</span>
-            <span class="stat-label">Problemas relatados</span>
+            <span class="stat-label">Relatos carregados</span>
           </div>
         </div>
         <div class="stat-divider"></div>
@@ -122,7 +122,7 @@
           <div class="stat-icon green"><i class="ti ti-circle-check"></i></div>
           <div class="stat-info">
             <span class="stat-num" id="stat-resolvidos">0</span>
-            <span class="stat-label">Já resolvidos</span>
+            <span class="stat-label">Resolvidos no lote</span>
           </div>
         </div>
         <div class="stat-divider"></div>
@@ -130,7 +130,7 @@
           <div class="stat-icon yellow"><i class="ti ti-clock"></i></div>
           <div class="stat-info">
             <span class="stat-num" id="stat-andamento">0</span>
-            <span class="stat-label">Em andamento</span>
+            <span class="stat-label">Em andamento no lote</span>
           </div>
         </div>
         <div class="stat-divider"></div>
@@ -197,13 +197,13 @@
       <div class="sidebar-box">
         <div class="sidebar-label">Filtrar por categoria</div>
         <div class="filter-list" id="cat-filters">
-          <button class="filter-btn active" data-cat="todos"><i class="ti ti-layout-grid"></i> Todos <span class="fcount">1.247</span></button>
-          <button class="filter-btn" data-cat="Buraco / Via danificada"><i class="ti ti-road"></i> Buracos <span class="fcount">412</span></button>
-          <button class="filter-btn" data-cat="Iluminação pública"><i class="ti ti-bulb"></i> Iluminação <span class="fcount">289</span></button>
-          <button class="filter-btn" data-cat="Lixo / Entulho"><i class="ti ti-trash"></i> Lixo / Entulho <span class="fcount">201</span></button>
-          <button class="filter-btn" data-cat="Água / Esgoto"><i class="ti ti-droplet"></i> Água / Esgoto <span class="fcount">178</span></button>
-          <button class="filter-btn" data-cat="Áreas verdes"><i class="ti ti-trees"></i> Áreas verdes <span class="fcount">96</span></button>
-          <button class="filter-btn" data-cat="Outros"><i class="ti ti-dots"></i> Outros <span class="fcount">71</span></button>
+          <button class="filter-btn active" data-cat="todos"><i class="ti ti-layout-grid"></i> Todos <span class="fcount">0</span></button>
+          <button class="filter-btn" data-cat="Buraco / Via danificada"><i class="ti ti-road"></i> Buracos <span class="fcount">0</span></button>
+          <button class="filter-btn" data-cat="Iluminação pública"><i class="ti ti-bulb"></i> Iluminação <span class="fcount">0</span></button>
+          <button class="filter-btn" data-cat="Lixo / Entulho"><i class="ti ti-trash"></i> Lixo / Entulho <span class="fcount">0</span></button>
+          <button class="filter-btn" data-cat="Água / Esgoto"><i class="ti ti-droplet"></i> Água / Esgoto <span class="fcount">0</span></button>
+          <button class="filter-btn" data-cat="Áreas verdes"><i class="ti ti-trees"></i> Áreas verdes <span class="fcount">0</span></button>
+          <button class="filter-btn" data-cat="Outros"><i class="ti ti-dots"></i> Outros <span class="fcount">0</span></button>
         </div>
       </div>
 
@@ -277,10 +277,16 @@
         <div class="form-group">
   <label class="form-label">Endereço / Localização <span class="required">*</span></label>
   <div class="endereco-wrap">
-    <input type="text" class="form-input" id="f-local" name="endereco-relato-unico" placeholder="Digite e escolha um endereço válido..." autocomplete="new-password" maxlength="300" />
-    <div class="endereco-sugestoes" id="endereco-sugestoes"></div>
+    <div class="endereco-busca-linha">
+      <input type="text" class="form-input" id="f-local" name="endereco-relato-unico" placeholder="Digite rua, número e cidade..." autocomplete="street-address" maxlength="300" />
+      <button type="button" class="btn-buscar-endereco" id="btn-buscar-endereco" aria-label="Buscar endereço na Paraíba">
+        <i class="ti ti-search"></i>
+        <span>Buscar</span>
+      </button>
+    </div>
+    <div class="endereco-sugestoes" id="endereco-sugestoes" role="listbox" aria-label="Endereços encontrados na Paraíba"></div>
   </div>
-  <span class="endereco-status" id="endereco-status"></span>
+  <span class="endereco-status" id="endereco-status" aria-live="polite"></span>
 </div>
         <div class="form-group">
             <label class="form-label">Foto do problema <span class="optional">(opcional)</span></label>

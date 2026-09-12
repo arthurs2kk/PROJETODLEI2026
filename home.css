@@ -994,7 +994,12 @@ body {
   box-shadow: 0 0 0 4px rgba(19,81,180,0.10);
 }
 
-.form-textarea { resize: vertical; min-height: 96px; }
+.form-textarea {
+  min-height: 96px;
+  max-height: 240px;
+  resize: vertical;
+  overflow-y: auto;
+}
 
 .upload-area {
   display: flex; flex-direction: column;
@@ -1202,6 +1207,73 @@ body {
   position: relative;
 }
 
+.endereco-busca-linha {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.endereco-busca-linha .form-input {
+  min-width: 0;
+}
+
+.btn-buscar-endereco {
+  flex: 0 0 auto;
+  min-width: 104px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: var(--radius);
+  background: var(--azul);
+  color: #fff;
+  font-family: var(--font);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  transition: background var(--transition-fast), opacity var(--transition-fast);
+}
+
+.btn-buscar-endereco:hover:not(:disabled) {
+  background: var(--azul-hover);
+}
+
+.btn-buscar-endereco:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--azul) 30%, transparent);
+  outline-offset: 2px;
+}
+
+.btn-buscar-endereco:disabled {
+  cursor: wait;
+  opacity: .7;
+}
+
+.btn-buscar-endereco.carregando i {
+  animation: spin .8s linear infinite;
+}
+
+.endereco-status {
+  display: block;
+  min-height: 18px;
+  margin-top: 6px;
+  color: var(--cinza-4);
+  font-size: 12.5px;
+}
+
+.endereco-status.valido {
+  color: var(--verde);
+}
+
+.endereco-status.invalido {
+  color: var(--vermelho);
+}
+
+.endereco-status.buscando {
+  color: var(--azul);
+}
+
 .endereco-sugestoes {
   display: none;
 }
@@ -1224,7 +1296,13 @@ body {
 }
 
 .sugestao-item {
+  width: 100%;
   padding: 10px 12px;
+  border: 0;
+  background: transparent;
+  color: var(--cinza-5);
+  font-family: var(--font);
+  text-align: left;
   font-size: 13.5px;
   cursor: pointer;
   border-bottom: 1px solid #eee;
@@ -1234,8 +1312,21 @@ body {
   transition: background var(--transition-fast);
 }
 
-.sugestao-item:hover {
+.sugestao-item:hover,
+.sugestao-item:focus-visible {
   background: var(--azul-claro);
+  outline: none;
+}
+
+@media (max-width: 520px) {
+  .endereco-busca-linha {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .btn-buscar-endereco {
+    min-height: 42px;
+  }
 }
 
 html {

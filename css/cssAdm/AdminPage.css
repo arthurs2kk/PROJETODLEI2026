@@ -94,6 +94,20 @@
 /* ── Cards de gestão ── */
 #admin-lista { display: flex; flex-direction: column; gap: 12px; }
 
+.admin-paginacao {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 20px 0 4px;
+}
+
+.admin-lote-info {
+  color: var(--cinza-4);
+  font-size: 13px;
+  text-align: center;
+}
+
 .gestao-card {
   background: var(--branco);
   border: 1px solid var(--borda);

@@ -4,11 +4,10 @@
 import {
   auth, db,
   ref, set, get, onValue, update, push,
-  query, orderByChild, equalTo, limitToLast, endAt
+  query, orderByChild, equalTo, limitToLast, startAt, endAt
 } from "./firebase.js";
 import { uploadImagem } from "./cloudinary.js";
 import { resolverCityId } from "./cidades.js";
-import { paraChaveFirebase } from "./populacao.js";
 
 // ── Salvar usuário após cadastro ──
 export async function salvarUsuario(uid, dados) {
@@ -54,26 +53,6 @@ export async function tempoRestanteParaEnviar(uid) {
   const passou = Date.now() - snapshot.val();
   const restante = INTERVALO_MINIMO_ENVIO - passou;
   return restante > 0 ? restante : 0;
-}
-
-// ── Contadores calculados a partir dos relatos públicos ──
-// Sem backend não existe um agregador confiável para manter contadores gravados.
-// Por isso eles são derivados, somente em memória, da fonte de verdade protegida.
-export function ouvirContadores(callback) {
-  return onValue(ref(db, "relatos"), (snapshot) => {
-    const contadores = { total: 0, porStatus: {}, porCategoria: {} };
-    for (const relato of Object.values(snapshot.val() || {})) {
-      contadores.total += 1;
-      const status = paraChaveFirebase(relato.status);
-      const categoria = paraChaveFirebase(relato.categoria);
-      contadores.porStatus[status] = (contadores.porStatus[status] || 0) + 1;
-      contadores.porCategoria[categoria] = (contadores.porCategoria[categoria] || 0) + 1;
-    }
-    callback(contadores);
-  }, (erro) => {
-    console.warn("Não foi possível carregar os contadores:", erro);
-    callback({ total: 0, porStatus: {}, porCategoria: {} });
-  });
 }
 
 // ── Criar novo relato ──
@@ -208,16 +187,28 @@ export async function buscarOrganizacao(organizacaoId) {
   return snapshot.exists() ? snapshot.val() : null;
 }
 
-// ── Ouvir TODOS os relatos em tempo real ──
-// Usado pelo mapa público e por superadministradores. Administradores municipais
-// devem usar ouvirRelatosGestao, que limita a consulta ao cityId autorizado.
-export function ouvirRelatos(callback) {
-  return onValue(ref(db, "relatos"), (snapshot) => {
-    const dados = snapshot.val();
-    if (!dados) { callback([]); return; }
-    const lista = Object.entries(dados).map(([id, relato]) => ({ id, ...relato }));
-    lista.sort((a, b) => b.votos - a.votos);
+// Mapa público: consulta somente uma cidade e limita o número de marcadores.
+export function ouvirRelatosMapa(cityId, callback, tamanho = 500) {
+  if (!/^25\d{5}$/.test(String(cityId || ''))) {
+    throw new Error('Cidade inválida para consulta do mapa.');
+  }
+
+  const limite = Math.min(Math.max(Number(tamanho) || 1, 1), 500);
+  const consulta = query(
+    ref(db, "relatos"),
+    orderByChild("cityId"),
+    equalTo(cityId),
+    limitToLast(limite)
+  );
+
+  return onValue(consulta, (snapshot) => {
+    const lista = Object.entries(snapshot.val() || {})
+      .map(([id, relato]) => ({ id, ...relato }))
+      .sort((a, b) => (b.dataCriacao || 0) - (a.dataCriacao || 0));
     callback(lista);
+  }, (erro) => {
+    console.warn('Não foi possível carregar os relatos do mapa:', erro);
+    callback([], erro);
   });
 }
 
@@ -276,17 +267,6 @@ export async function buscarRelatosPagina(cursor = null, tamanho = TAMANHO_PAGIN
   if (temMais) lista = lista.slice(0, tamanho);
 
   return { itens: lista, temMais };
-}
-
-// ── Cidades que já têm pelo menos um relato ──
-// Sem agregador no backend, a lista é derivada dos relatos públicos.
-export async function obterCidadesComRelatos() {
-  const snapshot = await get(ref(db, "relatos"));
-  const cidades = new Set();
-  for (const relato of Object.values(snapshot.val() || {})) {
-    if (relato.cidade) cidades.add(relato.cidade);
-  }
-  return [...cidades];
 }
 
 // ── Votar num relato (sem voto duplo) ──
@@ -356,25 +336,45 @@ export async function excluirRelato(relatoId) {
   });
 }
 
-// Administradores municipais recebem somente os relatos de sua cidade.
-// Superadministradores mantêm a visão global necessária para gerir a rede.
-export function ouvirRelatosGestao(admin, callback) {
+// Página administrativa. Superadmins usam a ordenação global por data;
+// admins municipais usam cityId e as chaves push, que também são cronológicas.
+// Em ambos os casos apenas um lote é transferido por chamada.
+export async function buscarRelatosGestaoPagina(admin, cursor = null, tamanho = TAMANHO_PAGINA_PADRAO) {
   if (!admin) throw new Error('Administrador não identificado.');
+  tamanho = Math.min(Math.max(Number(tamanho) || TAMANHO_PAGINA_PADRAO, 1), 500);
 
   if (admin.papel === 'superadmin') {
-    return ouvirRelatos(callback);
+    return buscarRelatosPagina(cursor, tamanho);
   }
 
   if (!admin.cityId) {
     throw new Error('Administrador municipal sem cidade vinculada.');
   }
 
-  const consulta = query(ref(db, "relatos"), orderByChild("cityId"), equalTo(admin.cityId));
-  return onValue(consulta, (snapshot) => {
-    const dados = snapshot.val();
-    if (!dados) { callback([]); return; }
-    const lista = Object.entries(dados).map(([id, relato]) => ({ id, ...relato }));
-    lista.sort((a, b) => (b.dataCriacao || 0) - (a.dataCriacao || 0));
-    callback(lista);
-  });
+  const consulta = cursor
+    ? query(
+        ref(db, "relatos"),
+        orderByChild("cityId"),
+        startAt(admin.cityId),
+        endAt(admin.cityId, cursor.id),
+        limitToLast(tamanho + 2)
+      )
+    : query(
+        ref(db, "relatos"),
+        orderByChild("cityId"),
+        startAt(admin.cityId),
+        endAt(admin.cityId),
+        limitToLast(tamanho + 1)
+      );
+
+  const snapshot = await get(consulta);
+  let lista = Object.entries(snapshot.val() || {})
+    .map(([id, relato]) => ({ id, ...relato }));
+  if (cursor) lista = lista.filter(relato => relato.id !== cursor.id);
+
+  // Dentro do mesmo cityId, o Realtime Database desempata pela chave.
+  lista.sort((a, b) => b.id.localeCompare(a.id));
+  const temMais = lista.length > tamanho;
+  if (temMais) lista = lista.slice(0, tamanho);
+  return { itens: lista, temMais };
 }

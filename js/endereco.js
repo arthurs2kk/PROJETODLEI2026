@@ -1,7 +1,8 @@
 import { normalizar } from "./populacao.js";
 import { obterMunicipiosPB } from "./cidades.js";
 
-let debounceTimer = null;
+const cacheBuscas = new Map();
+let ultimaConsulta = 0;
 
 const VIEWBOX_PARAIBA = "-38.85,-6.02,-34.79,-8.31";
 
@@ -29,14 +30,27 @@ function identificarMunicipioPB(address, municipios) {
 }
 
 export async function buscarSugestoesEndereco(query) {
-  if (query.length < 4) return [];
+  const termo = query.trim();
+  if (termo.length < 6) return [];
+
+  const chaveCache = normalizar(termo);
+  if (cacheBuscas.has(chaveCache)) return cacheBuscas.get(chaveCache);
+
+  // O serviço público aceita no máximo uma consulta por segundo por aplicação.
+  // Esta espera impede cliques sucessivos no mesmo navegador de ultrapassarem
+  // esse intervalo; a busca manual evita consultas a cada tecla digitada.
+  const espera = Math.max(0, 1100 - (Date.now() - ultimaConsulta));
+  if (espera > 0) {
+    await new Promise(resolve => setTimeout(resolve, espera));
+  }
+  ultimaConsulta = Date.now();
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 8000);
   try {
     const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=8` +
                 `&countrycodes=br&viewbox=${VIEWBOX_PARAIBA}&bounded=1` +
-                `&q=${encodeURIComponent(query)}`;
+                `&q=${encodeURIComponent(termo)}`;
     const resp = await fetch(url, { headers: { 'Accept-Language': 'pt-BR' }, signal: controller.signal });
     if (!resp.ok) return [];
     const [dados, municipios] = await Promise.all([
@@ -62,10 +76,16 @@ export async function buscarSugestoesEndereco(query) {
 
 
   
-    return sugestoes.filter(s =>
+    const validas = sugestoes.filter(s =>
       s.cidade && s.cityId && s.bairro && s.rua &&
-      s.estado && normalizar(s.estado).includes('paraiba')
+      Number.isFinite(s.lat) && Number.isFinite(s.lng) && estaNaParaiba(s.lat, s.lng) &&
+      s.estado && normalizar(s.estado) === 'paraiba'
     );
+
+    cacheBuscas.set(chaveCache, validas);
+    if (cacheBuscas.size > 50) cacheBuscas.delete(cacheBuscas.keys().next().value);
+
+    return validas;
 
   } catch (e) {
     console.warn('Erro ao buscar endereços:', e);
@@ -75,16 +95,8 @@ export async function buscarSugestoesEndereco(query) {
   }
 }
 
-// ── Versão com debounce, pronta para usar em eventos de input ──
-export function buscarComDebounce(query, callback, delay = 500) {
-  clearTimeout(debounceTimer);
-  debounceTimer = setTimeout(async () => {
-    const sugestoes = await buscarSugestoesEndereco(query);
-    callback(sugestoes);
-  }, delay);
-}
-
 export function estaNaParaiba(lat, lng) {
-  return lat >= LIMITES_PB.latMin && lat <= LIMITES_PB.latMax &&
+  return Number.isFinite(lat) && Number.isFinite(lng) &&
+         lat >= LIMITES_PB.latMin && lat <= LIMITES_PB.latMax &&
          lng >= LIMITES_PB.lngMin && lng <= LIMITES_PB.lngMax;
 }

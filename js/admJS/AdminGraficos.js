@@ -1,18 +1,25 @@
 // ── Pro Povo — AdminGraficos.js ──
 import { auth, onAuthStateChanged, signOut } from "../firebase.js";
-import { ouvirRelatosGestao, buscarOrganizacao } from "../db.js";
+import { buscarRelatosGestaoPagina, buscarOrganizacao } from "../db.js";
 import { buscarAdmin, ehSuperAdmin } from "./adminAuth.js";
 import { obterPopulacaoPB, normalizar } from "../populacao.js";
 import { escapeHTML } from "../escapeHtml.js";
 
-const state = { relatos: [], popMap: new Map(), dadosExport: null, admin: null };
+const TAMANHO_AMOSTRA = 500;
+const state = {
+  relatos: [],
+  popMap: new Map(),
+  dadosExport: null,
+  admin: null,
+  temMais: false
+};
 let chartAtual = null;
 
 // ── Esconde/trava opções que não fazem sentido pra um admin restrito a uma
 // única cidade. A visão "cidades com mais relatos por habitante" compara
 // municípios entre si, então some do seletor. O seletor de cidade da visão
-// "bairros" já fica naturalmente restrito (ouvirRelatosGestao só entrega
-// relatos da própria cidade) — aqui só desabilitamos o campo pra deixar isso
+// "bairros" já fica naturalmente restrito (a consulta só entrega relatos da
+// própria cidade) — aqui só desabilitamos o campo pra deixar isso
 // visualmente claro, sem escrever nenhuma lógica nova de filtragem. ──
 function aplicarRestricoesPorCidade(admin) {
   if (ehSuperAdmin(admin)) return;
@@ -65,11 +72,16 @@ onAuthStateChanged(auth, async (user) => {
 
   aplicarRestricoesPorCidade(admin);
 
-  ouvirRelatosGestao(admin, (relatos) => {
-    state.relatos = relatos;
+  try {
+    const { itens, temMais } = await buscarRelatosGestaoPagina(admin, null, TAMANHO_AMOSTRA);
+    state.relatos = itens;
+    state.temMais = temMais;
     atualizarSeletorCidades();
-    renderizar();
-  });
+    await renderizar();
+  } catch (erro) {
+    console.error('Não foi possível carregar a amostra dos gráficos:', erro);
+    atualizarAviso('Não foi possível carregar os dados dos gráficos.');
+  }
 });
 
 document.getElementById('btn-sair')?.addEventListener('click', async () => {
@@ -130,8 +142,13 @@ function atualizarSeletorCidades() {
 function atualizarAviso(msg) {
   const box = document.getElementById('graf-aviso');
   const texto = document.getElementById('graf-aviso-texto');
-  if (!msg) { box.style.display = 'none'; return; }
-  texto.textContent = msg;
+  const mensagens = [];
+  if (state.temMais) {
+    mensagens.push(`Os gráficos usam somente os ${state.relatos.length} relatos mais recentes do escopo autorizado.`);
+  }
+  if (msg) mensagens.push(msg);
+  if (mensagens.length === 0) { box.style.display = 'none'; return; }
+  texto.textContent = mensagens.join(' ');
   box.style.display = 'block';
 }
 
