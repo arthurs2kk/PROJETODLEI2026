@@ -88,23 +88,23 @@
 }
 
 .tabela-card {
-  background: var(--branco);
-  border: 1px solid var(--borda);
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  box-shadow: var(--shadow);
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  overflow: visible;
+  box-shadow: none;
   animation: fadeInUp .4s var(--ease) both;
 }
 
 .tabela-relatos {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0 14px;
   font-size: 13.5px;
 }
 
 .tabela-relatos thead {
-  background: var(--cinza-1);
-  border-bottom: 2px solid var(--borda);
+  background: transparent;
 }
 
 .tabela-relatos th {
@@ -124,15 +124,33 @@
 .th-endereco { min-width: 160px; }
 
 .tabela-relatos td {
-  padding: 12px 14px;
+  padding: 18px 14px;
+  border-top: 1px solid var(--borda);
   border-bottom: 1px solid var(--borda);
+  background: var(--branco);
   color: var(--cinza-5);
   vertical-align: middle;
 }
 
-.tabela-relatos tbody tr { transition: background var(--transition-fast); }
-.tabela-relatos tbody tr:hover { background: var(--cinza-1); }
-.tabela-relatos tbody tr:last-child td { border-bottom: none; }
+.tabela-relatos tbody tr {
+  box-shadow: var(--shadow);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.tabela-relatos tbody tr:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.tabela-relatos tbody td:first-child {
+  border-left: 1px solid var(--borda);
+  border-radius: var(--radius-lg) 0 0 var(--radius-lg);
+}
+
+.tabela-relatos tbody td:last-child {
+  border-right: 1px solid var(--borda);
+  border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
+}
 
 .td-titulo { font-weight: 600; max-width: 260px; }
 .td-endereco { color: var(--cinza-4); }
@@ -172,6 +190,10 @@
   text-align: center;
   padding: 50px 20px;
   color: var(--cinza-4);
+  background: var(--branco);
+  border: 1px solid var(--borda);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
 }
 
 .tabela-empty i { font-size: 44px; color: var(--cinza-3); display: block; margin-bottom: 10px; }
@@ -208,11 +230,16 @@
     width: 100%;
   }
   .tabela-relatos tr {
-    border-bottom: 8px solid var(--cinza-1);
-    padding: 12px 14px;
+    margin-bottom: 16px;
+    padding: 14px 16px;
+    border: 1px solid var(--borda);
+    border-radius: var(--radius-lg);
+    background: var(--branco);
+    box-shadow: var(--shadow);
   }
   .tabela-relatos td {
     border: none;
+    background: transparent;
     padding: 5px 0;
     display: flex;
     justify-content: space-between;
@@ -227,4 +254,10 @@
   }
   .td-titulo { font-size: 14.5px; }
   .td-acao { justify-content: flex-end; }
+
+  .tabela-relatos tbody td:first-child,
+  .tabela-relatos tbody td:last-child {
+    border: 0;
+    border-radius: 0;
+  }
 }
