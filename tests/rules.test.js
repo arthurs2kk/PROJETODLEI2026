@@ -52,6 +52,11 @@ before(async () => {
           cidade: "João Pessoa",
           dataCadastro: agora,
         },
+        legado: {
+          nome: "Perfil Legado",
+          email: "legado@example.com",
+          cidade: "Campina Grande",
+        },
       },
       admins: {
         adminJP: { ativo: true, papel: "admin", cityId: "2507507", organizacaoId: "orgJP" },
@@ -86,6 +91,10 @@ test("regras bloqueiam adulterações e preservam operações legítimas", async
     email: "novo@example.com",
     email_verified: false,
   }).database();
+  const legado = ambiente.authenticatedContext("legado", {
+    email: "legado@example.com",
+    email_verified: true,
+  }).database();
 
   await assertSucceeds(set(ref(novoCidadao, "usuarios/novoCidadao"), {
     nome: "Novo Cidadão",
@@ -99,6 +108,20 @@ test("regras bloqueiam adulterações e preservam operações legítimas", async
   }));
   await assertFails(update(ref(novoCidadao, "usuarios/novoCidadao"), {
     dataCadastro: Date.now() - 86400000,
+  }));
+
+  // Perfis anteriores à exigência de dataCadastro precisam enviar o campo na
+  // primeira edição. Este é o formato usado por atualizarUsuario no cliente.
+  await assertFails(update(ref(legado, "usuarios/legado"), {
+    nome: "Perfil Legado Atualizado",
+    dataAtualizacao: Date.now(),
+  }));
+  await assertSucceeds(update(ref(legado, "usuarios/legado"), {
+    nome: "Perfil Legado Atualizado",
+    email: "legado@example.com",
+    cidade: "Campina Grande",
+    dataCadastro: Date.now(),
+    dataAtualizacao: Date.now(),
   }));
 
   const novoRelato = { ...relatoBase, dataCriacao: Date.now() };

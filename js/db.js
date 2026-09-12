@@ -143,19 +143,31 @@ export async function buscarUsuario(uid) {
 
 // ── Atualizar dados do perfil (nome, e-mail e cidade) ──
 // O e-mail é reenviado aqui mesmo sem ter mudado: as regras do banco exigem que
-// nome/email/cidade existam juntos em usuarios/{uid}, então se o registro tivesse
-// ficado incompleto por algum motivo (ex: conta criada antes de uma correção
-// anterior), essa gravação já conserta sozinha em vez de falhar na validação.
+// nome/email/cidade/dataCadastro existam juntos em usuarios/{uid}. Se um registro
+// antigo estiver incompleto, esta gravação o normaliza em vez de falhar.
 export async function atualizarUsuario(uid, dados) {
   if (!auth.currentUser || auth.currentUser.uid !== uid) {
     throw new Error('Usuário autenticado inválido.');
   }
-  await update(ref(db, `usuarios/${uid}`), {
+
+  const usuarioRef = ref(db, `usuarios/${uid}`);
+  const snapshot = await get(usuarioRef);
+  const perfilAtual = snapshot.exists() ? snapshot.val() : null;
+  const agora = Date.now();
+  const atualizacoes = {
     nome:            dados.nome,
     email:           dados.email,
     cidade:          dados.cidade,
-    dataAtualizacao: Date.now()
-  });
+    dataAtualizacao: agora
+  };
+
+  // As regras exigem dataCadastro no registro completo. Contas antigas podem
+  // ter sido criadas antes desse campo existir, então o inicializamos uma vez.
+  if (!perfilAtual || !Object.prototype.hasOwnProperty.call(perfilAtual, 'dataCadastro')) {
+    atualizacoes.dataCadastro = agora;
+  }
+
+  await update(usuarioRef, atualizacoes);
 }
 
 // ── Ouvir, em tempo real, apenas os relatos criados pelo próprio usuário ──
