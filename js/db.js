@@ -8,6 +8,7 @@ import {
 } from "./firebase.js";
 import { uploadImagem } from "./cloudinary.js";
 import { resolverCityId } from "./cidades.js";
+import { invalidarCacheRelatos, lerCache, salvarCache } from "./cache.js";
 
 // ── Salvar usuário após cadastro ──
 export async function salvarUsuario(uid, dados) {
@@ -119,6 +120,7 @@ export async function criarRelato(dados, fotoFile) {
       [`relatos/${novoRef.key}`]: relato,
       [`limitesEnvio/${dados.autorId}`]: agora
     });
+    invalidarCacheRelatos();
   } catch (erro) {
     if (String(erro.code || '').includes('permission-denied')) {
       try {
@@ -191,6 +193,7 @@ export async function atualizarRelatoDoUsuario(relatoId, dados) {
     descricao:  dados.descricao,
     dataEdicao: Date.now()
   });
+  invalidarCacheRelatos();
 }
 
 export async function buscarOrganizacao(organizacaoId) {
@@ -199,13 +202,22 @@ export async function buscarOrganizacao(organizacaoId) {
   return snapshot.exists() ? snapshot.val() : null;
 }
 
-// Mapa público: consulta somente uma cidade e limita o número de marcadores.
-export function ouvirRelatosMapa(cityId, callback, tamanho = 500) {
+// Mapa público: consulta somente uma cidade, limita os marcadores e reaproveita
+// por cinco minutos a última cidade visitada.
+export async function buscarRelatosMapa(cityId, tamanho = 500, usarCache = true) {
   if (!/^25\d{5}$/.test(String(cityId || ''))) {
     throw new Error('Cidade inválida para consulta do mapa.');
   }
 
   const limite = Math.min(Math.max(Number(tamanho) || 1, 1), 500);
+  // Mantém apenas uma cidade do mapa por limite, evitando ocupar o
+  // localStorage com até 500 relatos para cada município visitado.
+  const chaveCache = `relatos:mapa:${limite}`;
+  if (usarCache) {
+    const cache = lerCache(chaveCache);
+    if (cache?.cityId === cityId) return cache.relatos;
+  }
+
   const consulta = query(
     ref(db, "relatos"),
     orderByChild("cityId"),
@@ -213,42 +225,49 @@ export function ouvirRelatosMapa(cityId, callback, tamanho = 500) {
     limitToLast(limite)
   );
 
-  return onValue(consulta, (snapshot) => {
-    const lista = Object.entries(snapshot.val() || {})
-      .map(([id, relato]) => ({ id, ...relato }))
-      .sort((a, b) => (b.dataCriacao || 0) - (a.dataCriacao || 0));
-    callback(lista);
-  }, (erro) => {
-    console.warn('Não foi possível carregar os relatos do mapa:', erro);
-    callback([], erro);
-  });
+  const snapshot = await get(consulta);
+  const lista = Object.entries(snapshot.val() || {})
+    .map(([id, relato]) => ({ id, ...relato }))
+    .sort((a, b) => (b.dataCriacao || 0) - (a.dataCriacao || 0));
+  salvarCache(chaveCache, { cityId, relatos: lista });
+  return lista;
 }
 
 // ── Feed limitado pra home: só os N relatos mais votados ──
 // Evita que a página mais visitada do site baixe a tabela inteira pra mostrar
 // só 5 cards. "tamanho" é intencionalmente maior que os 5 exibidos, pra
 // sobrar folga pros filtros de categoria/status feitos no cliente.
-export function ouvirRelatosDestaque(callback, tamanho = 50) {
-  const consulta = query(ref(db, "relatos"), orderByChild("votos"), limitToLast(tamanho));
-  return onValue(consulta, (snapshot) => {
-    const dados = snapshot.val();
-    if (!dados) { callback([]); return; }
-    const lista = Object.entries(dados).map(([id, r]) => ({ id, ...r }));
-    lista.sort((a, b) => (b.votos || 0) - (a.votos || 0));
-    callback(lista);
-  });
+export async function buscarRelatosDestaque(tamanho = 50, usarCache = true) {
+  const limite = Math.min(Math.max(Number(tamanho) || 1, 1), 100);
+  const chaveCache = `relatos:destaque:${limite}`;
+  if (usarCache) {
+    const cache = lerCache(chaveCache);
+    if (cache !== undefined) return cache;
+  }
+
+  const consulta = query(ref(db, "relatos"), orderByChild("votos"), limitToLast(limite));
+  const snapshot = await get(consulta);
+  const lista = Object.entries(snapshot.val() || {}).map(([id, r]) => ({ id, ...r }));
+  lista.sort((a, b) => (b.votos || 0) - (a.votos || 0));
+  salvarCache(chaveCache, lista);
+  return lista;
 }
 
 // ── Feed limitado pra home: só os N relatos mais recentes ──
-export function ouvirRelatosRecentes(callback, tamanho = 50) {
-  const consulta = query(ref(db, "relatos"), orderByChild("dataCriacao"), limitToLast(tamanho));
-  return onValue(consulta, (snapshot) => {
-    const dados = snapshot.val();
-    if (!dados) { callback([]); return; }
-    const lista = Object.entries(dados).map(([id, r]) => ({ id, ...r }));
-    lista.sort((a, b) => b.dataCriacao - a.dataCriacao);
-    callback(lista);
-  });
+export async function buscarRelatosRecentes(tamanho = 50, usarCache = true) {
+  const limite = Math.min(Math.max(Number(tamanho) || 1, 1), 100);
+  const chaveCache = `relatos:recentes:${limite}`;
+  if (usarCache) {
+    const cache = lerCache(chaveCache);
+    if (cache !== undefined) return cache;
+  }
+
+  const consulta = query(ref(db, "relatos"), orderByChild("dataCriacao"), limitToLast(limite));
+  const snapshot = await get(consulta);
+  const lista = Object.entries(snapshot.val() || {}).map(([id, r]) => ({ id, ...r }));
+  lista.sort((a, b) => b.dataCriacao - a.dataCriacao);
+  salvarCache(chaveCache, lista);
+  return lista;
 }
 
 const TAMANHO_PAGINA_PADRAO = 30;
@@ -259,14 +278,25 @@ const TAMANHO_PAGINA_PADRAO = 30;
 // página; pra próxima, passe { dataCriacao, id } do último relato já
 // carregado. O par (dataCriacao, id) no endAt evita pular ou repetir relatos
 // quando dois deles têm exatamente o mesmo timestamp.
-export async function buscarRelatosPagina(cursor = null, tamanho = TAMANHO_PAGINA_PADRAO) {
+export async function buscarRelatosPagina(cursor = null, tamanho = TAMANHO_PAGINA_PADRAO, opcoes = {}) {
+  const { usarCache = false } = opcoes;
+  const chaveCache = !cursor ? `relatos:pagina-inicial:${tamanho}` : null;
+  if (usarCache && chaveCache) {
+    const cache = lerCache(chaveCache);
+    if (cache !== undefined) return cache;
+  }
+
   const consulta = cursor
     ? query(ref(db, "relatos"), orderByChild("dataCriacao"), endAt(cursor.dataCriacao, cursor.id), limitToLast(tamanho + 2))
     : query(ref(db, "relatos"), orderByChild("dataCriacao"), limitToLast(tamanho + 1));
 
   const snapshot = await get(consulta);
   const dados = snapshot.val();
-  if (!dados) return { itens: [], temMais: false };
+  if (!dados) {
+    const resultadoVazio = { itens: [], temMais: false };
+    if (usarCache && chaveCache) salvarCache(chaveCache, resultadoVazio);
+    return resultadoVazio;
+  }
 
   let lista = Object.entries(dados).map(([id, r]) => ({ id, ...r }));
   if (cursor) lista = lista.filter(r => r.id !== cursor.id); // o endAt inclui de novo o cursor
@@ -278,7 +308,9 @@ export async function buscarRelatosPagina(cursor = null, tamanho = TAMANHO_PAGIN
   const temMais = lista.length > tamanho;
   if (temMais) lista = lista.slice(0, tamanho);
 
-  return { itens: lista, temMais };
+  const resultado = { itens: lista, temMais };
+  if (usarCache && chaveCache) salvarCache(chaveCache, resultado);
+  return resultado;
 }
 
 // ── Votar num relato (sem voto duplo) ──
@@ -307,6 +339,7 @@ export async function votar(relatoId, userId) {
 
     try {
       await update(ref(db), atualizacoes);
+      invalidarCacheRelatos();
       return !jaExiste;
     } catch (erro) {
       const concorrencia = String(erro.code || '').includes('permission-denied');
@@ -329,7 +362,7 @@ export async function atualizarStatus(relatoId, novoStatus) {
     status: novoStatus,
     dataResolucao: novoStatus === 'resolvido' ? Date.now() : null
   });
-
+  invalidarCacheRelatos();
 }
 
 // ── Salvar resposta oficial da prefeitura ──
@@ -338,6 +371,7 @@ export async function salvarResposta(relatoId, resposta) {
     respostaOficial: resposta,
     dataResposta: Date.now()
   });
+  invalidarCacheRelatos();
 }
 
 // ── Excluir relato ──
@@ -346,6 +380,7 @@ export async function excluirRelato(relatoId) {
     [`relatos/${relatoId}`]: null,
     [`votos/${relatoId}`]: null
   });
+  invalidarCacheRelatos();
 }
 
 // Página administrativa. Superadmins usam a ordenação global por data;
@@ -389,4 +424,33 @@ export async function buscarRelatosGestaoPagina(admin, cursor = null, tamanho = 
   const temMais = lista.length > tamanho;
   if (temMais) lista = lista.slice(0, tamanho);
   return { itens: lista, temMais };
+}
+
+// Os gráficos administrativos precisam do conjunto completo. A leitura segue
+// paginada para limitar o tamanho de cada resposta, mas percorre todos os lotes
+// do escopo autorizado antes de montar as estatísticas.
+export async function buscarTodosRelatosGestao(admin, onProgresso = null, tamanhoLote = 500) {
+  const relatosPorId = new Map();
+  let cursor = null;
+  let temMais = true;
+
+  while (temMais) {
+    const pagina = await buscarRelatosGestaoPagina(admin, cursor, tamanhoLote);
+    pagina.itens.forEach(relato => relatosPorId.set(relato.id, relato));
+    temMais = pagina.temMais;
+    onProgresso?.(relatosPorId.size);
+
+    const ultimo = pagina.itens[pagina.itens.length - 1];
+    if (!temMais || !ultimo) break;
+
+    const proximoCursor = { id: ultimo.id, dataCriacao: ultimo.dataCriacao };
+    if (cursor?.id === proximoCursor.id) {
+      throw new Error('A paginação dos relatos não avançou.');
+    }
+    cursor = proximoCursor;
+  }
+
+  return [...relatosPorId.values()].sort((a, b) =>
+    ((b.dataCriacao || 0) - (a.dataCriacao || 0)) || b.id.localeCompare(a.id)
+  );
 }

@@ -266,6 +266,15 @@
 
 .resposta-existente strong { display: block; margin-bottom: 3px; font-size: 12px; }
 
+html[data-theme="dark"] .resposta-existente {
+  color: var(--cinza-5);
+  border-left-color: #6EA8FE;
+}
+
+html[data-theme="dark"] .resposta-existente strong {
+  color: #A9C7F7;
+}
+
 @media (max-width: 640px) {
   .admin-resumo { grid-template-columns: repeat(2, 1fr); }
   .gestao-controles { flex-direction: column; align-items: stretch; }

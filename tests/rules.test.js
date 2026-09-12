@@ -44,7 +44,10 @@ before(async () => {
 
   await ambiente.withSecurityRulesDisabled(async (contexto) => {
     await set(ref(contexto.database()), {
-      relatos: { relatoA: relatoBase },
+      relatos: {
+        relatoA: relatoBase,
+        relatoSemVotos: relatoBase,
+      },
       usuarios: {
         cidadao: {
           nome: "Cidadão de Teste",
@@ -178,6 +181,18 @@ test("regras bloqueiam adulterações e preservam operações legítimas", async
   await assertFails(get(ref(adminJP, "usuarios/cidadao")));
   const perfil = await assertSucceeds(get(ref(superadmin, "usuarios/cidadao")));
   assert.equal(perfil.val().email, "cidadao@example.com");
+
+  // A tela administrativa sempre remove relato e votos na mesma atualizacao.
+  // Isso tambem precisa funcionar quando o relato nunca recebeu nenhum voto e,
+  // portanto, /votos/{relatoId} ainda nao existe.
+  await assertFails(update(ref(adminCG), {
+    "relatos/relatoSemVotos": null,
+    "votos/relatoSemVotos": null,
+  }));
+  await assertSucceeds(update(ref(adminJP), {
+    "relatos/relatoSemVotos": null,
+    "votos/relatoSemVotos": null,
+  }));
 
   await assertSucceeds(update(ref(cidadao), {
     "votos/relatoA/cidadao": true,

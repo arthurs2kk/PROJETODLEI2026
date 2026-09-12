@@ -456,62 +456,103 @@ body {
   flex-wrap: wrap;
 }
 
-/* Stats box */
-.hero-stats-box {
-  background: var(--branco);
-  border-radius: var(--radius-lg);
-  padding: 24px;
-  width: 280px;
+.hero-participacao-card {
+  position: relative;
+  width: 320px;
   flex-shrink: 0;
+  overflow: hidden;
+  background: var(--branco);
+  border: 1px solid rgba(255,255,255,0.32);
+  border-left: 4px solid var(--amarelo);
+  border-radius: var(--radius-lg);
+  padding: 22px;
   box-shadow: var(--shadow-md);
   animation: fadeInUp .6s var(--ease) .12s both;
 }
 
-.stats-title {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--azul-escuro);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  margin-bottom: 16px;
-  padding-bottom: 10px;
-  border-bottom: 2px solid var(--azul);
-}
-
-.stat-row {
+.participacao-card-header {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 8px 0;
+  margin-bottom: 18px;
 }
 
-.stat-divider { height: 1px; background: var(--borda); margin: 2px 0; }
+.participacao-card-header > div {
+  display: grid;
+  gap: 2px;
+}
 
-.stat-icon {
-  width: 36px; height: 36px;
-  border-radius: var(--radius);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 18px;
+.participacao-card-header strong {
+  color: var(--azul-escuro);
+  font-size: 16px;
+  line-height: 1.3;
+}
+
+.participacao-card-icon {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
   flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--azul-claro);
+  color: var(--azul);
+  font-size: 22px;
 }
 
-.stat-icon.blue   { background: var(--azul-claro); color: var(--azul); }
-.stat-icon.green  { background: var(--verde-claro); color: var(--verde); }
-.stat-icon.yellow { background: #FFF8D0; color: #7A5900; }
-.stat-icon.navy   { background: #E8ECF4; color: var(--azul-escuro); }
-
-.stat-num {
-  display: block;
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--cinza-5);
-  line-height: 1.1;
-}
-
-.stat-label {
-  display: block;
-  font-size: 12px;
+.participacao-card-label {
   color: var(--cinza-4);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.participacao-beneficios {
+  display: grid;
+  gap: 11px;
+  margin: 0 0 18px;
+  padding: 0;
+  list-style: none;
+}
+
+.participacao-beneficios li {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--cinza-5);
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.participacao-beneficios i {
+  flex-shrink: 0;
+  color: var(--verde);
+  font-size: 18px;
+}
+
+.participacao-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--azul);
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.participacao-link i {
+  transition: transform var(--transition-fast);
+}
+
+.participacao-link:hover i {
+  transform: translateX(3px);
+}
+
+.participacao-link:focus-visible {
+  outline: 3px solid var(--amarelo);
+  outline-offset: 4px;
+  border-radius: 2px;
 }
 
 /* ── Como funciona ── */
@@ -1126,7 +1167,7 @@ body {
 /* ── Responsivo ── */
 @media (max-width: 860px) {
   .hero-inner { flex-direction: column; }
-  .hero-stats-box { width: 100%; }
+  .hero-participacao-card { width: 100%; }
   .steps { flex-direction: column; }
   .step-arrow { transform: rotate(90deg); }
   .main-wrapper { flex-direction: column; padding: 12px; }

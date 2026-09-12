@@ -1,17 +1,15 @@
 // ── Pro Povo — AdminGraficos.js ──
 import { auth, onAuthStateChanged, signOut } from "../firebase.js";
-import { buscarRelatosGestaoPagina, buscarOrganizacao } from "../db.js";
+import { buscarTodosRelatosGestao, buscarOrganizacao } from "../db.js";
 import { buscarAdmin, ehSuperAdmin } from "./adminAuth.js";
 import { obterPopulacaoPB, normalizar } from "../populacao.js";
 import { escapeHTML } from "../escapeHtml.js";
 
-const TAMANHO_AMOSTRA = 500;
 const state = {
   relatos: [],
   popMap: new Map(),
   dadosExport: null,
-  admin: null,
-  temMais: false
+  admin: null
 };
 let chartAtual = null;
 
@@ -73,13 +71,14 @@ onAuthStateChanged(auth, async (user) => {
   aplicarRestricoesPorCidade(admin);
 
   try {
-    const { itens, temMais } = await buscarRelatosGestaoPagina(admin, null, TAMANHO_AMOSTRA);
-    state.relatos = itens;
-    state.temMais = temMais;
+    atualizarAviso('Carregando todos os relatos do escopo autorizado...');
+    state.relatos = await buscarTodosRelatosGestao(admin, (quantidade) => {
+      atualizarAviso(`Carregando relatos para os gráficos... ${quantidade} recebido${quantidade !== 1 ? 's' : ''}.`);
+    });
     atualizarSeletorCidades();
     await renderizar();
   } catch (erro) {
-    console.error('Não foi possível carregar a amostra dos gráficos:', erro);
+    console.error('Não foi possível carregar os dados completos dos gráficos:', erro);
     atualizarAviso('Não foi possível carregar os dados dos gráficos.');
   }
 });
@@ -142,13 +141,8 @@ function atualizarSeletorCidades() {
 function atualizarAviso(msg) {
   const box = document.getElementById('graf-aviso');
   const texto = document.getElementById('graf-aviso-texto');
-  const mensagens = [];
-  if (state.temMais) {
-    mensagens.push(`Os gráficos usam somente os ${state.relatos.length} relatos mais recentes do escopo autorizado.`);
-  }
-  if (msg) mensagens.push(msg);
-  if (mensagens.length === 0) { box.style.display = 'none'; return; }
-  texto.textContent = mensagens.join(' ');
+  if (!msg) { box.style.display = 'none'; return; }
+  texto.textContent = msg;
   box.style.display = 'block';
 }
 

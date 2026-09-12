@@ -1,6 +1,6 @@
 // ── Pro Povo — app.js ──
 import { auth, onAuthStateChanged } from "./js/firebase.js";
-import { criarRelato, ouvirRelatosDestaque, ouvirRelatosRecentes, votar, jaVotou, tempoRestanteParaEnviar } from "./js/db.js";
+import { criarRelato, buscarRelatosDestaque, buscarRelatosRecentes, votar, jaVotou, tempoRestanteParaEnviar } from "./js/db.js";
 import { buscarSugestoesEndereco, estaNaParaiba } from "./js/endereco.js";
 import { otimizarImagem } from "./js/cloudinary.js";
 import { initNavbar } from "./js/navbar.js";
@@ -36,7 +36,10 @@ initNavbar();
 
 // ── Guarda o usuário logado para uso no restante da página (ex: enviar relato) ──
 onAuthStateChanged(auth, (user) => {
+  const usuarioMudou = state.usuario?.uid !== user?.uid;
+  if (usuarioMudou) state.voted = {};
   state.usuario = user;
+  if (usuarioMudou && state.relatosDoBanco.length > 0) renderCards();
 });
 
 // ── Modal ──
@@ -198,6 +201,7 @@ document.getElementById('btn-enviar')?.addEventListener('click', async () => {
 
     closeModal();
     limparFormulario();
+    await carregarFeed(true);
     showToast('✅ Relato enviado com sucesso! Obrigado.');
   } catch (err) {
     console.error(err);
@@ -228,19 +232,22 @@ function limparFormulario() {
 // mais recentes, dependendo do "Ordenar por"). Isso evita que a página
 // inicial — a mais visitada do site — baixe o banco inteiro a cada visita.
 const TAMANHO_FEED = 50;
-let pararDeOuvirFeed = null;
+let solicitacaoFeed = 0;
 
-function carregarFeed() {
-  if (pararDeOuvirFeed) pararDeOuvirFeed();
-
-  const ouvir = state.sort === 'recentes' ? ouvirRelatosRecentes : ouvirRelatosDestaque;
-  pararDeOuvirFeed = ouvir(async (relatos) => {
+async function carregarFeed(forcarAtualizacao = false) {
+  const numeroSolicitacao = ++solicitacaoFeed;
+  const buscar = state.sort === 'recentes' ? buscarRelatosRecentes : buscarRelatosDestaque;
+  try {
+    const relatos = await buscar(TAMANHO_FEED, !forcarAtualizacao);
+    if (numeroSolicitacao !== solicitacaoFeed) return;
     state.relatosDoBanco = relatos;
     const contadores = calcularContadoresDoLote(relatos);
-    atualizarEstatisticas(contadores);
     atualizarContadoresCategoria(contadores);
     await renderCards();
-  }, TAMANHO_FEED);
+  } catch (erro) {
+    console.error('Não foi possível carregar o feed:', erro);
+    showToast('❌ Não foi possível carregar os relatos. Tente novamente.');
+  }
 }
 
 carregarFeed();
@@ -303,7 +310,9 @@ async function renderCards() {
   if (state.usuario) {
     relatos.forEach(async (r) => {
       try {
-        const votei = await jaVotou(r.id, state.usuario.uid);
+        const temCache = Object.prototype.hasOwnProperty.call(state.voted, r.id);
+        const votei = temCache ? state.voted[r.id] : await jaVotou(r.id, state.usuario.uid);
+        state.voted[r.id] = votei;
         const btn = [...lista.querySelectorAll('.vote-btn')]
           .find(el => el.dataset.id === r.id);
         if (btn && votei) btn.classList.add('voted');
@@ -326,7 +335,12 @@ async function renderCards() {
       btn.disabled = true;
       try {
         const votei = await votar(id, state.usuario.uid);
+        state.voted[id] = votei;
+        const relato = state.relatosDoBanco.find(item => item.id === id);
+        if (relato) relato.votos = Math.max(0, (Number(relato.votos) || 0) + (votei ? 1 : -1));
         btn.classList.toggle('voted', votei);
+        const contagem = btn.querySelector('.vcount');
+        if (contagem && relato) contagem.textContent = relato.votos;
       } catch (e) {
         console.error('Não foi possível registrar o voto:', e);
         showToast('❌ Não foi possível registrar seu voto. Tente novamente.');
@@ -430,26 +444,6 @@ function tempoRelativo(ts) {
   if (min < 60) return `Há ${min} minuto${min > 1 ? 's' : ''}`;
   if (h < 24)   return `Há ${h} hora${h > 1 ? 's' : ''}`;
   return `Há ${d} dia${d > 1 ? 's' : ''}`;
-}
-
-// ── Atualizar estatísticas do hero (a partir dos contadores agregados) ──
-function atualizarEstatisticas(contadores) {
-  animarNumero('stat-relatos',    contadores.total || 0);
-  animarNumero('stat-resolvidos', (contadores.porStatus && contadores.porStatus.resolvido) || 0);
-  animarNumero('stat-andamento',  (contadores.porStatus && contadores.porStatus.andamento) || 0);
-}
-
-function animarNumero(id, target) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  let i = 0;
-  const steps = 40;
-  clearInterval(el._timer);
-  el._timer = setInterval(() => {
-    i++;
-    el.textContent = Math.round((i / steps) * target).toLocaleString('pt-BR');
-    if (i >= steps) { el.textContent = target.toLocaleString('pt-BR'); clearInterval(el._timer); }
-  }, 20);
 }
 
 // ── Filtros ──

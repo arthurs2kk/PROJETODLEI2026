@@ -1,5 +1,5 @@
 // ── Pro Povo — mapa.js ──
-import { ouvirRelatosMapa } from "../db.js";
+import { buscarRelatosMapa } from "../db.js";
 import { obterMunicipiosPB } from "../cidades.js";
 import { initNavbar } from "../navbar.js";
 import { escapeHTML } from "../escapeHtml.js";
@@ -49,7 +49,7 @@ L.rectangle(BOUNDS_PB, {
 }).addTo(mapa);
 
 let marcadores = [];
-let pararDeOuvirCidade = null;
+let solicitacaoAtual = 0;
 const LIMITE_MARCADORES = 500;
 const CHAVE_CIDADE_MAPA = 'proPovoMapaCityId';
 
@@ -59,11 +59,8 @@ function limparMarcadores() {
 }
 
 // ── Carregar somente os relatos da cidade selecionada ──
-function carregarCidade(cityId) {
-  if (pararDeOuvirCidade) {
-    pararDeOuvirCidade();
-    pararDeOuvirCidade = null;
-  }
+async function carregarCidade(cityId) {
+  const numeroSolicitacao = ++solicitacaoAtual;
   limparMarcadores();
 
   const contagem = document.getElementById('mapa-contagem');
@@ -75,13 +72,10 @@ function carregarCidade(cityId) {
   localStorage.setItem(CHAVE_CIDADE_MAPA, cityId);
   contagem.textContent = 'Carregando relatos desta cidade...';
 
-  pararDeOuvirCidade = ouvirRelatosMapa(cityId, (relatos, erro) => {
+  try {
+    const relatos = await buscarRelatosMapa(cityId, LIMITE_MARCADORES);
+    if (numeroSolicitacao !== solicitacaoAtual) return;
     limparMarcadores();
-
-    if (erro) {
-      contagem.textContent = 'Não foi possível carregar os relatos desta cidade.';
-      return;
-    }
 
     const comCoordenadas = relatos.filter(r => Number.isFinite(r.lat) && Number.isFinite(r.lng));
 
@@ -124,7 +118,11 @@ function carregarCidade(cityId) {
     contagem.textContent = atingiuLimite
       ? `Mostrando os ${comCoordenadas.length} relatos localizados mais recentes desta cidade`
       : `${comCoordenadas.length} relato${comCoordenadas.length !== 1 ? 's' : ''} localizado${comCoordenadas.length !== 1 ? 's' : ''} nesta cidade`;
-  }, LIMITE_MARCADORES);
+  } catch (erro) {
+    if (numeroSolicitacao !== solicitacaoAtual) return;
+    console.warn('Não foi possível carregar os relatos do mapa:', erro);
+    contagem.textContent = 'Não foi possível carregar os relatos desta cidade.';
+  }
 }
 
 async function iniciarSeletorCidades() {

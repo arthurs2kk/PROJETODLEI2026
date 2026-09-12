@@ -100,7 +100,9 @@ async function carregarProximaPagina() {
   const cursor = ultimo ? { dataCriacao: ultimo.dataCriacao, id: ultimo.id } : null;
 
   try {
-    const { itens, temMais } = await buscarRelatosPagina(cursor, TAMANHO_PAGINA);
+    const { itens, temMais } = await buscarRelatosPagina(cursor, TAMANHO_PAGINA, {
+      usarCache: cursor === null
+    });
     state.todos.push(...itens);
     state.temMais = temMais;
   } catch (e) {
