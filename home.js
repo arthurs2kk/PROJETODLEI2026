@@ -176,6 +176,11 @@ document.getElementById('btn-enviar')?.addEventListener('click', async () => {
     return;
   }
 
+  if (!state.enderecoSelecionado.bairro) {
+    showToast('⚠️ Selecione um endereço cujo bairro tenha sido identificado.');
+    return;
+  }
+
   const restante = await tempoRestanteParaEnviar(state.usuario.uid);
   if (restante > 0) {
     const minutos = Math.ceil(restante / 60000);
@@ -541,7 +546,7 @@ async function executarBuscaEndereco() {
     // Defesa adicional: mesmo que o serviço externo retorne algo inesperado,
     // somente coordenadas e municípios reconhecidos da Paraíba são exibidos.
     sugestoesAtuais = sugestoes.filter(s =>
-      s.cityId && s.cidade && estaNaParaiba(s.lat, s.lng)
+      s.cityId && s.cidade && s.bairro && estaNaParaiba(s.lat, s.lng)
     );
 
     if (sugestoesAtuais.length === 0) {
@@ -570,7 +575,12 @@ async function executarBuscaEndereco() {
     statusEndereco.className = 'endereco-status';
   } catch (erro) {
     console.warn('Não foi possível buscar o endereço:', erro);
-    statusEndereco.textContent = 'Não foi possível buscar agora. Tente novamente.';
+    const mensagens = {
+      BAIRRO_NAO_IDENTIFICADO: 'O local foi encontrado, mas o bairro não foi identificado. Tente incluir rua, bairro e cidade na busca.',
+      LIMITE_NOMINATIM: 'O serviço de endereços está ocupado. Aguarde alguns segundos e tente novamente.',
+      TIMEOUT: 'A busca demorou mais que o esperado. Verifique sua conexão e tente novamente.'
+    };
+    statusEndereco.textContent = mensagens[erro?.codigo] || 'Não foi possível consultar os endereços agora. Tente novamente.';
     statusEndereco.className = 'endereco-status invalido';
   } finally {
     btnBuscarEndereco.disabled = false;
@@ -594,7 +604,7 @@ dropSugestoes?.addEventListener('click', (e) => {
 
   const i = Number(item.dataset.i);
   const s = sugestoesAtuais[i];
-  if (!s || !estaNaParaiba(s.lat, s.lng)) return;
+  if (!s || !s.bairro || !estaNaParaiba(s.lat, s.lng)) return;
 
   inputLocal.value = s.texto;
   state.enderecoSelecionado = s;

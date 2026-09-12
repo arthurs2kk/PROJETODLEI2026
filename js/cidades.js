@@ -16,8 +16,21 @@ let cacheMunicipios = null; // [{ id, nome, nomeNormalizado }]
 export async function obterMunicipiosPB() {
   if (cacheMunicipios) return cacheMunicipios;
 
-  const resp = await fetch('https://servicodados.ibge.gov.br/api/v1/localidades/estados/PB/municipios');
-  const dados = await resp.json();
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
+  let dados;
+
+  try {
+    const resp = await fetch(
+      'https://servicodados.ibge.gov.br/api/v1/localidades/estados/PB/municipios',
+      { signal: controller.signal }
+    );
+    if (!resp.ok) throw new Error(`A API do IBGE respondeu com HTTP ${resp.status}.`);
+    dados = await resp.json();
+    if (!Array.isArray(dados)) throw new Error('A API do IBGE retornou uma resposta inválida.');
+  } finally {
+    clearTimeout(timeout);
+  }
 
   cacheMunicipios = dados
     .map(m => ({ id: String(m.id), nome: m.nome, nomeNormalizado: normalizar(m.nome) }))

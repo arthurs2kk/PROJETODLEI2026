@@ -2,7 +2,8 @@
   "name": "pro-povo-security-tests",
   "private": true,
   "scripts": {
-    "test:rules": "node --test tests/rules.test.js"
+    "test:rules": "node --test tests/rules.test.js",
+    "test:endereco": "node --experimental-vm-modules --test tests/endereco.test.js"
   },
   "devDependencies": {
     "@firebase/rules-unit-testing": "5.0.2",
