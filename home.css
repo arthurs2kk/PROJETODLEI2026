@@ -923,6 +923,65 @@ body {
 .empty-state i   { font-size: 52px; display: block; margin-bottom: 12px; }
 .empty-state p   { font-size: 15px; margin-bottom: 16px; }
 
+/* Indicador compartilhado enquanto os relatos chegam do banco */
+.relatos-loader {
+  min-height: 150px;
+  padding: 38px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  color: var(--cinza-4);
+  background: var(--branco);
+  border: 1px solid var(--borda);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  text-align: center;
+}
+
+.relatos-loader[hidden] { display: none; }
+
+.relatos-loader-orbita {
+  position: relative;
+  width: 52px;
+  height: 52px;
+  animation: relatos-orbita 1.05s linear infinite;
+}
+
+.relatos-loader-bolinha {
+  --angulo: 0deg;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 11px;
+  height: 11px;
+  margin: -5.5px;
+  border-radius: 50%;
+  background: var(--azul);
+  box-shadow: 0 2px 6px rgba(12, 50, 111, 0.2);
+  transform: rotate(var(--angulo)) translateY(-19px);
+}
+
+.relatos-loader-bolinha:nth-child(2) {
+  --angulo: 120deg;
+  background: var(--amarelo);
+}
+
+.relatos-loader-bolinha:nth-child(3) {
+  --angulo: 240deg;
+  background: var(--verde);
+}
+
+.relatos-loader-texto {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+@keyframes relatos-orbita {
+  to { transform: rotate(360deg); }
+}
+
 /* ── Modal ── */
 .modal-overlay {
   display: flex;

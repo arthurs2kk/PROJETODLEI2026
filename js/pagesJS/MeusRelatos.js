@@ -5,7 +5,7 @@ import { initNavbar } from "../navbar.js";
 import { escapeHTML } from "../escapeHtml.js";
 import { otimizarImagem } from "../cloudinary.js";
 
-const state = { todos: [], busca: '', status: 'todos', relatoEditando: null };
+const state = { todos: [], busca: '', status: 'todos', relatoEditando: null, carregando: true };
 
 // ── Navbar (login/cadastro/nome do usuário/sair/perfil) ──
 initNavbar();
@@ -20,6 +20,7 @@ onAuthStateChanged(auth, (user) => {
   }
   ouvirRelatosDoUsuario(user.uid, (relatos) => {
     state.todos = relatos;
+    state.carregando = false;
     render();
   });
 });
@@ -60,8 +61,10 @@ function render() {
 
   const container = document.getElementById('meus-lista');
   const empty = document.getElementById('lista-empty');
-  empty.style.display = state.todos.length === 0 ? 'block' : 'none';
-  container.style.display = state.todos.length === 0 ? 'none' : 'flex';
+  const loader = document.getElementById('relatos-loader-meus');
+  if (loader) loader.hidden = !state.carregando;
+  empty.style.display = !state.carregando && state.todos.length === 0 ? 'block' : 'none';
+  container.style.display = !state.carregando && state.todos.length > 0 ? 'flex' : 'none';
 
   container.innerHTML = lista.map(cardHTML).join('');
 

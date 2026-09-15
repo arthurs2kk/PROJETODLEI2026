@@ -118,9 +118,17 @@ function atualizarControlesDePagina() {
   const botao = document.getElementById('btn-carregar-mais-admin');
   const atualizar = document.getElementById('btn-atualizar-relatos');
   const info = document.getElementById('admin-lote-info');
+  const loader = document.getElementById('relatos-loader-admin');
+  const container = document.getElementById('admin-lista');
+  const empty = document.getElementById('lista-empty');
+  const primeiroCarregamento = state.carregando && state.todos.length === 0;
+
+  if (loader) loader.hidden = !primeiroCarregamento;
+  if (container) container.style.display = primeiroCarregamento ? 'none' : 'flex';
+  if (primeiroCarregamento && empty) empty.style.display = 'none';
 
   if (botao) {
-    botao.style.display = state.temMais || state.carregando ? 'inline-flex' : 'none';
+    botao.style.display = !primeiroCarregamento && (state.temMais || state.carregando) ? 'inline-flex' : 'none';
     botao.disabled = state.carregando;
     botao.innerHTML = state.carregando
       ? '<i class="ti ti-loader-2" style="animation:spin 0.8s linear infinite"></i> Carregando...'
@@ -128,9 +136,11 @@ function atualizarControlesDePagina() {
   }
   if (atualizar) atualizar.disabled = state.carregando;
   if (info) {
-    info.textContent = state.temMais
-      ? `${state.todos.length} relato${state.todos.length !== 1 ? 's' : ''} carregado${state.todos.length !== 1 ? 's' : ''}; existem registros mais antigos.`
-      : `${state.todos.length} relato${state.todos.length !== 1 ? 's' : ''} carregado${state.todos.length !== 1 ? 's' : ''}.`;
+    info.textContent = primeiroCarregamento
+      ? 'Carregando o primeiro lote...'
+      : state.temMais
+        ? `${state.todos.length} relato${state.todos.length !== 1 ? 's' : ''} carregado${state.todos.length !== 1 ? 's' : ''}; existem registros mais antigos.`
+        : `${state.todos.length} relato${state.todos.length !== 1 ? 's' : ''} carregado${state.todos.length !== 1 ? 's' : ''}.`;
   }
 }
 
@@ -194,7 +204,7 @@ function render() {
 
   const container = document.getElementById('admin-lista');
   const empty = document.getElementById('lista-empty');
-  empty.style.display = lista.length === 0 ? 'block' : 'none';
+  empty.style.display = !state.carregando && lista.length === 0 ? 'block' : 'none';
 
   container.innerHTML = lista.map(cardHTML).join('');
   atualizarControlesDePagina();

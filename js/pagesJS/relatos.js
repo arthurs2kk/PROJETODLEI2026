@@ -94,6 +94,7 @@ document.querySelectorAll('th[data-sort]').forEach(th => {
 async function carregarProximaPagina() {
   if (state.carregando || (!state.temMais && state.todos.length > 0)) return;
   state.carregando = true;
+  atualizarIndicadorCarregamento();
   atualizarBotaoCarregarMais();
 
   const ultimo = state.todos[state.todos.length - 1];
@@ -113,10 +114,16 @@ async function carregarProximaPagina() {
   }
 }
 
+function atualizarIndicadorCarregamento() {
+  const loader = document.getElementById('relatos-loader-lista');
+  if (loader) loader.hidden = !(state.carregando && state.todos.length === 0);
+}
+
 function atualizarBotaoCarregarMais() {
   const btn = document.getElementById('btn-carregar-mais');
   if (!btn) return;
-  const mostrar = state.temMais || state.carregando;
+  const carregamentoInicial = state.carregando && state.todos.length === 0;
+  const mostrar = !carregamentoInicial && (state.temMais || state.carregando);
   btn.style.display = mostrar ? 'inline-flex' : 'none';
   btn.disabled = state.carregando;
   btn.innerHTML = state.carregando
@@ -162,7 +169,8 @@ function render() {
   if (filtroAtivo && state.temMais) texto += ' — clique em "Carregar mais" pra incluir relatos mais antigos nesse filtro';
   contagem.textContent = texto;
 
-  empty.style.display = lista.length === 0 ? 'block' : 'none';
+  atualizarIndicadorCarregamento();
+  empty.style.display = !state.carregando && lista.length === 0 ? 'block' : 'none';
 
   tbody.innerHTML = lista.map(linhaHTML).join('');
 

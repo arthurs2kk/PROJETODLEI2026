@@ -239,9 +239,22 @@ function limparFormulario() {
 const TAMANHO_FEED = 50;
 let solicitacaoFeed = 0;
 
+function mostrarCarregamentoFeed(carregando) {
+  const loader = document.getElementById('relatos-loader-home');
+  const lista = document.getElementById('cards-list');
+  const vazio = document.getElementById('empty-state');
+  const contagem = document.getElementById('feed-count');
+
+  if (loader) loader.hidden = !carregando;
+  if (lista) lista.hidden = carregando;
+  if (carregando && vazio) vazio.style.display = 'none';
+  if (carregando && contagem) contagem.textContent = 'Carregando relatos...';
+}
+
 async function carregarFeed(forcarAtualizacao = false) {
   const numeroSolicitacao = ++solicitacaoFeed;
   const buscar = state.sort === 'recentes' ? buscarRelatosRecentes : buscarRelatosDestaque;
+  mostrarCarregamentoFeed(true);
   try {
     const relatos = await buscar(TAMANHO_FEED, !forcarAtualizacao);
     if (numeroSolicitacao !== solicitacaoFeed) return;
@@ -252,6 +265,8 @@ async function carregarFeed(forcarAtualizacao = false) {
   } catch (erro) {
     console.error('Não foi possível carregar o feed:', erro);
     showToast('❌ Não foi possível carregar os relatos. Tente novamente.');
+  } finally {
+    if (numeroSolicitacao === solicitacaoFeed) mostrarCarregamentoFeed(false);
   }
 }
 
@@ -506,7 +521,7 @@ function limparEnderecoSelecionado() {
   sugestoesAtuais = [];
   dropSugestoes?.replaceChildren();
   dropSugestoes?.classList.remove('open');
-  inputLocal?.removeAttribute('aria-activedescendant');
+  inputLocal?.removeAttribute('aria-activedescendant'); 
   statusEndereco.className = 'endereco-status';
 }
 

@@ -1,8 +1,43 @@
 // ── Pro Povo — cloudinary.js ──
-// Upload de imagens direto do navegador, sem backend, usando preset "unsigned"
+// Upload direto do navegador com assinatura temporária gerada pela Vercel Function
 
 const CLOUD_NAME = "dk8uky6m";
-const UPLOAD_PRESET = "pro_povo_imagens";
+const API_RELATOS = "/api/relatos";
+
+async function chamarApiRelatos(acao, relatoId, idToken) {
+  const resposta = await fetch(API_RELATOS, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${idToken}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ acao, relatoId })
+  });
+
+  let dados = null;
+  try { dados = await resposta.json(); } catch { /* resposta sem corpo JSON */ }
+
+  if (!resposta.ok) {
+    const erro = new Error(dados?.erro || "Não foi possível concluir a operação com a imagem.");
+    erro.code = dados?.codigo || "ERRO_API_RELATOS";
+    erro.status = resposta.status;
+    throw erro;
+  }
+
+  return dados;
+}
+
+async function excluirImagemComToken(deleteToken) {
+  if (!deleteToken) return false;
+
+  const formData = new FormData();
+  formData.append("token", deleteToken);
+  const resposta = await fetch("https://api.cloudinary.com/v1_1/delete_by_token", {
+    method: "POST",
+    body: formData
+  });
+  return resposta.ok;
+}
 
 // ── Gera a mesma imagem do Cloudinary, mas otimizada ──
 // f_auto: entrega WebP/AVIF automaticamente pros navegadores que suportam (bem mais leve que JPG/PNG)
@@ -24,15 +59,29 @@ export function otimizarImagem(url, largura = 600) {
   }
 }
 
-// ── Envia o arquivo de imagem e retorna a URL pública ──
-export async function uploadImagem(file) {
+// ── Envia o arquivo diretamente ao Cloudinary com assinatura temporária ──
+// A assinatura é criada pela Vercel Function. O arquivo continua indo direto do
+// navegador ao Cloudinary e, portanto, não consome banda nem memória da função.
+export async function uploadImagem(file, relatoId, idToken) {
   if (!file) return null;
 
-  const url = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`;
+  if (!relatoId || !idToken) {
+    throw new Error("Não foi possível autorizar o envio da imagem.");
+  }
+
+  const assinatura = await chamarApiRelatos("assinar-upload", relatoId, idToken);
+  const cloudName = assinatura.cloudName || CLOUD_NAME;
+  const url = `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`;
 
   const formData = new FormData();
   formData.append("file", file);
-  formData.append("upload_preset", UPLOAD_PRESET);
+  formData.append("api_key", assinatura.apiKey);
+  formData.append("timestamp", String(assinatura.timestamp));
+  formData.append("public_id", assinatura.publicId);
+  formData.append("overwrite", "false");
+  formData.append("return_delete_token", "true");
+  formData.append("upload_preset", assinatura.uploadPreset);
+  formData.append("signature", assinatura.signature);
 
   try {
     const resp = await fetch(url, { method: "POST", body: formData });
@@ -40,25 +89,40 @@ export async function uploadImagem(file) {
     let dados = null;
     try { dados = await resp.json(); } catch { /* resposta sem corpo JSON */ }
 
-    if (resp.ok && dados && dados.secure_url) {
-      return dados.secure_url;
+    if (resp.ok && dados?.secure_url && dados.public_id !== assinatura.publicId) {
+      await excluirImagemComToken(dados.delete_token);
+      const erro = new Error("O preset do Cloudinary alterou o identificador assinado da imagem.");
+      erro.code = "PUBLIC_ID_INESPERADO";
+      throw erro;
     }
 
-    if (resp.status === 404) {
-      console.error(
-        `Erro 404 no upload do Cloudinary. Confira no painel do Cloudinary se o ` +
-        `"Cloud name" (atualmente "${CLOUD_NAME}") e o upload preset ` +
-        `(atualmente "${UPLOAD_PRESET}") existem exatamente com esse nome e se ` +
-        `o preset está com "Signing Mode" = Unsigned.`,
-        dados
-      );
-    } else {
-      console.error(`Erro no upload do Cloudinary (status ${resp.status}):`, dados);
+    if (resp.ok && dados?.secure_url) {
+      return {
+        deleteToken: dados.delete_token || null,
+        url: dados.secure_url,
+        publicId: dados.public_id
+      };
     }
-    return null;
+
+    console.error(`Erro no upload do Cloudinary (status ${resp.status}):`, dados);
+    const erro = new Error(dados?.error?.message || "O Cloudinary recusou o envio da imagem.");
+    erro.code = "ERRO_UPLOAD_IMAGEM";
+    throw erro;
 
   } catch (e) {
-    console.error("Falha de rede ao enviar imagem:", e);
-    return null;
+    console.error("Falha ao enviar imagem:", e);
+    throw e;
   }
+}
+
+// Remove um upload cujo relato não chegou a ser gravado no Firebase.
+export async function excluirUploadPendente(relatoId, idToken) {
+  return chamarApiRelatos("cancelar-upload", relatoId, idToken);
+}
+
+export { excluirImagemComToken };
+
+// A exclusão do relato e da imagem acontece no mesmo endpoint autenticado.
+export async function excluirRelatoNoServidor(relatoId, idToken) {
+  return chamarApiRelatos("excluir", relatoId, idToken);
 }

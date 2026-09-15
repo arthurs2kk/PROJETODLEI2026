@@ -212,7 +212,7 @@
       <div class="feed-header">
         <div>
           <h2 class="feed-title">Problemas mais votados</h2>
-           <p class="feed-sub" id="feed-count">Mostrando 3 relatos</p>
+           <p class="feed-sub" id="feed-count">Carregando relatos...</p>
            <a href="pages/userPages/relatos.html" class="ver-todos-link">Ver todos os relatos <i class="ti ti-arrow-right"></i></a>
         </div>
         <select class="sort-select" id="sort-select">
@@ -223,6 +223,15 @@
 
       <div id="cards-list">
 
+      </div>
+
+      <div class="relatos-loader" id="relatos-loader-home" role="status" aria-live="polite">
+        <div class="relatos-loader-orbita" aria-hidden="true">
+          <span class="relatos-loader-bolinha"></span>
+          <span class="relatos-loader-bolinha"></span>
+          <span class="relatos-loader-bolinha"></span>
+        </div>
+        <p class="relatos-loader-texto">Carregando relatos...</p>
       </div>
 
       <div class="empty-state" id="empty-state" style="display:none">

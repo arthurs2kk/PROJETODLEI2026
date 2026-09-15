@@ -55,6 +55,12 @@ before(async () => {
           cidade: "João Pessoa",
           dataCadastro: agora,
         },
+        fotografo: {
+          nome: "Usuario com Foto",
+          email: "foto@example.com",
+          cidade: "Joao Pessoa",
+          dataCadastro: agora,
+        },
         legado: {
           nome: "Perfil Legado",
           email: "legado@example.com",
@@ -96,6 +102,10 @@ test("regras bloqueiam adulterações e preservam operações legítimas", async
   }).database();
   const legado = ambiente.authenticatedContext("legado", {
     email: "legado@example.com",
+    email_verified: true,
+  }).database();
+  const fotografo = ambiente.authenticatedContext("fotografo", {
+    email: "foto@example.com",
     email_verified: true,
   }).database();
 
@@ -147,6 +157,34 @@ test("regras bloqueiam adulterações e preservam operações legítimas", async
   await assertFails(update(ref(novoCidadao), {
     "relatos/relatoSemEmailVerificado": naoVerificado,
     "limitesEnvio/novoCidadao": naoVerificado.dataCriacao,
+  }));
+
+  const relatoComFoto = {
+    ...novoRelato,
+    autorId: "fotografo",
+    autorNome: "Usuario com Foto",
+    fotoUrl: "https://res.cloudinary.com/dk8uky6m/image/upload/v1785000000/pro_povo/fotografo/relatoComFoto.jpg",
+    dataCriacao: Date.now(),
+  };
+  await assertFails(update(ref(fotografo), {
+    "relatos/relatoComFoto": relatoComFoto,
+    "limitesEnvio/fotografo": relatoComFoto.dataCriacao,
+  }));
+  await assertFails(update(ref(fotografo), {
+    "relatos/relatoComFoto": { ...relatoComFoto, fotoPublicId: "pro_povo/outro/relatoComFoto" },
+    "limitesEnvio/fotografo": relatoComFoto.dataCriacao,
+  }));
+  await assertSucceeds(update(ref(fotografo), {
+    "relatos/relatoComFoto": { ...relatoComFoto, fotoPublicId: "pro_povo/fotografo/relatoComFoto" },
+    "limitesEnvio/fotografo": relatoComFoto.dataCriacao,
+  }));
+  await assertFails(update(ref(fotografo, "relatos/relatoComFoto"), {
+    fotoPublicId: "pro_povo/fotografo/outroRelato",
+    dataEdicao: Date.now(),
+  }));
+  await assertFails(update(ref(fotografo, "relatos/relatoComFoto"), {
+    fotoPublicId: null,
+    dataEdicao: Date.now(),
   }));
 
   await assertFails(update(ref(cidadao, "relatos/relatoA"), { votos: 999 }));
