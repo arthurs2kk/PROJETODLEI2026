@@ -250,12 +250,13 @@ async function excluirRelato(decoded, relatoId) {
 
   if (publicId) imagem = await destruirImagem(publicId);
 
-  // A remoção do relato e dos votos continua atômica no Realtime Database.
+  // A remoção do relato, dos votos e do contato privado continua atômica.
   // Se esta etapa falhar, repetir a chamada é seguro: o Cloudinary responde
   // "not found" para uma imagem que já tenha sido removida.
   await db.ref().update({
     [`relatos/${relatoId}`]: null,
-    [`votos/${relatoId}`]: null
+    [`votos/${relatoId}`]: null,
+    [`contatosRelatos/${relatoId}`]: null
   });
 
   return { ok: true, imagem };

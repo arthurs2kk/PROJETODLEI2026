@@ -15,6 +15,7 @@ Main Features
 ✅ Interactive Map: Visualize up to 500 recent geolocated reports from one selected city
 ✅ Analytics Dashboard: Statistics by city, neighborhood, problem category, and monthly trends
 ✅ Official Responses: Municipality updates and responses appear in real time in the citizen interface
+✅ Email Notifications: Status changes and official responses notify the report author through EmailJS
 ✅ Responsive Design: Seamless experience on desktop, tablet, and mobile devices
 ✅ Dark Mode: User-friendly theme toggle for comfortable viewing
 ✅ User Authentication: Secure login system with email verification
@@ -56,6 +57,25 @@ Firebase Authentication - Secure user login with email/password and Google OAuth
 Firebase Realtime Database - Real-time NoSQL database for instant data synchronization across users, with security rules enforcing per-city write permissions for admins
 Firebase Realtime Database Rules - Server-side authorization, field validation, anti-spam checks, and atomic vote consistency
 Cloudinary - Cloud-based image service for uploading, storing, and optimizing user photos
+EmailJS - Browser-based transactional email delivery for status and official-response notifications
+
+EmailJS notification setup
+
+The admin panel sends an email only after Realtime Database confirms the status
+change or official response. Create a free account at https://www.emailjs.com/ and:
+
+1. Connect an email provider under **Email Services**.
+2. Create one template under **Email Templates**.
+3. Set **To Email** to `{{to_email}}`.
+4. Use these variables in the subject/body as desired: `{{to_name}}`,
+   `{{relato_titulo}}`, `{{status_label}}`, `{{mensagem}}` and `{{relato_url}}`.
+5. Copy the Public Key, Service ID and Template ID into the three constants at
+   the top of `js/notificacoes.js`.
+
+The Public Key is intended for browser use. Never put an EmailJS Private Key,
+an email password or SMTP credentials in the repository. The free plan has a
+monthly request limit, so the admin panel reports email failures without undoing
+the already-confirmed report update.
 
 Vercel Function for secure image lifecycle
 
@@ -97,13 +117,16 @@ Deployment order:
 2. Deploy the updated Realtime Database rules with
    `npx firebase-tools deploy --only database --project pro--povo` (run
    `npx firebase-tools login` first if necessary).
-3. Deploy the repository to Vercel.
-4. Change `pro_povo_imagens` to **Signed**, or create a new signed preset and put
+3. Configure the EmailJS service, template and three public identifiers described
+   above.
+4. Deploy the repository to Vercel.
+5. Change `pro_povo_imagens` to **Signed**, or create a new signed preset and put
    its name in `CLOUDINARY_UPLOAD_PRESET`. Preserve the format and file-size
    restrictions. Do not configure a fixed `folder` or public-ID prefix that changes
    the signed public ID; the returned ID must remain
    `pro_povo/<firebase-uid>/<relato-id>`.
-5. Test creating and deleting one report with an image.
+6. Test creating and deleting one report with an image, then change its status
+   and save an official response to verify both emails.
 
 For local end-to-end testing, create an untracked `.env.local` from `.env.example`
 and run the site with `vercel dev`; a plain static file server cannot provide
@@ -150,9 +173,9 @@ PROJETODLEI2026/
 │   ├── db.js                      # Database queries and atomic, rules-validated writes
 │   ├── cloudinary.js              # Image upload handler and URL optimization
 │   ├── cidades.js                 # City dropdown population from IBGE data + cityId resolution
-│   ├── endereco.js                # Manual address search with Paraíba validation
+│   ├── endereco.js                # Manual/GPS address lookup with Paraíba validation
 │   ├── populacao.js               # Population data fetching, caching, and name normalization
-│   ├── notificacoes.js            # Reserved notification templates (not active in the admin panel)
+│   ├── notificacoes.js            # Active EmailJS status/response notifications
 │   ├── escapeHtml.js              # XSS prevention utility
 │   ├── cooldown.js                # Rate limiting for report submissions
 │   ├── config.js                  # External link configuration (e.g. footer author link)
@@ -196,10 +219,10 @@ PROJETODLEI2026/
 🏗️ Architecture Overview
 
 Data Flow
-Report Creation: Citizen fills form → Cloudinary uploads photo → client atomically writes report + cooldown → Realtime Database Rules validate identity, verified email, fields, timestamp and rate limit before Firebase commits either write
+Report Creation: Citizen fills form → Cloudinary uploads photo → client atomically writes report + private contact + cooldown → Realtime Database Rules validate identity, verified email, fields, timestamp and rate limit before Firebase commits the write
 Real-Time Updates: Firebase listeners broadcast changes → All connected clients update instantly
 Admin Access Resolution: On login, adminAuth.js reads the admin's role and cityId once, and every subsequent panel query/action is scoped accordingly
-Admin Actions: Admin updates status → Realtime Database rules confirm that the admin's city matches the report's city (or that they are a superadmin) → citizen interface updates in real time
+Admin Actions: Admin updates status or response → Realtime Database rules confirm that the admin's city matches the report's city (or that they are a superadmin) → citizen interface updates in real time → the panel reads only that report's protected contact and asks EmailJS to notify the author
 Analytics: Up to 500 recent reports are queried (already city-scoped when applicable), aggregated with IBGE population data → Sample-based charts generated
 
 Key Modules
@@ -214,7 +237,7 @@ Geolocation Module (endereco.js, mapa.js) - Address search, map visualization, a
 Citizen Features
 
 Report Creation
-Manual, user-triggered address search powered by Nominatim
+Manual address search or user-triggered current-location lookup powered by Nominatim
 Photo upload with client-side validation (format, size)
 Automatic categorization (potholes, lighting, garbage, water, green areas, other)
 Geolocation capture and storage for map visualization, including the report's cityId
@@ -271,7 +294,7 @@ All analytics views use a sample of up to 500 recent reports and are automatical
 ✅ Rate Limiting - Citizens must wait between report submissions (prevents spam)
 ✅ Responsive & Accessible - Works on all devices with keyboard navigation support
 ✅ Dark Mode - Reduces eye strain with persistent theme preference
-⚠️ Email Notifications - Intentionally disabled until implemented in a trusted backend with explicit consent and a configured provider
+✅ Email Notifications - Sent from the authenticated admin workflow through EmailJS, with protected per-report contact data
 
 🔄 Data Model
 
@@ -287,6 +310,9 @@ Municipality's official response (if any)
 usuarios - Citizen accounts
 Name, email, city of residence
 Registration date, email verification status
+
+contatosRelatos - Private notification contacts
+Maps a report ID to its verified author email, name and cityId. It is not publicly readable; only the author, the responsible city's admin and superadmins can read the matching entry
 
 votos - Vote tracking
 Maps report ID to user ID (ensures one vote per user)
@@ -324,7 +350,7 @@ Trustworthy - Transparent responses, visible vote counts, public data, and clear
 Technology | Why Used
 Firebase | Real-time updates, built-in authentication, and server-evaluated rules that enforce field integrity, vote consistency and per-city admin isolation
 Cloudinary | Automatic image optimization, CDN delivery, free tier generous
-Nominatim | Manual, user-triggered address search for the MVP, restricted to validated Paraíba municipalities
+Nominatim | Manual address search and user-triggered reverse geocoding, restricted to validated Paraíba municipalities
 IBGE API | Official Brazilian census data, regularly updated population figures, and stable municipality codes used as the cityId for admin scoping
 Chart.js | Lightweight, declarative, extensive chart types
 Leaflet | Small bundle size, fast rendering, OpenStreetMap integration

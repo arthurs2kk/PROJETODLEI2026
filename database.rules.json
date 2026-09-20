@@ -31,6 +31,19 @@
         "$other": { ".validate": false }
       }
     },
+    "contatosRelatos": {
+      "$relatoId": {
+        ".read": "auth != null && (root.child('relatos').child($relatoId).child('autorId').val() === auth.uid || root.child('admins').child(auth.uid).val() === true || (root.child('admins').child(auth.uid).child('ativo').val() === true && (root.child('admins').child(auth.uid).child('papel').val() === 'superadmin' || (root.child('admins').child(auth.uid).child('papel').val() === 'admin' && root.child('admins').child(auth.uid).child('cityId').val() === root.child('relatos').child($relatoId).child('cityId').val()))))",
+        ".write": "auth != null && !data.exists() && newData.exists() && auth.token.email_verified === true && newData.child('autorId').val() === auth.uid && newData.child('email').val() === auth.token.email && newData.parent().parent().child('relatos').child($relatoId).exists() && newData.child('autorId').val() === newData.parent().parent().child('relatos').child($relatoId).child('autorId').val() && newData.child('nome').val() === newData.parent().parent().child('relatos').child($relatoId).child('autorNome').val() && newData.child('cityId').val() === newData.parent().parent().child('relatos').child($relatoId).child('cityId').val() && newData.child('dataCriacao').val() === newData.parent().parent().child('relatos').child($relatoId).child('dataCriacao').val()",
+        ".validate": "newData.hasChildren(['autorId','nome','email','cityId','dataCriacao'])",
+        "autorId": { ".validate": "newData.isString() && newData.val() === auth.uid" },
+        "nome": { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 100" },
+        "email": { ".validate": "newData.isString() && newData.val() === auth.token.email && newData.val().length <= 254" },
+        "cityId": { ".validate": "newData.isString() && newData.val().matches(/^25[0-9]{5}$/)" },
+        "dataCriacao": { ".validate": "newData.isNumber() && newData.val() <= now + 120000" },
+        "$other": { ".validate": false }
+      }
+    },
     "limitesEnvio": {
       "$uid": {
         ".read": "auth != null && auth.uid === $uid",

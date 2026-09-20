@@ -1,9 +1,10 @@
 // ── Pro Povo — admin-painel.js ──
 import { auth, onAuthStateChanged, signOut } from "../firebase.js";
-import { buscarRelatosGestaoPagina, buscarOrganizacao, atualizarStatus, salvarResposta, excluirRelato } from "../db.js";
+import { buscarRelatosGestaoPagina, buscarOrganizacao, buscarContatoRelato, atualizarStatus, salvarResposta, excluirRelato } from "../db.js";
 import { buscarAdmin, ehSuperAdmin } from "./adminAuth.js";
 import { otimizarImagem } from "../cloudinary.js";
 import { escapeHTML } from "../escapeHtml.js";
+import { notificarMudancaStatus, notificarNovaResposta } from "../notificacoes.js";
 
 const TAMANHO_PAGINA = 25;
 const state = {
@@ -170,6 +171,22 @@ document.getElementById('filtro-status')?.addEventListener('change', (e) => {
 
 const STATUS_LABEL = { aberto: 'Aberto', andamento: 'Em andamento', resolvido: 'Resolvido' };
 
+async function tentarNotificarAutor(relato, enviar) {
+  try {
+    const contato = await buscarContatoRelato(relato.id);
+    if (!contato) {
+      const erro = new Error('Contato privado não encontrado para este relato.');
+      erro.code = 'CONTATO_INDISPONIVEL';
+      throw erro;
+    }
+    await enviar(contato);
+    return true;
+  } catch (erro) {
+    console.warn('O relato foi salvo, mas o e-mail não foi enviado:', erro);
+    return false;
+  }
+}
+
 // ── Render principal ──
 function render() {
   let lista = [...state.todos];
@@ -217,15 +234,24 @@ function render() {
 
     document.getElementById(`status-${r.id}`)?.addEventListener('change', async (e) => {
       const novoStatus = e.target.value;
+      if (novoStatus === r.status) return;
+      e.target.disabled = true;
       try {
         await atualizarStatus(r.id, novoStatus);
         r.status = novoStatus;
         r.dataResolucao = novoStatus === 'resolvido' ? Date.now() : null;
         render();
-        showToast('✅ Status atualizado.');
+        const notificou = await tentarNotificarAutor(
+          r,
+          contato => notificarMudancaStatus(contato, r, novoStatus)
+        );
+        showToast(notificou
+          ? '✅ Status atualizado e usuário notificado por e-mail.'
+          : '⚠️ Status atualizado, mas o e-mail não foi enviado.');
       } catch (erro) {
         console.error(erro);
         e.target.value = r.status;
+        e.target.disabled = false;
         showToast('⚠️ Não foi possível atualizar este relato.');
       }
     });
@@ -234,17 +260,27 @@ function render() {
       document.getElementById(`resp-area-${r.id}`).classList.toggle('open');
     });
 
-    document.getElementById(`btn-resp-salvar-${r.id}`)?.addEventListener('click', async () => {
+    document.getElementById(`btn-resp-salvar-${r.id}`)?.addEventListener('click', async (e) => {
+      const botaoSalvar = e.currentTarget;
       const texto = document.getElementById(`resp-texto-${r.id}`).value.trim();
       if (!texto) { showToast('⚠️ Escreva uma resposta antes de salvar.'); return; }
+      if (texto === r.respostaOficial) { showToast('ℹ️ A resposta não foi alterada.'); return; }
+      botaoSalvar.disabled = true;
       try {
         await salvarResposta(r.id, texto);
         r.respostaOficial = texto;
         r.dataResposta = Date.now();
         render();
-        showToast('✅ Resposta oficial salva.');
+        const notificou = await tentarNotificarAutor(
+          r,
+          contato => notificarNovaResposta(contato, r, texto)
+        );
+        showToast(notificou
+          ? '✅ Resposta salva e usuário notificado por e-mail.'
+          : '⚠️ Resposta salva, mas o e-mail não foi enviado.');
       } catch (erro) {
         console.error(erro);
+        botaoSalvar.disabled = false;
         showToast('⚠️ Não foi possível salvar a resposta.');
       }
     });

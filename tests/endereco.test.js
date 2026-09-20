@@ -195,3 +195,79 @@ test("diferencia limite HTTP de uma busca sem resultados", async () => {
     erro => erro.codigo === "LIMITE_NOMINATIM" && erro.status === 429
   );
 });
+
+test("converte a localização atual em endereço válido da Paraíba", async () => {
+  const latitude = -7.2162084;
+  const longitude = -35.8879689;
+  const urlsConsultadas = [];
+
+  const endereco = await carregarModuloEndereco(async url => {
+    const urlConsultada = String(url);
+    urlsConsultadas.push(urlConsultada);
+    if (urlConsultada.includes("/reverse?")) {
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          display_name: "Rua João Suassuna, Centro, Campina Grande, Paraíba, Brasil",
+          lat: "-7.2161000",
+          lon: "-35.8879000",
+          address: {
+            road: "Rua João Suassuna",
+            suburb: "Centro",
+            city: "Campina Grande",
+            state: "Paraíba",
+            "ISO3166-2-lvl4": "BR-PB",
+            country: "Brasil"
+          }
+        })
+      };
+    }
+    if (urlConsultada.includes("servicodados.ibge.gov.br")) {
+      return {
+        ok: true,
+        status: 200,
+        json: async () => [{ id: 2504009, nome: "Campina Grande" }]
+      };
+    }
+    throw new Error("consulta inesperada");
+  });
+
+  const resultado = await endereco.buscarEnderecoPorCoordenadas(latitude, longitude);
+  assert.equal(urlsConsultadas.some(url => url.includes("/reverse?")), true);
+  assert.equal(urlsConsultadas.some(url => url.includes("servicodados.ibge.gov.br")), true);
+  assert.equal(resultado.lat, latitude);
+  assert.equal(resultado.lng, longitude);
+  assert.equal(resultado.cidade, "Campina Grande");
+  assert.equal(resultado.cityId, "2504009");
+  assert.equal(resultado.bairro, "Centro");
+  assert.equal(resultado.rua, "Rua João Suassuna");
+});
+
+test("recusa o GPS fora dos limites da Paraíba sem consultar serviços externos", async () => {
+  let consultas = 0;
+  const endereco = await carregarModuloEndereco(async () => {
+    consultas += 1;
+    throw new Error("fetch inesperado");
+  });
+
+  await assert.rejects(
+    endereco.buscarEnderecoPorCoordenadas(-23.5505, -46.6333),
+    erro => erro.codigo === "FORA_PARAIBA"
+  );
+  assert.equal(consultas, 0);
+});
+
+test("traduz a recusa da permissão do navegador em erro compreensível", async () => {
+  const endereco = await carregarModuloEndereco();
+  const geolocation = {
+    getCurrentPosition(_sucesso, falha) {
+      falha({ code: 1 });
+    }
+  };
+
+  await assert.rejects(
+    endereco.obterCoordenadasAtuais(geolocation),
+    erro => erro.codigo === "PERMISSAO_GPS_NEGADA"
+  );
+});

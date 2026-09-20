@@ -31,6 +31,13 @@ const relatoBase = {
   autorNome: "Cidadão de Teste",
   dataCriacao: agora,
 };
+const contatoBase = {
+  autorId: "cidadao",
+  nome: "Cidadão de Teste",
+  email: "cidadao@example.com",
+  cityId: "2507507",
+  dataCriacao: agora,
+};
 
 before(async () => {
   ambiente = await initializeTestEnvironment({
@@ -47,6 +54,11 @@ before(async () => {
       relatos: {
         relatoA: relatoBase,
         relatoSemVotos: relatoBase,
+        relatoContatoPendente: relatoBase,
+      },
+      contatosRelatos: {
+        relatoA: contatoBase,
+        relatoSemVotos: contatoBase,
       },
       usuarios: {
         cidadao: {
@@ -108,6 +120,7 @@ test("regras bloqueiam adulterações e preservam operações legítimas", async
     email: "foto@example.com",
     email_verified: true,
   }).database();
+  const publico = ambiente.unauthenticatedContext().database();
 
   await assertSucceeds(set(ref(novoCidadao, "usuarios/novoCidadao"), {
     nome: "Novo Cidadão",
@@ -141,6 +154,10 @@ test("regras bloqueiam adulterações e preservam operações legítimas", async
   await assertFails(set(ref(cidadao, "relatos/relatoCriadoNoCliente"), novoRelato));
   await assertSucceeds(update(ref(cidadao), {
     "relatos/relatoCriadoAtomicamente": novoRelato,
+    "contatosRelatos/relatoCriadoAtomicamente": {
+      ...contatoBase,
+      dataCriacao: novoRelato.dataCriacao,
+    },
     "limitesEnvio/cidadao": novoRelato.dataCriacao,
   }));
   await assertFails(update(ref(cidadao), {
@@ -215,6 +232,22 @@ test("regras bloqueiam adulterações e preservam operações legítimas", async
 
   await assertFails(update(ref(adminCG, "relatos/relatoA"), { status: "andamento" }));
   await assertSucceeds(update(ref(adminJP, "relatos/relatoA"), { status: "andamento" }));
+
+  await assertFails(set(ref(cidadao, "contatosRelatos/relatoContatoPendente"), {
+    ...contatoBase,
+    email: "outro@example.com",
+  }));
+  await assertSucceeds(set(ref(cidadao, "contatosRelatos/relatoContatoPendente"), contatoBase));
+
+  const contatoAdmin = await assertSucceeds(get(ref(adminJP, "contatosRelatos/relatoA")));
+  assert.equal(contatoAdmin.val().email, "cidadao@example.com");
+  await assertFails(get(ref(adminCG, "contatosRelatos/relatoA")));
+  await assertFails(get(ref(publico, "contatosRelatos/relatoA")));
+  await assertFails(get(ref(invasor, "contatosRelatos/relatoA")));
+  await assertSucceeds(get(ref(cidadao, "contatosRelatos/relatoA")));
+  await assertFails(update(ref(cidadao, "contatosRelatos/relatoA"), {
+    email: "cidadao@example.com",
+  }));
 
   await assertFails(get(ref(adminJP, "usuarios/cidadao")));
   const perfil = await assertSucceeds(get(ref(superadmin, "usuarios/cidadao")));

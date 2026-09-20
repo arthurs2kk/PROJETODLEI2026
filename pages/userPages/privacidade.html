@@ -86,7 +86,7 @@
     <div class="legal-header-inner">
       <h1 class="legal-title"><i class="ti ti-shield-lock"></i> Política de Privacidade</h1>
       <p class="legal-subtitle">Como o Pro Povo coleta, usa e protege os seus dados</p>
-      <span class="legal-updated"><i class="ti ti-calendar"></i> Última atualização: 29 de agosto de 2026</span>
+      <span class="legal-updated"><i class="ti ti-calendar"></i> Última atualização: 20 de setembro de 2026</span>
     </div>
   </div>
 
@@ -147,14 +147,21 @@
         <h3>e) Dados enviados a serviços de terceiros durante o uso</h3>
         <p>
           Ao digitar um endereço no formulário de relato, o texto digitado é enviado ao serviço
-          Nominatim/OpenStreetMap, para que ele sugira e valide o endereço. Não enviamos seu nome, e-mail ou
-          qualquer outro dado de identificação nessa consulta — apenas o texto do endereço.
+          Nominatim/OpenStreetMap, para que ele sugira e valide o endereço. Se você escolher "Usar localização
+          atual", o navegador solicitará sua permissão e enviará as coordenadas obtidas pelo aparelho ao
+          Nominatim/OpenStreetMap para identificar o endereço. Não enviamos seu nome ou e-mail nessa consulta.
+        </p>
+        <p>
+          Quando a prefeitura altera o status ou publica uma resposta oficial, o EmailJS recebe o nome e
+          e-mail do autor, o título e o status do relato, a mensagem da prefeitura e o link de acompanhamento.
+          Esses dados são usados somente para entregar o aviso transacional ao autor do relato.
         </p>
 
         <div class="legal-box">
           <p>
-            <strong>Não coletamos:</strong> dados de geolocalização automática do seu dispositivo,
-            nem cookies de rastreamento publicitário.
+            <strong>A localização nunca é obtida automaticamente:</strong> o GPS só é acessado depois que você
+            toca em "Usar localização atual" e autoriza o navegador. Você também pode digitar o endereço
+            manualmente. Não usamos cookies de rastreamento publicitário.
           </p>
         </div>
       </section>
@@ -184,6 +191,7 @@
               <tr><td>Criar e autenticar sua conta</td><td>Nome, e-mail, senha (gerenciada pelo Firebase Authentication)</td></tr>
               <tr><td>Publicar e exibir seus relatos</td><td>Título, descrição, categoria, endereço, foto, nome exibido</td></tr>
               <tr><td>Permitir que a prefeitura responda e atualize o status</td><td>Conteúdo público do relato e município associado</td></tr>
+              <tr><td>Enviar avisos sobre mudanças de status e respostas oficiais</td><td>Nome, e-mail, título do relato, status e resposta da prefeitura</td></tr>
               <tr><td>Evitar abusos (contas falsas, envios em massa)</td><td>Confirmação de e-mail, intervalo entre envios</td></tr>
               <tr><td>Gerar estatísticas para a gestão pública</td><td>Dados agregados dos relatos (sem identificar autores individualmente nos gráficos)</td></tr>
             </tbody>
@@ -197,9 +205,10 @@
         <ul>
           <li><strong>Firebase (Google):</strong> hospeda nosso banco de dados e cuida da autenticação de contas. Os servidores podem estar localizados fora do Brasil;</li>
           <li><strong>Cloudinary:</strong> armazena as fotos enviadas nos relatos;</li>
-          <li><strong>OpenStreetMap/Nominatim:</strong> recebe o texto do endereço digitado, para sugerir e validar localizações dentro da Paraíba;</li>
+          <li><strong>EmailJS:</strong> processa o envio dos avisos transacionais sobre mudanças de status e respostas oficiais. O serviço recebe apenas os dados necessários para compor e entregar cada mensagem;</li>
+          <li><strong>OpenStreetMap/Nominatim:</strong> recebe o texto do endereço digitado ou, quando você solicita o uso do GPS, as coordenadas atuais, para identificar e validar localizações dentro da Paraíba;</li>
           <li><strong>IBGE:</strong> fornece dados públicos de municípios e estimativas de população, usados para comparar relatos entre cidades. Esse serviço não recebe nenhum dado pessoal seu, apenas é consultado por nós;</li>
-          <li><strong>Administração pública responsável:</strong> servidores autorizados no painel administrativo podem visualizar e gerir os relatos públicos vinculados ao seu município. O painel municipal não recebe o e-mail cadastrado do autor.</li>
+          <li><strong>Administração pública responsável:</strong> servidores autorizados no painel administrativo podem visualizar e gerir os relatos vinculados ao seu município. O contato privado associado ao relato é usado exclusivamente para enviar as notificações de acompanhamento e não é exibido nas páginas públicas.</li>
         </ul>
       </section>
 

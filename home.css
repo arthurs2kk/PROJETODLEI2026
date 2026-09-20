@@ -1309,6 +1309,7 @@ body {
 
 .endereco-busca-linha {
   display: flex;
+  flex-wrap: wrap;
   align-items: stretch;
   gap: 8px;
 }
@@ -1352,6 +1353,19 @@ body {
 
 .btn-buscar-endereco.carregando i {
   animation: spin .8s linear infinite;
+}
+
+.btn-localizacao-atual {
+  flex: 1 0 100%;
+  min-width: 0;
+  min-height: 42px;
+  border: 1px solid var(--azul);
+  background: transparent;
+  color: var(--azul);
+}
+
+.btn-localizacao-atual:hover:not(:disabled) {
+  background: var(--azul-claro);
 }
 
 .endereco-status {
@@ -1439,6 +1453,7 @@ body {
   .btn-buscar-endereco {
     min-height: 42px;
   }
+
 }
 
 html {

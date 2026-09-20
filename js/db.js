@@ -109,6 +109,13 @@ export async function criarRelato(dados, fotoFile) {
     autorNome:   perfil.nome,
     dataCriacao: agora
   };
+  const contatoRelato = {
+    autorId:     dados.autorId,
+    nome:        perfil.nome,
+    email:       auth.currentUser.email || perfil.email,
+    cityId,
+    dataCriacao: agora
+  };
   if (dados.bairro) relato.bairro = dados.bairro;
   if (foto) {
     relato.fotoUrl = foto.url;
@@ -121,6 +128,7 @@ export async function criarRelato(dados, fotoFile) {
   try {
     await update(ref(db), {
       [`relatos/${novoRef.key}`]: relato,
+      [`contatosRelatos/${novoRef.key}`]: contatoRelato,
       [`limitesEnvio/${dados.autorId}`]: agora
     });
     invalidarCacheRelatos();
@@ -161,6 +169,13 @@ export async function buscarUsuario(uid) {
   return snapshot.exists() ? snapshot.val() : null;
 }
 
+// Contato privado ligado a um relato. As Rules permitem a leitura somente ao
+// autor, ao superadmin ou ao administrador responsavel pela cidade do relato.
+export async function buscarContatoRelato(relatoId) {
+  const snapshot = await get(ref(db, `contatosRelatos/${relatoId}`));
+  return snapshot.exists() ? snapshot.val() : null;
+}
+
 // ── Atualizar dados do perfil (nome, e-mail e cidade) ──
 // O e-mail é reenviado aqui mesmo sem ter mudado: as regras do banco exigem que
 // nome/email/cidade/dataCadastro existam juntos em usuarios/{uid}. Se um registro
@@ -190,6 +205,42 @@ export async function atualizarUsuario(uid, dados) {
   await update(usuarioRef, atualizacoes);
 }
 
+const contatosRelatosVerificados = new Set();
+
+async function garantirContatosPrivados(uid, relatos) {
+  if (!auth.currentUser || auth.currentUser.uid !== uid || !auth.currentUser.emailVerified) return;
+
+  const pendentes = relatos.filter(relato => !contatosRelatosVerificados.has(relato.id));
+  if (pendentes.length === 0) return;
+  pendentes.forEach(relato => contatosRelatosVerificados.add(relato.id));
+
+  try {
+    await auth.currentUser.getIdToken(true);
+    const resultados = await Promise.all(pendentes.map(async relato => {
+      const snapshot = await get(ref(db, `contatosRelatos/${relato.id}`));
+      return snapshot.exists() ? null : relato;
+    }));
+
+    const atualizacoes = {};
+    resultados.filter(Boolean).forEach(relato => {
+      atualizacoes[`contatosRelatos/${relato.id}`] = {
+        autorId: uid,
+        nome: relato.autorNome,
+        email: auth.currentUser.email,
+        cityId: relato.cityId,
+        dataCriacao: relato.dataCriacao
+      };
+    });
+
+    if (Object.keys(atualizacoes).length > 0) {
+      await update(ref(db), atualizacoes);
+    }
+  } catch (erro) {
+    pendentes.forEach(relato => contatosRelatosVerificados.delete(relato.id));
+    console.warn('Não foi possível preparar os contatos privados dos relatos antigos:', erro);
+  }
+}
+
 // ── Ouvir, em tempo real, apenas os relatos criados pelo próprio usuário ──
 export function ouvirRelatosDoUsuario(uid, callback) {
   const consulta = query(ref(db, "relatos"), orderByChild("autorId"), equalTo(uid));
@@ -200,6 +251,7 @@ export function ouvirRelatosDoUsuario(uid, callback) {
       .map(([id, relato]) => ({ id, ...relato }));
     lista.sort((a, b) => b.dataCriacao - a.dataCriacao);
     callback(lista);
+    void garantirContatosPrivados(uid, lista);
   });
 }
 

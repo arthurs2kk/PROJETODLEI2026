@@ -1,7 +1,12 @@
 // ── Pro Povo — app.js ──
 import { auth, onAuthStateChanged } from "./js/firebase.js";
 import { criarRelato, buscarRelatosDestaque, buscarRelatosRecentes, votar, jaVotou, tempoRestanteParaEnviar } from "./js/db.js";
-import { buscarSugestoesEndereco, estaNaParaiba } from "./js/endereco.js";
+import {
+  buscarSugestoesEndereco,
+  buscarEnderecoPorCoordenadas,
+  obterCoordenadasAtuais,
+  estaNaParaiba
+} from "./js/endereco.js";
 import { otimizarImagem } from "./js/cloudinary.js";
 import { initNavbar } from "./js/navbar.js";
 import { escapeHTML } from "./js/escapeHtml.js";
@@ -512,6 +517,7 @@ document.head.appendChild(s);
 // ── Busca manual de endereço ──
 const inputLocal = document.getElementById('f-local');
 const btnBuscarEndereco = document.getElementById('btn-buscar-endereco');
+const btnLocalizacaoAtual = document.getElementById('btn-localizacao-atual');
 const dropSugestoes = document.getElementById('endereco-sugestoes');
 const statusEndereco = document.getElementById('endereco-status');
 let sugestoesAtuais = [];
@@ -545,6 +551,7 @@ async function executarBuscaEndereco() {
   }
 
   btnBuscarEndereco.disabled = true;
+  btnLocalizacaoAtual.disabled = true;
   btnBuscarEndereco.classList.add('carregando');
   btnBuscarEndereco.querySelector('i').className = 'ti ti-loader-2';
   btnBuscarEndereco.querySelector('span').textContent = 'Buscando';
@@ -599,6 +606,7 @@ async function executarBuscaEndereco() {
     statusEndereco.className = 'endereco-status invalido';
   } finally {
     btnBuscarEndereco.disabled = false;
+    btnLocalizacaoAtual.disabled = false;
     btnBuscarEndereco.classList.remove('carregando');
     btnBuscarEndereco.querySelector('i').className = 'ti ti-search';
     btnBuscarEndereco.querySelector('span').textContent = 'Buscar';
@@ -606,6 +614,52 @@ async function executarBuscaEndereco() {
 }
 
 btnBuscarEndereco?.addEventListener('click', executarBuscaEndereco);
+
+async function usarLocalizacaoAtual() {
+  limparEnderecoSelecionado();
+  btnLocalizacaoAtual.disabled = true;
+  btnBuscarEndereco.disabled = true;
+  btnLocalizacaoAtual.classList.add('carregando');
+  btnLocalizacaoAtual.querySelector('i').className = 'ti ti-loader-2';
+  btnLocalizacaoAtual.querySelector('span').textContent = 'Localizando';
+  statusEndereco.textContent = 'Aguardando a permissão do GPS...';
+  statusEndereco.className = 'endereco-status buscando';
+
+  try {
+    const { lat, lng } = await obterCoordenadasAtuais();
+    statusEndereco.textContent = 'Localização encontrada. Identificando o endereço...';
+
+    const endereco = await buscarEnderecoPorCoordenadas(lat, lng);
+    inputLocal.value = endereco.texto;
+    state.enderecoSelecionado = endereco;
+    statusEndereco.textContent = '✓ Localização atual selecionada';
+    statusEndereco.className = 'endereco-status valido';
+  } catch (erro) {
+    console.warn('Não foi possível usar a localização atual:', erro);
+    const mensagens = {
+      GPS_NAO_SUPORTADO: 'Este navegador não oferece acesso à localização. Digite o endereço manualmente.',
+      PERMISSAO_GPS_NEGADA: 'Permissão de localização negada. Libere-a no navegador ou digite o endereço.',
+      GPS_INDISPONIVEL: 'Não foi possível obter sua localização. Ative o GPS ou digite o endereço.',
+      GPS_TIMEOUT: 'O GPS demorou mais que o esperado. Tente novamente ou digite o endereço.',
+      LOCALIZACAO_INVALIDA: 'O GPS retornou uma localização inválida. Digite o endereço manualmente.',
+      FORA_PARAIBA: 'Sua localização atual não pertence a um município da Paraíba.',
+      BAIRRO_NAO_IDENTIFICADO: 'A localização foi encontrada, mas o bairro não foi identificado. Digite o endereço manualmente.',
+      ENDERECO_NAO_ENCONTRADO: 'Não foi possível identificar o endereço atual. Digite-o manualmente.',
+      LIMITE_NOMINATIM: 'O serviço de endereços está ocupado. Aguarde alguns segundos e tente novamente.',
+      TIMEOUT: 'A identificação do endereço demorou mais que o esperado. Tente novamente.'
+    };
+    statusEndereco.textContent = mensagens[erro?.codigo] || 'Não foi possível usar sua localização agora. Tente novamente.';
+    statusEndereco.className = 'endereco-status invalido';
+  } finally {
+    btnLocalizacaoAtual.disabled = false;
+    btnBuscarEndereco.disabled = false;
+    btnLocalizacaoAtual.classList.remove('carregando');
+    btnLocalizacaoAtual.querySelector('i').className = 'ti ti-current-location';
+    btnLocalizacaoAtual.querySelector('span').textContent = 'Usar localização atual';
+  }
+}
+
+btnLocalizacaoAtual?.addEventListener('click', usarLocalizacaoAtual);
 
 inputLocal?.addEventListener('keydown', (e) => {
   if (e.key !== 'Enter') return;
