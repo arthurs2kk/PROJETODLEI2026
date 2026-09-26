@@ -77,24 +77,23 @@ an email password or SMTP credentials in the repository. The free plan has a
 monthly request limit, so the admin panel reports email failures without undoing
 the already-confirmed report update.
 
-Vercel Function for secure image lifecycle
+Temporary Cloudinary compatibility mode
 
-Image uploads are signed by `POST /api/relatos`, but the image bytes still travel
-directly from the browser to Cloudinary. The same authenticated endpoint removes
-the Cloudinary asset before atomically deleting the report and its votes from
-Realtime Database. If the database rejects a report after its image was uploaded,
-the client calls the endpoint to roll that upload back.
+Image uploads currently use the original direct browser flow with the
+`pro_povo_imagens` unsigned upload preset. The browser sends the file straight to
+Cloudinary and stores only the returned HTTPS URL in Realtime Database. No
+Cloudinary API key, secret, Vercel Function or `fotoPublicId` is required for an
+upload.
 
-The endpoint verifies the Firebase ID token and mirrors the authorization rules:
-an author can delete only their own open report, municipal admins remain limited
-to their city, and superadmins can delete any report. New image public IDs are
-namespaced by Firebase UID and report ID. Images uploaded by the old unsigned flow
-remain supported during deletion.
+The signed `/api/relatos` implementation remains in the repository so the secure
+image lifecycle can be resumed later, but the browser does not call it in this
+temporary mode. Deleting a report removes its database data but does not remove
+the corresponding Cloudinary asset.
 
-Vercel environment variables
+Vercel environment variables for the paused signed flow
 
-Copy the names from `.env.example` into **Vercel > Project > Settings > Environment
-Variables** for Production, Preview and Development:
+These variables are not needed by the current unsigned upload. They are required
+only when the signed `/api/relatos` flow is re-enabled:
 
 - `FIREBASE_PROJECT_ID`
 - `FIREBASE_CLIENT_EMAIL`
@@ -111,26 +110,22 @@ Accounts > Generate new private key**. Copy `client_email`, `private_key` and
 Cloudinary key and secret are available under **Cloudinary Console > Settings >
 API Keys**.
 
-Deployment order:
+Deployment order for the temporary compatibility mode:
 
-1. Add all environment variables to Vercel.
-2. Deploy the updated Realtime Database rules with
+1. In Cloudinary, keep `pro_povo_imagens` set to **Unsigned** and restrict its
+   accepted formats and maximum file size.
+2. If the signed-upload rules were already deployed, deploy the compatibility
+   Realtime Database rules with
    `npx firebase-tools deploy --only database --project pro--povo` (run
    `npx firebase-tools login` first if necessary).
 3. Configure the EmailJS service, template and three public identifiers described
    above.
 4. Deploy the repository to Vercel.
-5. Change `pro_povo_imagens` to **Signed**, or create a new signed preset and put
-   its name in `CLOUDINARY_UPLOAD_PRESET`. Preserve the format and file-size
-   restrictions. Do not configure a fixed `folder` or public-ID prefix that changes
-   the signed public ID; the returned ID must remain
-   `pro_povo/<firebase-uid>/<relato-id>`.
-6. Test creating and deleting one report with an image, then change its status
+5. Test creating and deleting one report with an image, then change its status
    and save an official response to verify both emails.
 
-For local end-to-end testing, create an untracked `.env.local` from `.env.example`
-and run the site with `vercel dev`; a plain static file server cannot provide
-`/api/relatos`.
+The current image upload works from a plain static server because it no longer
+depends on `/api/relatos`.
 
 External APIs & Data Sources
 IBGE API - Official Brazilian census data for municipal population estimates and municipality codes (used both for "reports per capita" analytics and as the stable cityId that powers city-scoped admin access)
@@ -287,7 +282,7 @@ All analytics views use a sample of up to 500 recent reports and are automatical
 
 🎯 Key Differentiators
 ✅ Real-Time Synchronization - All changes propagate instantly across connected users
-✅ Rules-First Security Boundary - Realtime Database Rules protect ordinary writes; a small authenticated Vercel Function owns the Cloudinary lifecycle
+✅ Rules-First Security Boundary - Realtime Database Rules protect application data; Cloudinary temporarily uses its restricted unsigned preset
 ✅ City-Isolated Admin Access - Realtime Database security rules, not just the UI, enforce that a municipality's staff can only act on their own city's reports
 ✅ Population-Normalized Analytics - Compares cities fairly by report density, not absolute count
 ✅ XSS Protection - All user input sanitized to prevent malicious code injection
@@ -303,7 +298,7 @@ Core Collections
 relatos - Individual problem reports
 Title, category, description, location (address + coordinates)
 City name and cityId (IBGE municipality code), and neighborhood — used both for public filtering and for scoping admin access
-Photo URL and namespaced public ID (Cloudinary), status, vote count
+Photo URL (Cloudinary), status, vote count
 Author info, creation date, resolution date
 Municipality's official response (if any)
 
@@ -357,16 +352,15 @@ Leaflet | Small bundle size, fast rendering, OpenStreetMap integration
 
 🔐 Security Architecture
 
-The application does not require a dedicated server. Firebase Authentication and
-Realtime Database Security Rules enforce ordinary authorization, data validation,
-report-submission intervals, vote consistency and municipal access boundaries. A
-small Vercel Function verifies Firebase ID tokens and performs the privileged
-Cloudinary operations that cannot safely run in public browser code.
+The application does not require a dedicated server for its current user flow.
+Firebase Authentication and Realtime Database Security Rules enforce ordinary
+authorization, data validation, report-submission intervals, vote consistency
+and municipal access boundaries.
 
 Technical considerations of this design:
 
 - Home counters describe only its limited feed, and city selectors use the IBGE municipality list; browsers do not read all reports to calculate either one.
-- Cloudinary upload signatures and deletion credentials exist only in the Vercel Function. The browser receives a short-lived signature scoped to a namespaced public ID and uploads the image directly to Cloudinary.
+- Cloudinary temporarily accepts direct browser uploads through the unsigned `pro_povo_imagens` preset. Restrict formats and file size in Cloudinary; this mode is operationally simpler but less resistant to abuse than signed uploads.
 - Coordinates and the IBGE municipality pair are format/range checked, but a static client cannot prove that a user did not intentionally choose another valid municipality. A trusted reference dataset in Firebase Rules or a backend would be required for stronger geographic attestation.
 - App Check can be added as defense in depth against scripted clients, but it does not replace Authentication or Security Rules.
 

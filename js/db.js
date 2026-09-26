@@ -6,7 +6,7 @@ import {
   ref, set, get, onValue, update, push,
   query, orderByChild, equalTo, limitToLast, startAt, endAt
 } from "./firebase.js";
-import { uploadImagem, excluirImagemComToken, excluirUploadPendente, excluirRelatoNoServidor } from "./cloudinary.js";
+import { uploadImagem } from "./cloudinary.js";
 import { resolverCityId } from "./cidades.js";
 import { invalidarCacheRelatos, lerCache, salvarCache } from "./cache.js";
 
@@ -63,7 +63,7 @@ export async function criarRelato(dados, fotoFile) {
   }
 
   // Atualiza a claim email_verified usada pelas regras do banco.
-  const idToken = await auth.currentUser.getIdToken(true);
+  await auth.currentUser.getIdToken(true);
 
   const cityId = dados.cityId || await resolverCityId(dados.cidade);
   if (!cityId) {
@@ -85,15 +85,15 @@ export async function criarRelato(dados, fotoFile) {
     throw erro;
   }
 
-  const novoRef = push(ref(db, 'relatos'));
-  let foto = null;
+  let fotoUrl = null;
 
   // Upload da foto via Cloudinary (se houver)
   if (fotoFile) {
-    foto = await uploadImagem(fotoFile, novoRef.key, idToken);
+    fotoUrl = await uploadImagem(fotoFile);
   }
 
   const agora = Date.now();
+  const novoRef = push(ref(db, 'relatos'));
   const relato = {
     titulo:      dados.titulo,
     categoria:   dados.categoria,
@@ -117,10 +117,7 @@ export async function criarRelato(dados, fotoFile) {
     dataCriacao: agora
   };
   if (dados.bairro) relato.bairro = dados.bairro;
-  if (foto) {
-    relato.fotoUrl = foto.url;
-    relato.fotoPublicId = foto.publicId;
-  }
+  if (fotoUrl) relato.fotoUrl = fotoUrl;
 
   // As Rules só aceitam a criação se relato e cooldown forem atualizados juntos.
   // O cliente não consegue criar um relato isolado, forjar votos/status nem
@@ -133,21 +130,6 @@ export async function criarRelato(dados, fotoFile) {
     });
     invalidarCacheRelatos();
   } catch (erro) {
-    // Se o banco recusar a criação depois do upload, desfaz o upload para
-    // que a imagem não fique órfã. A falha da limpeza não mascara o erro original.
-    if (foto) {
-      try {
-        await excluirUploadPendente(novoRef.key, idToken);
-      } catch (erroLimpeza) {
-        console.error('Não foi possível desfazer o upload da imagem:', erroLimpeza);
-        try {
-          await excluirImagemComToken(foto.deleteToken);
-        } catch (erroToken) {
-          console.error('A limpeza pelo token temporário também falhou:', erroToken);
-        }
-      }
-    }
-
     if (String(erro.code || '').includes('permission-denied')) {
       try {
         if (await tempoRestanteParaEnviar(dados.autorId) > 0) {
@@ -446,12 +428,10 @@ export async function salvarResposta(relatoId, resposta) {
 
 // ── Excluir relato ──
 export async function excluirRelato(relatoId) {
-  if (!auth.currentUser) {
-    throw new Error('Faça login para excluir um relato.');
-  }
-
-  const idToken = await auth.currentUser.getIdToken(true);
-  await excluirRelatoNoServidor(relatoId, idToken);
+  await update(ref(db), {
+    [`relatos/${relatoId}`]: null,
+    [`votos/${relatoId}`]: null
+  });
   invalidarCacheRelatos();
 }
 

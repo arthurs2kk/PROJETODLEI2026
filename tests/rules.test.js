@@ -184,24 +184,12 @@ test("regras bloqueiam adulterações e preservam operações legítimas", async
     dataCriacao: Date.now(),
   };
   await assertFails(update(ref(fotografo), {
-    "relatos/relatoComFoto": relatoComFoto,
-    "limitesEnvio/fotografo": relatoComFoto.dataCriacao,
-  }));
-  await assertFails(update(ref(fotografo), {
     "relatos/relatoComFoto": { ...relatoComFoto, fotoPublicId: "pro_povo/outro/relatoComFoto" },
     "limitesEnvio/fotografo": relatoComFoto.dataCriacao,
   }));
   await assertSucceeds(update(ref(fotografo), {
-    "relatos/relatoComFoto": { ...relatoComFoto, fotoPublicId: "pro_povo/fotografo/relatoComFoto" },
+    "relatos/relatoComFoto": relatoComFoto,
     "limitesEnvio/fotografo": relatoComFoto.dataCriacao,
-  }));
-  await assertFails(update(ref(fotografo, "relatos/relatoComFoto"), {
-    fotoPublicId: "pro_povo/fotografo/outroRelato",
-    dataEdicao: Date.now(),
-  }));
-  await assertFails(update(ref(fotografo, "relatos/relatoComFoto"), {
-    fotoPublicId: null,
-    dataEdicao: Date.now(),
   }));
 
   await assertFails(update(ref(cidadao, "relatos/relatoA"), { votos: 999 }));
