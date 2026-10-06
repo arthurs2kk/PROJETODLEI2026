@@ -46,6 +46,20 @@ export async function geocodificar(endereco, cidade = '') {
 
 
 const INTERVALO_MINIMO_ENVIO = 5 * 60 * 1000; // 5 minutos
+const CATEGORIAS_RELATO = new Set([
+  'Buraco / Via danificada',
+  'Iluminação pública',
+  'Lixo / Entulho',
+  'Água / Esgoto',
+  'Áreas verdes',
+  'Outros'
+]);
+
+function erroEnvio(codigo, mensagem) {
+  const erro = new Error(mensagem);
+  erro.code = codigo;
+  return erro;
+}
 
 
 export async function tempoRestanteParaEnviar(uid) {
@@ -59,22 +73,60 @@ export async function tempoRestanteParaEnviar(uid) {
 // ── Criar novo relato ──
 export async function criarRelato(dados, fotoFile) {
   if (!auth.currentUser || auth.currentUser.uid !== dados.autorId) {
-    throw new Error('Usuário autenticado inválido.');
+    throw erroEnvio('USUARIO_NAO_AUTENTICADO', 'Faça login novamente antes de enviar o relato.');
+  }
+
+  if (!auth.currentUser.emailVerified) {
+    throw erroEnvio('EMAIL_NAO_VERIFICADO', 'Confirme seu e-mail antes de enviar um relato.');
   }
 
   // Atualiza a claim email_verified usada pelas regras do banco.
   await auth.currentUser.getIdToken(true);
 
+  if (typeof dados.titulo !== 'string' || dados.titulo.length < 5 || dados.titulo.length > 100) {
+    throw erroEnvio('TITULO_INVALIDO', 'O título deve ter entre 5 e 100 caracteres.');
+  }
+  if (!CATEGORIAS_RELATO.has(dados.categoria)) {
+    throw erroEnvio('CATEGORIA_INVALIDA', 'Selecione uma categoria válida.');
+  }
+  if (typeof dados.descricao !== 'string' || dados.descricao.length < 10 || dados.descricao.length > 2000) {
+    throw erroEnvio('DESCRICAO_INVALIDA', 'A descrição deve ter entre 10 e 2000 caracteres.');
+  }
+  if (typeof dados.endereco !== 'string' || dados.endereco.length < 3 || dados.endereco.length > 300) {
+    throw erroEnvio('ENDERECO_INVALIDO', 'Selecione um endereço válido na lista de sugestões.');
+  }
+  if (!Number.isFinite(dados.lat) || !Number.isFinite(dados.lng) ||
+      dados.lat < -8.31 || dados.lat > -6.02 || dados.lng < -38.85 || dados.lng > -34.79) {
+    throw erroEnvio('LOCALIZACAO_INVALIDA', 'O endereço precisa estar localizado na Paraíba.');
+  }
+  if (typeof dados.bairro !== 'string' || dados.bairro.length < 1 || dados.bairro.length > 120) {
+    throw erroEnvio('BAIRRO_INVALIDO', 'Selecione um endereço cujo bairro tenha sido identificado.');
+  }
+
   const cityId = dados.cityId || await resolverCityId(dados.cidade);
-  if (!cityId) {
-    const erro = new Error('Selecione uma cidade válida da Paraíba.');
-    erro.code = 'CIDADE_INVALIDA';
-    throw erro;
+  if (!/^25\d{5}$/.test(String(cityId || '')) ||
+      typeof dados.cidade !== 'string' || dados.cidade.length < 2 || dados.cidade.length > 100) {
+    throw erroEnvio('CIDADE_INVALIDA', 'Selecione uma cidade válida da Paraíba.');
   }
 
   const perfil = await buscarUsuario(dados.autorId);
-  if (!perfil?.nome) {
-    throw new Error('Complete seu perfil antes de enviar um relato.');
+  const cidadePerfilValida = typeof perfil?.cidade === 'string' &&
+    perfil.cidade.trim().length >= 2 && perfil.cidade.length <= 100;
+  if (!cidadePerfilValida) {
+    throw erroEnvio(
+      'PERFIL_SEM_CIDADE',
+      'Seu perfil não possui uma cidade. Abra “Meu perfil”, selecione sua cidade e salve antes de enviar.'
+    );
+  }
+  const nomePerfilValido = typeof perfil.nome === 'string' &&
+    perfil.nome.trim().length >= 1 && perfil.nome.length <= 100;
+  const emailPerfilValido = typeof perfil.email === 'string' &&
+    perfil.email === auth.currentUser.email && perfil.email.length <= 254;
+  if (!nomePerfilValido || !emailPerfilValido || !Number.isFinite(perfil.dataCadastro)) {
+    throw erroEnvio(
+      'PERFIL_INCOMPLETO',
+      'Complete e salve seu perfil antes de enviar um relato.'
+    );
   }
 
   // Evita um upload órfão no fluxo normal; a verificação definitiva e imune a
@@ -89,7 +141,17 @@ export async function criarRelato(dados, fotoFile) {
 
   // Upload da foto via Cloudinary (se houver)
   if (fotoFile) {
+    const tiposPermitidos = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/heic']);
+    if (!tiposPermitidos.has(fotoFile.type) || fotoFile.size > 10 * 1024 * 1024) {
+      throw erroEnvio('FOTO_INVALIDA', 'A foto deve ser JPG, PNG, WebP ou HEIC e ter no máximo 10 MB.');
+    }
     fotoUrl = await uploadImagem(fotoFile);
+    if (!fotoUrl) {
+      throw erroEnvio(
+        'ERRO_UPLOAD_IMAGEM',
+        'A foto não pôde ser enviada. Verifique sua conexão e tente novamente.'
+      );
+    }
   }
 
   const agora = Date.now();

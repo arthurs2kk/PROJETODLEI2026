@@ -148,12 +148,47 @@ function verificarConteudo(titulo, descricao) {
   return null;
 }
 
+function mensagemErroEnvio(erro) {
+  const mensagens = {
+    USUARIO_NAO_AUTENTICADO: '⚠️ Sua sessão expirou. Entre novamente antes de enviar o relato.',
+    EMAIL_NAO_VERIFICADO: '⚠️ Confirme seu e-mail antes de enviar. Você pode reenviar a confirmação em “Meu perfil”.',
+    PERFIL_SEM_CIDADE: '⚠️ Seu perfil não possui uma cidade. Abra “Meu perfil”, selecione sua cidade e salve.',
+    PERFIL_INCOMPLETO: '⚠️ Seu perfil está incompleto. Abra “Meu perfil”, confira os dados e salve novamente.',
+    TITULO_INVALIDO: '⚠️ O título deve ter entre 5 e 100 caracteres.',
+    CATEGORIA_INVALIDA: '⚠️ Selecione uma categoria válida.',
+    DESCRICAO_INVALIDA: '⚠️ A descrição deve ter entre 10 e 2000 caracteres.',
+    ENDERECO_INVALIDO: '⚠️ Selecione um endereço válido na lista de sugestões.',
+    LOCALIZACAO_INVALIDA: '⚠️ O endereço precisa estar localizado na Paraíba.',
+    CIDADE_INVALIDA: '⚠️ Não foi possível identificar uma cidade válida da Paraíba nesse endereço.',
+    BAIRRO_INVALIDO: '⚠️ Selecione um endereço cujo bairro tenha sido identificado.',
+    FOTO_INVALIDA: '⚠️ A foto deve ser JPG, PNG, WebP ou HEIC e ter no máximo 10 MB.',
+    ERRO_UPLOAD_IMAGEM: '❌ Não foi possível enviar a foto. Verifique sua conexão e tente novamente.',
+    LIMITE_ENVIO: '⏳ Você enviou um relato há pouco tempo. Aguarde alguns minutos antes de enviar outro.'
+  };
+
+  if (mensagens[erro?.code]) return mensagens[erro.code];
+  if (String(erro?.code || '').includes('permission-denied')) {
+    return '❌ O Firebase recusou o envio. Confirme seu e-mail, complete a cidade em “Meu perfil” e tente novamente.';
+  }
+  return '❌ Não foi possível enviar o relato. Verifique os dados obrigatórios e tente novamente.';
+}
+
 // ── Enviar relato ──
 document.getElementById('btn-enviar')?.addEventListener('click', async () => {
   const titulo    = document.getElementById('f-titulo').value.trim();
   const categoria = document.getElementById('f-cat').value;
   const descricao = document.getElementById('f-desc').value.trim();
   const endereco  = document.getElementById('f-local').value.trim();
+
+  if (!state.usuario || !auth.currentUser) {
+    showToast('⚠️ Sua sessão expirou. Entre novamente antes de enviar o relato.');
+    return;
+  }
+
+  if (!auth.currentUser.emailVerified) {
+    showToast('⚠️ Confirme seu e-mail antes de enviar. Você pode reenviar a confirmação em “Meu perfil”.');
+    return;
+  }
 
   if (!titulo || !categoria || !descricao || !endereco) {
     showToast('⚠️ Preencha todos os campos obrigatórios.');
@@ -186,18 +221,18 @@ document.getElementById('btn-enviar')?.addEventListener('click', async () => {
     return;
   }
 
-  const restante = await tempoRestanteParaEnviar(state.usuario.uid);
-  if (restante > 0) {
-    const minutos = Math.ceil(restante / 60000);
-    showToast(`⏳ Aguarde cerca de ${minutos} minuto${minutos > 1 ? 's' : ''} antes de enviar outro relato.`);
-    return;
-  }
-
   const btn = document.getElementById('btn-enviar');
   btn.disabled = true;
   btn.innerHTML = '<i class="ti ti-loader-2" style="animation:spin 0.8s linear infinite"></i> Enviando...';
 
   try {
+    const restante = await tempoRestanteParaEnviar(state.usuario.uid);
+    if (restante > 0) {
+      const minutos = Math.ceil(restante / 60000);
+      showToast(`⏳ Aguarde cerca de ${minutos} minuto${minutos > 1 ? 's' : ''} antes de enviar outro relato.`);
+      return;
+    }
+
     await criarRelato({
       titulo, categoria, descricao,
       endereco: state.enderecoSelecionado.texto,
@@ -215,11 +250,7 @@ document.getElementById('btn-enviar')?.addEventListener('click', async () => {
     showToast('✅ Relato enviado com sucesso! Obrigado.');
   } catch (err) {
     console.error(err);
-    if (err.code === 'LIMITE_ENVIO') {
-      showToast('⏳ Você enviou um relato há pouco tempo. Aguarde alguns minutos antes de enviar outro.');
-    } else {
-      showToast('❌ Erro ao enviar. Tente novamente.');
-    }
+    showToast(mensagemErroEnvio(err));
   } finally {
     btn.disabled = false;
     btn.innerHTML = '<i class="ti ti-send"></i> Enviar relato';
