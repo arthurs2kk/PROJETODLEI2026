@@ -7,7 +7,6 @@ let ultimaConsulta = 0;
 const VIEWBOX_PARAIBA = "-38.85,-6.02,-34.79,-8.31";
 
 const LIMITES_PB = { latMin: -8.31, latMax: -6.02, lngMin: -38.85, lngMax: -34.79 };
-
 export class ErroBuscaEndereco extends Error {
   constructor(codigo, mensagem, status = null) {
     super(mensagem);
@@ -116,6 +115,9 @@ export function converterResultadoNominatim(item, municipios, coordenadas = null
     estadoCodigo: addr['ISO3166-2-lvl4'] || addr['ISO3166-2-lvl6'] || null,
     cidade: municipio?.nome || null,
     cityId: municipio?.id || null,
+    // O OpenStreetMap nem sempre possui o bairro. Nessa situação, a
+    // localização continua selecionável e o formulário pede o bairro ao
+    // cidadão antes de permitir o envio.
     bairro: identificarBairro(addr, municipio),
     rua: identificarRua(addr),
     numero: textoValido(addr.house_number)
@@ -167,9 +169,12 @@ export async function buscarSugestoesEndereco(query) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 8000);
   try {
+    const termoBusca = normalizar(termo).includes('paraiba')
+      ? termo
+      : `${termo}, Paraíba`;
     const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=8` +
                 `&countrycodes=br&viewbox=${VIEWBOX_PARAIBA}&bounded=1` +
-                `&q=${encodeURIComponent(termo)}`;
+                `&q=${encodeURIComponent(termoBusca)}`;
     const resp = await fetch(url, { headers: { 'Accept-Language': 'pt-BR' }, signal: controller.signal });
     if (!resp.ok) {
       throw new ErroBuscaEndereco(
@@ -193,19 +198,7 @@ export async function buscarSugestoesEndereco(query) {
   
     const naParaiba = sugestoes.filter(pertenceAParaiba);
 
-    // O bairro continua obrigatório: ele é persistido no relato e alimenta os
-    // gráficos administrativos. Resultados em que o OSM não informa nenhum
-    // bairro/distrito confiável não podem ser selecionados.
-    const validas = removerDuplicadas(naParaiba.filter(s => s.bairro));
-
-    if (naParaiba.length > 0 && validas.length === 0) {
-      const erro = new ErroBuscaEndereco(
-        'BAIRRO_NAO_IDENTIFICADO',
-        'Foram encontrados locais, mas o OpenStreetMap não informou o bairro.'
-      );
-      salvarNoCache(chaveCache, erro);
-      throw erro;
-    }
+    const validas = removerDuplicadas(naParaiba);
 
     salvarNoCache(chaveCache, validas);
 
@@ -308,19 +301,12 @@ export async function buscarEnderecoPorCoordenadas(lat, lng) {
     if (!pertenceAParaiba(sugestao)) {
       throw new ErroBuscaEndereco('FORA_PARAIBA', 'A localização não pertence a um município da Paraíba.');
     }
-    if (!sugestao.bairro) {
-      throw new ErroBuscaEndereco(
-        'BAIRRO_NAO_IDENTIFICADO',
-        'O OpenStreetMap não informou o bairro desta localização.'
-      );
-    }
-
     salvarNoCache(chaveCache, sugestao);
     return sugestao;
   } catch (e) {
     console.warn('Erro ao identificar endereço pelas coordenadas:', e);
     if (e instanceof ErroBuscaEndereco) {
-      if (['ENDERECO_NAO_ENCONTRADO', 'BAIRRO_NAO_IDENTIFICADO'].includes(e.codigo)) {
+      if (e.codigo === 'ENDERECO_NAO_ENCONTRADO') {
         salvarNoCache(chaveCache, e);
       }
       throw e;

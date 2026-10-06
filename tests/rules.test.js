@@ -10,7 +10,7 @@ const {
   assertFails,
 } = require("@firebase/rules-unit-testing");
 const {
-  ref, set, update, get, query, orderByChild, startAt, endAt, limitToLast
+  ref, set, update, get, query, orderByChild, startAt, endAt, limitToLast, serverTimestamp
 } = require("firebase/database");
 
 let ambiente;
@@ -73,6 +73,12 @@ before(async () => {
           cidade: "Joao Pessoa",
           dataCadastro: agora,
         },
+        relogioIncorreto: {
+          nome: "Usuário com relógio incorreto",
+          email: "relogio@example.com",
+          cidade: "Cabaceiras",
+          dataCadastro: agora,
+        },
         legado: {
           nome: "Perfil Legado",
           email: "legado@example.com",
@@ -118,6 +124,10 @@ test("regras bloqueiam adulterações e preservam operações legítimas", async
   }).database();
   const fotografo = ambiente.authenticatedContext("fotografo", {
     email: "foto@example.com",
+    email_verified: true,
+  }).database();
+  const relogioIncorreto = ambiente.authenticatedContext("relogioIncorreto", {
+    email: "relogio@example.com",
     email_verified: true,
   }).database();
   const publico = ambiente.unauthenticatedContext().database();
@@ -190,6 +200,30 @@ test("regras bloqueiam adulterações e preservam operações legítimas", async
   await assertSucceeds(update(ref(fotografo), {
     "relatos/relatoComFoto": relatoComFoto,
     "limitesEnvio/fotografo": relatoComFoto.dataCriacao,
+  }));
+
+  // O cliente usa o timestamp do servidor para não depender da data/hora
+  // configurada no computador ou celular do cidadão.
+  const horarioServidor = serverTimestamp();
+  const relatoComHorarioServidor = {
+    ...novoRelato,
+    autorId: "relogioIncorreto",
+    autorNome: "Usuário com relógio incorreto",
+    cidade: "Cabaceiras",
+    cityId: "2503100",
+    bairro: "Centro",
+    dataCriacao: horarioServidor,
+  };
+  await assertSucceeds(update(ref(relogioIncorreto), {
+    "relatos/relatoComHorarioServidor": relatoComHorarioServidor,
+    "contatosRelatos/relatoComHorarioServidor": {
+      autorId: "relogioIncorreto",
+      nome: "Usuário com relógio incorreto",
+      email: "relogio@example.com",
+      cityId: "2503100",
+      dataCriacao: horarioServidor,
+    },
+    "limitesEnvio/relogioIncorreto": horarioServidor,
   }));
 
   await assertFails(update(ref(cidadao, "relatos/relatoA"), { votos: 999 }));

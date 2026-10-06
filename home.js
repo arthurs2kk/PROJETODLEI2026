@@ -99,7 +99,8 @@ uploadArea?.addEventListener('change', (event) => {
     'image/jpeg',
     'image/png',
     'image/webp',
-    'image/heic'
+    'image/heic',
+    'image/heif'
   ];
 
   if (!tiposPermitidos.includes(file.type)) {
@@ -160,14 +161,15 @@ function mensagemErroEnvio(erro) {
     ENDERECO_INVALIDO: '⚠️ Selecione um endereço válido na lista de sugestões.',
     LOCALIZACAO_INVALIDA: '⚠️ O endereço precisa estar localizado na Paraíba.',
     CIDADE_INVALIDA: '⚠️ Não foi possível identificar uma cidade válida da Paraíba nesse endereço.',
-    BAIRRO_INVALIDO: '⚠️ Selecione um endereço cujo bairro tenha sido identificado.',
+    BAIRRO_INVALIDO: '⚠️ Informe um bairro válido para o relato.',
     FOTO_INVALIDA: '⚠️ A foto deve ser JPG, PNG, WebP ou HEIC e ter no máximo 10 MB.',
     ERRO_UPLOAD_IMAGEM: '❌ Não foi possível enviar a foto. Verifique sua conexão e tente novamente.',
     LIMITE_ENVIO: '⏳ Você enviou um relato há pouco tempo. Aguarde alguns minutos antes de enviar outro.'
   };
 
   if (mensagens[erro?.code]) return mensagens[erro.code];
-  if (String(erro?.code || '').includes('permission-denied')) {
+  const codigoFirebase = String(erro?.code || '').toLowerCase().replaceAll('_', '-');
+  if (codigoFirebase.includes('permission-denied')) {
     return '❌ O Firebase recusou o envio. Confirme seu e-mail, complete a cidade em “Meu perfil” e tente novamente.';
   }
   return '❌ Não foi possível enviar o relato. Verifique os dados obrigatórios e tente novamente.';
@@ -179,6 +181,7 @@ document.getElementById('btn-enviar')?.addEventListener('click', async () => {
   const categoria = document.getElementById('f-cat').value;
   const descricao = document.getElementById('f-desc').value.trim();
   const endereco  = document.getElementById('f-local').value.trim();
+  const bairro    = document.getElementById('f-bairro').value.trim();
 
   if (!state.usuario || !auth.currentUser) {
     showToast('⚠️ Sua sessão expirou. Entre novamente antes de enviar o relato.');
@@ -190,7 +193,7 @@ document.getElementById('btn-enviar')?.addEventListener('click', async () => {
     return;
   }
 
-  if (!titulo || !categoria || !descricao || !endereco) {
+  if (!titulo || !categoria || !descricao || !endereco || !bairro) {
     showToast('⚠️ Preencha todos os campos obrigatórios.');
     return;
   }
@@ -216,8 +219,8 @@ document.getElementById('btn-enviar')?.addEventListener('click', async () => {
     return;
   }
 
-  if (!state.enderecoSelecionado.bairro) {
-    showToast('⚠️ Selecione um endereço cujo bairro tenha sido identificado.');
+  if (bairro.length > 120) {
+    showToast('⚠️ O bairro deve ter no máximo 120 caracteres.');
     return;
   }
 
@@ -240,7 +243,7 @@ document.getElementById('btn-enviar')?.addEventListener('click', async () => {
       lng: state.enderecoSelecionado.lng,
       cidade: state.enderecoSelecionado.cidade,
       cityId: state.enderecoSelecionado.cityId,
-      bairro: state.enderecoSelecionado.bairro,
+      bairro,
       autorId:   state.usuario.uid
     }, state.fotoFile);
 
@@ -258,7 +261,7 @@ document.getElementById('btn-enviar')?.addEventListener('click', async () => {
 });
 
 function limparFormulario() {
-  ['f-titulo', 'f-cat', 'f-desc', 'f-local'].forEach(id => {
+  ['f-titulo', 'f-cat', 'f-desc', 'f-local', 'f-bairro'].forEach(id => {
     document.getElementById(id).value = '';
   });
   state.fotoFile = null;
@@ -547,14 +550,16 @@ document.head.appendChild(s);
 
 // ── Busca manual de endereço ──
 const inputLocal = document.getElementById('f-local');
+const inputBairro = document.getElementById('f-bairro');
 const btnBuscarEndereco = document.getElementById('btn-buscar-endereco');
 const btnLocalizacaoAtual = document.getElementById('btn-localizacao-atual');
 const dropSugestoes = document.getElementById('endereco-sugestoes');
 const statusEndereco = document.getElementById('endereco-status');
 let sugestoesAtuais = [];
 
-function limparEnderecoSelecionado() {
+function limparEnderecoSelecionado(limparBairro = true) {
   state.enderecoSelecionado = null;
+  if (limparBairro && inputBairro) inputBairro.value = '';
   sugestoesAtuais = [];
   dropSugestoes?.replaceChildren();
   dropSugestoes?.classList.remove('open');
@@ -599,7 +604,7 @@ async function executarBuscaEndereco() {
     // Defesa adicional: mesmo que o serviço externo retorne algo inesperado,
     // somente coordenadas e municípios reconhecidos da Paraíba são exibidos.
     sugestoesAtuais = sugestoes.filter(s =>
-      s.cityId && s.cidade && s.bairro && estaNaParaiba(s.lat, s.lng)
+      s.cityId && s.cidade && estaNaParaiba(s.lat, s.lng)
     );
 
     if (sugestoesAtuais.length === 0) {
@@ -629,7 +634,6 @@ async function executarBuscaEndereco() {
   } catch (erro) {
     console.warn('Não foi possível buscar o endereço:', erro);
     const mensagens = {
-      BAIRRO_NAO_IDENTIFICADO: 'O local foi encontrado, mas o bairro não foi identificado. Tente incluir rua, bairro e cidade na busca.',
       LIMITE_NOMINATIM: 'O serviço de endereços está ocupado. Aguarde alguns segundos e tente novamente.',
       TIMEOUT: 'A busca demorou mais que o esperado. Verifique sua conexão e tente novamente.'
     };
@@ -647,7 +651,7 @@ async function executarBuscaEndereco() {
 btnBuscarEndereco?.addEventListener('click', executarBuscaEndereco);
 
 async function usarLocalizacaoAtual() {
-  limparEnderecoSelecionado();
+  limparEnderecoSelecionado(false);
   btnLocalizacaoAtual.disabled = true;
   btnBuscarEndereco.disabled = true;
   btnLocalizacaoAtual.classList.add('carregando');
@@ -662,9 +666,13 @@ async function usarLocalizacaoAtual() {
 
     const endereco = await buscarEnderecoPorCoordenadas(lat, lng);
     inputLocal.value = endereco.texto;
+    inputBairro.value = endereco.bairro || '';
     state.enderecoSelecionado = endereco;
-    statusEndereco.textContent = '✓ Localização atual selecionada';
-    statusEndereco.className = 'endereco-status valido';
+    statusEndereco.textContent = !endereco.bairro
+      ? '✓ Localização selecionada. Informe o bairro para continuar.'
+      : '✓ Localização atual selecionada';
+    statusEndereco.className = endereco.bairro ? 'endereco-status valido' : 'endereco-status invalido';
+    if (!endereco.bairro) inputBairro.focus();
   } catch (erro) {
     console.warn('Não foi possível usar a localização atual:', erro);
     const mensagens = {
@@ -674,7 +682,6 @@ async function usarLocalizacaoAtual() {
       GPS_TIMEOUT: 'O GPS demorou mais que o esperado. Tente novamente ou digite o endereço.',
       LOCALIZACAO_INVALIDA: 'O GPS retornou uma localização inválida. Digite o endereço manualmente.',
       FORA_PARAIBA: 'Sua localização atual não pertence a um município da Paraíba.',
-      BAIRRO_NAO_IDENTIFICADO: 'A localização foi encontrada, mas o bairro não foi identificado. Digite o endereço manualmente.',
       ENDERECO_NAO_ENCONTRADO: 'Não foi possível identificar o endereço atual. Digite-o manualmente.',
       LIMITE_NOMINATIM: 'O serviço de endereços está ocupado. Aguarde alguns segundos e tente novamente.',
       TIMEOUT: 'A identificação do endereço demorou mais que o esperado. Tente novamente.'
@@ -704,13 +711,26 @@ dropSugestoes?.addEventListener('click', (e) => {
 
   const i = Number(item.dataset.i);
   const s = sugestoesAtuais[i];
-  if (!s || !s.bairro || !estaNaParaiba(s.lat, s.lng)) return;
+  if (!s || !estaNaParaiba(s.lat, s.lng)) return;
 
   inputLocal.value = s.texto;
+  inputBairro.value = s.bairro || '';
   state.enderecoSelecionado = s;
   dropSugestoes.classList.remove('open');
-  statusEndereco.textContent = '✓ Endereço válido selecionado';
-  statusEndereco.className = 'endereco-status valido';
+  statusEndereco.textContent = !s.bairro
+    ? '✓ Endereço validado. Informe o bairro para continuar.'
+    : '✓ Endereço válido selecionado';
+  statusEndereco.className = s.bairro ? 'endereco-status valido' : 'endereco-status invalido';
+  if (!s.bairro) inputBairro.focus();
+});
+
+inputBairro?.addEventListener('input', () => {
+  if (!state.enderecoSelecionado) return;
+  const bairro = inputBairro.value.trim();
+  statusEndereco.textContent = bairro
+    ? '✓ Endereço e bairro prontos para envio'
+    : '✓ Endereço validado. Informe o bairro para continuar.';
+  statusEndereco.className = bairro ? 'endereco-status valido' : 'endereco-status invalido';
 });
 
 document.addEventListener('click', (e) => {

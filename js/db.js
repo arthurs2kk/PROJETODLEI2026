@@ -4,7 +4,7 @@
 import {
   auth, db,
   ref, set, get, onValue, update, push,
-  query, orderByChild, equalTo, limitToLast, startAt, endAt
+  query, orderByChild, equalTo, limitToLast, startAt, endAt, serverTimestamp
 } from "./firebase.js";
 import { uploadImagem } from "./cloudinary.js";
 import { resolverCityId } from "./cidades.js";
@@ -19,7 +19,7 @@ export async function salvarUsuario(uid, dados) {
     nome:         dados.nome,
     email:        dados.email,
     cidade:       dados.cidade,
-    dataCadastro: Date.now()
+    dataCadastro: serverTimestamp()
   });
 }
 
@@ -61,11 +61,24 @@ function erroEnvio(codigo, mensagem) {
   return erro;
 }
 
+function ehErroPermissao(erro) {
+  const codigo = String(erro?.code || '').toLowerCase().replaceAll('_', '-');
+  return codigo.includes('permission-denied');
+}
+
 
 export async function tempoRestanteParaEnviar(uid) {
   const snapshot = await get(ref(db, `limitesEnvio/${uid}`));
   if (!snapshot.exists()) return 0;
-  const passou = Date.now() - snapshot.val();
+  let agora = Date.now();
+  try {
+    const offsetSnapshot = await get(ref(db, '.info/serverTimeOffset'));
+    const offset = Number(offsetSnapshot.val());
+    if (Number.isFinite(offset)) agora += offset;
+  } catch (_) {
+    // Se o metadado estiver temporariamente indisponível, usa o relógio local.
+  }
+  const passou = agora - snapshot.val();
   const restante = INTERVALO_MINIMO_ENVIO - passou;
   return restante > 0 ? restante : 0;
 }
@@ -100,7 +113,7 @@ export async function criarRelato(dados, fotoFile) {
     throw erroEnvio('LOCALIZACAO_INVALIDA', 'O endereço precisa estar localizado na Paraíba.');
   }
   if (typeof dados.bairro !== 'string' || dados.bairro.length < 1 || dados.bairro.length > 120) {
-    throw erroEnvio('BAIRRO_INVALIDO', 'Selecione um endereço cujo bairro tenha sido identificado.');
+    throw erroEnvio('BAIRRO_INVALIDO', 'Informe um bairro válido para o relato.');
   }
 
   const cityId = dados.cityId || await resolverCityId(dados.cidade);
@@ -141,7 +154,7 @@ export async function criarRelato(dados, fotoFile) {
 
   // Upload da foto via Cloudinary (se houver)
   if (fotoFile) {
-    const tiposPermitidos = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/heic']);
+    const tiposPermitidos = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif']);
     if (!tiposPermitidos.has(fotoFile.type) || fotoFile.size > 10 * 1024 * 1024) {
       throw erroEnvio('FOTO_INVALIDA', 'A foto deve ser JPG, PNG, WebP ou HEIC e ter no máximo 10 MB.');
     }
@@ -154,7 +167,9 @@ export async function criarRelato(dados, fotoFile) {
     }
   }
 
-  const agora = Date.now();
+  // Usa o relógio do Firebase. Assim, um celular ou computador com data/hora
+  // incorreta não é recusado pelas regras de segurança.
+  const agora = serverTimestamp();
   const novoRef = push(ref(db, 'relatos'));
   const relato = {
     titulo:      dados.titulo,
@@ -192,7 +207,7 @@ export async function criarRelato(dados, fotoFile) {
     });
     invalidarCacheRelatos();
   } catch (erro) {
-    if (String(erro.code || '').includes('permission-denied')) {
+    if (ehErroPermissao(erro)) {
       try {
         if (await tempoRestanteParaEnviar(dados.autorId) > 0) {
           erro.code = 'LIMITE_ENVIO';
@@ -232,7 +247,7 @@ export async function atualizarUsuario(uid, dados) {
   const usuarioRef = ref(db, `usuarios/${uid}`);
   const snapshot = await get(usuarioRef);
   const perfilAtual = snapshot.exists() ? snapshot.val() : null;
-  const agora = Date.now();
+  const agora = serverTimestamp();
   const atualizacoes = {
     nome:            dados.nome,
     email:           dados.email,
@@ -305,7 +320,7 @@ export async function atualizarRelatoDoUsuario(relatoId, dados) {
     titulo:     dados.titulo,
     categoria:  dados.categoria,
     descricao:  dados.descricao,
-    dataEdicao: Date.now()
+    dataEdicao: serverTimestamp()
   });
   invalidarCacheRelatos();
 }
@@ -456,7 +471,7 @@ export async function votar(relatoId, userId) {
       invalidarCacheRelatos();
       return !jaExiste;
     } catch (erro) {
-      const concorrencia = String(erro.code || '').includes('permission-denied');
+      const concorrencia = ehErroPermissao(erro);
       if (!concorrencia || tentativa === 2) throw erro;
     }
   }
@@ -474,7 +489,7 @@ export async function jaVotou(relatoId, userId) {
 export async function atualizarStatus(relatoId, novoStatus) {
   await update(ref(db, `relatos/${relatoId}`), {
     status: novoStatus,
-    dataResolucao: novoStatus === 'resolvido' ? Date.now() : null
+    dataResolucao: novoStatus === 'resolvido' ? serverTimestamp() : null
   });
   invalidarCacheRelatos();
 }
@@ -483,7 +498,7 @@ export async function atualizarStatus(relatoId, novoStatus) {
 export async function salvarResposta(relatoId, resposta) {
   await update(ref(db, `relatos/${relatoId}`), {
     respostaOficial: resposta,
-    dataResposta: Date.now()
+    dataResposta: serverTimestamp()
   });
   invalidarCacheRelatos();
 }

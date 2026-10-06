@@ -96,7 +96,7 @@ test("remove segmentos repetidos da mesma rua e preserva bairros diferentes", as
   assert.deepEqual(Array.from(resultado, item => item.bairro), ["Torre", "Miramar"]);
 });
 
-test("a busca converte a resposta realista em endereço com bairro obrigatório", async () => {
+test("a busca converte a resposta realista em endereço com bairro", async () => {
   const respostaNominatim = [
     {
       display_name: "Rua João Suassuna, Centro, Campina Grande, Paraíba, Brasil",
@@ -148,7 +148,7 @@ test("a busca converte a resposta realista em endereço com bairro obrigatório"
   assert.equal(resultado[0].bairro, "Centro");
 });
 
-test("recusa seleção quando o OSM não fornece um bairro confiável", async () => {
+test("aceita endereço válido quando o OSM não fornece o bairro", async () => {
   const endereco = await carregarModuloEndereco(async url => {
     const alvo = String(url);
     if (alvo.includes("nominatim")) {
@@ -176,10 +176,11 @@ test("recusa seleção quando o OSM não fornece um bairro confiável", async ()
     };
   });
 
-  await assert.rejects(
-    endereco.buscarSugestoesEndereco("Rua Coronel Maracajá, Cabaceiras"),
-    erro => erro.codigo === "BAIRRO_NAO_IDENTIFICADO"
-  );
+  const resultado = await endereco.buscarSugestoesEndereco("Rua Coronel Maracajá, Cabaceiras");
+  assert.equal(resultado.length, 1);
+  assert.equal(resultado[0].cidade, "Cabaceiras");
+  assert.equal(resultado[0].cityId, "2503100");
+  assert.equal(resultado[0].bairro, null);
 });
 
 test("diferencia limite HTTP de uma busca sem resultados", async () => {
@@ -242,6 +243,41 @@ test("converte a localização atual em endereço válido da Paraíba", async ()
   assert.equal(resultado.cityId, "2504009");
   assert.equal(resultado.bairro, "Centro");
   assert.equal(resultado.rua, "Rua João Suassuna");
+});
+
+test("aceita a localização do GPS quando o OSM não informa o bairro", async () => {
+  const endereco = await carregarModuloEndereco(async url => {
+    const urlConsultada = String(url);
+    if (urlConsultada.includes("/reverse?")) {
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          display_name: "Rua Coronel Maracajá, Cabaceiras, Paraíba, Brasil",
+          address: {
+            road: "Rua Coronel Maracajá",
+            city_district: "Cabaceiras",
+            village: "Cabaceiras",
+            state: "Paraíba",
+            "ISO3166-2-lvl4": "BR-PB",
+            country: "Brasil"
+          }
+        })
+      };
+    }
+    if (urlConsultada.includes("servicodados.ibge.gov.br")) {
+      return {
+        ok: true,
+        status: 200,
+        json: async () => [{ id: 2503100, nome: "Cabaceiras" }]
+      };
+    }
+    throw new Error("consulta inesperada");
+  });
+
+  const resultado = await endereco.buscarEnderecoPorCoordenadas(-7.4880218, -36.2858430);
+  assert.equal(resultado.cidade, "Cabaceiras");
+  assert.equal(resultado.bairro, null);
 });
 
 test("recusa o GPS fora dos limites da Paraíba sem consultar serviços externos", async () => {

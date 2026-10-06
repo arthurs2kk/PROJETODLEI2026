@@ -212,27 +212,35 @@ function montarConfigBairros() {
   const cidade = document.getElementById('grafico-filtro-cidade').value;
   if (!cidade) return null;
 
-  const contagem = {};
+  const contagem = new Map();
   state.relatos.forEach(r => {
     const { cidade: cidadeR, bairro } = extrairCidadeBairro(r);
     if (!cidadeR || normalizar(cidadeR) !== normalizar(cidade)) return;
-    const chave = bairro || 'Não identificado';
-    contagem[chave] = (contagem[chave] || 0) + 1;
+    const nomeBairro = bairro?.trim() || 'Não identificado';
+    const chave = normalizar(nomeBairro);
+    const atual = contagem.get(chave);
+    if (atual) {
+      atual.total += 1;
+    } else {
+      contagem.set(chave, { nome: nomeBairro, total: 1 });
+    }
   });
 
-  const linhas = Object.entries(contagem).sort((a, b) => b[1] - a[1]).slice(0, 12);
+  const linhas = [...contagem.values()]
+    .sort((a, b) => b.total - a.total)
+    .slice(0, 12);
 
   state.dadosExport = {
     titulo: `bairros-${normalizar(cidade)}`,
     colunas: ['Bairro', 'Quantidade de relatos'],
-    linhas: linhas.map(([bairro, total]) => [bairro, total])
+    linhas: linhas.map(item => [item.nome, item.total])
   };
 
   return {
     type: 'bar',
     data: {
-      labels: linhas.map(l => l[0]),
-      datasets: [{ label: `Relatos em ${cidade}`, data: linhas.map(l => l[1]), backgroundColor: '#C45C00' }]
+      labels: linhas.map(item => item.nome),
+      datasets: [{ label: `Relatos em ${cidade}`, data: linhas.map(item => item.total), backgroundColor: '#C45C00' }]
     },
     options: opcoesBase(`Bairros com mais relatos — ${cidade}`, {
       indexAxis: 'y',
