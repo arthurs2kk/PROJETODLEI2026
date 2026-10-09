@@ -163,7 +163,11 @@ function mensagemErroEnvio(erro) {
     CIDADE_INVALIDA: '⚠️ Não foi possível identificar uma cidade válida da Paraíba nesse endereço.',
     BAIRRO_INVALIDO: '⚠️ Informe um bairro válido para o relato.',
     FOTO_INVALIDA: '⚠️ A foto deve ser JPG, PNG, WebP ou HEIC e ter no máximo 10 MB.',
-    ERRO_UPLOAD_IMAGEM: '❌ Não foi possível enviar a foto. Verifique sua conexão e tente novamente.',
+    CONFIGURACAO_UPLOAD_IMAGEM: '❌ O envio de fotos está temporariamente indisponível. Tente novamente mais tarde.',
+    FOTO_MUITO_GRANDE: '⚠️ A foto excede o limite aceito pelo serviço de imagens.',
+    FORMATO_FOTO_NAO_ACEITO: '⚠️ O serviço não aceitou o formato da foto. Tente usar JPG, PNG ou WebP.',
+    REDE_UPLOAD_IMAGEM: '❌ Não foi possível conectar ao serviço de imagens. Confira sua conexão.',
+    ERRO_UPLOAD_IMAGEM: '❌ O serviço de imagens recusou a foto. Tente novamente mais tarde.',
     LIMITE_ENVIO: '⏳ Você enviou um relato há pouco tempo. Aguarde alguns minutos antes de enviar outro.'
   };
 

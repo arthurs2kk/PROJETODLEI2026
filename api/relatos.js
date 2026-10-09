@@ -5,7 +5,7 @@ const { v2: cloudinary } = require('cloudinary');
 
 const INTERVALO_MINIMO_ENVIO = 5 * 60 * 1000;
 const CLOUD_NAME_PADRAO = 'dk8uky6m';
-const UPLOAD_PRESET_PADRAO = 'pro_povo_imagens';
+const UPLOAD_PRESET_PADRAO = 'ProPovo';
 const FIREBASE_PROJECT_ID_PADRAO = 'pro--povo';
 const FIREBASE_DATABASE_URL_PADRAO = 'https://pro--povo-default-rtdb.firebaseio.com';
 

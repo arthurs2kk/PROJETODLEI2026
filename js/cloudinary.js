@@ -2,7 +2,48 @@
 // Upload de imagens direto do navegador, sem backend, usando preset "unsigned"
 
 const CLOUD_NAME = "dk8uky6m";
-const UPLOAD_PRESET = "pro_povo_imagens";
+export const UPLOAD_PRESET = "ProPovo";
+
+export function criarErroUpload(status, dados) {
+  const detalhe = typeof dados?.error?.message === "string"
+    ? dados.error.message.trim()
+    : "";
+  const detalheNormalizado = detalhe.toLowerCase();
+
+  let code = "ERRO_UPLOAD_IMAGEM";
+  let mensagem = "O serviço de imagens recusou a foto. Tente novamente mais tarde.";
+
+  if (detalheNormalizado.includes("upload preset not found")) {
+    code = "CONFIGURACAO_UPLOAD_IMAGEM";
+    mensagem = "O envio de fotos está temporariamente indisponível.";
+  } else if (
+    detalheNormalizado.includes("unsigned upload") ||
+    detalheNormalizado.includes("signed upload") ||
+    detalheNormalizado.includes("signature")
+  ) {
+    code = "CONFIGURACAO_UPLOAD_IMAGEM";
+    mensagem = "O envio de fotos precisa ser reconfigurado pelo responsável do site.";
+  } else if (
+    detalheNormalizado.includes("file size") ||
+    detalheNormalizado.includes("too large")
+  ) {
+    code = "FOTO_MUITO_GRANDE";
+    mensagem = "A foto excede o limite aceito pelo serviço de imagens.";
+  } else if (
+    detalheNormalizado.includes("invalid image") ||
+    detalheNormalizado.includes("unsupported") ||
+    detalheNormalizado.includes("format")
+  ) {
+    code = "FORMATO_FOTO_NAO_ACEITO";
+    mensagem = "O formato desta foto não foi aceito. Tente usar JPG, PNG ou WebP.";
+  }
+
+  const erro = new Error(mensagem);
+  erro.code = code;
+  erro.status = status;
+  erro.cloudinaryMessage = detalhe || null;
+  return erro;
+}
 
 // ── Gera a mesma imagem do Cloudinary, mas otimizada ──
 // f_auto: entrega WebP/AVIF automaticamente pros navegadores que suportam (bem mais leve que JPG/PNG)
@@ -34,31 +75,27 @@ export async function uploadImagem(file) {
   formData.append("file", file);
   formData.append("upload_preset", UPLOAD_PRESET);
 
+  let resp;
   try {
-    const resp = await fetch(url, { method: "POST", body: formData });
-
-    let dados = null;
-    try { dados = await resp.json(); } catch { /* resposta sem corpo JSON */ }
-
-    if (resp.ok && dados && dados.secure_url) {
-      return dados.secure_url;
-    }
-
-    if (resp.status === 404) {
-      console.error(
-        `Erro 404 no upload do Cloudinary. Confira no painel do Cloudinary se o ` +
-        `"Cloud name" (atualmente "${CLOUD_NAME}") e o upload preset ` +
-        `(atualmente "${UPLOAD_PRESET}") existem exatamente com esse nome e se ` +
-        `o preset está com "Signing Mode" = Unsigned.`,
-        dados
-      );
-    } else {
-      console.error(`Erro no upload do Cloudinary (status ${resp.status}):`, dados);
-    }
-    return null;
-
-  } catch (e) {
-    console.error("Falha de rede ao enviar imagem:", e);
-    return null;
+    resp = await fetch(url, { method: "POST", body: formData });
+  } catch (causa) {
+    console.error("Falha de rede ao enviar imagem:", causa);
+    const erro = new Error("Não foi possível conectar ao serviço de imagens.");
+    erro.code = "REDE_UPLOAD_IMAGEM";
+    erro.cause = causa;
+    throw erro;
   }
+
+  let dados = null;
+  try { dados = await resp.json(); } catch { /* resposta sem corpo JSON */ }
+
+  if (resp.ok && dados?.secure_url) return dados.secure_url;
+
+  const erro = criarErroUpload(resp.status, dados);
+  console.error(
+    `Erro no upload do Cloudinary (status ${resp.status}): ` +
+    `${erro.cloudinaryMessage || "resposta sem detalhes"}`,
+    dados
+  );
+  throw erro;
 }

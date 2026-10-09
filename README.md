@@ -30,7 +30,7 @@ Because Realtime Database has no browser-side aggregate query such as `COUNT()`,
 
 Vercel Web Analytics
 
-All HTML pages include the official static-site integration, loading `/_vercel/insights/script.js` with `defer`. This project does not use Next.js or a bundler, so `@vercel/analytics/next` and an npm analytics dependency are unnecessary.
+All HTML pages load `js/vercel-analytics.js`, which injects the official `/_vercel/insights/script.js` integration outside localhost. This project does not use Next.js or a bundler, so `@vercel/analytics/next` and an npm analytics dependency are unnecessary.
 
 To activate collection:
 
@@ -38,7 +38,7 @@ To activate collection:
 2. Deploy the updated site to Vercel.
 3. Visit the deployed site and navigate between pages, then check the Analytics dashboard. Browser Network tools should show the insights script and requests to `/_vercel/insights/view`.
 
-The analytics endpoint is provided by Vercel after activation and deployment; it is not served by a local static server. Include the same analytics snippet in any new HTML pages.
+The analytics endpoint is provided by Vercel after activation and deployment; it is not served by a local static server. Include the shared `vercel-analytics.js` helper in any new HTML pages.
 
 Documentation: https://vercel.com/docs/analytics/quickstart
 
@@ -80,7 +80,7 @@ the already-confirmed report update.
 Temporary Cloudinary compatibility mode
 
 Image uploads currently use the original direct browser flow with the
-`pro_povo_imagens` unsigned upload preset. The browser sends the file straight to
+`ProPovo` unsigned upload preset. The browser sends the file straight to
 Cloudinary and stores only the returned HTTPS URL in Realtime Database. No
 Cloudinary API key, secret, Vercel Function or `fotoPublicId` is required for an
 upload.
@@ -112,7 +112,7 @@ API Keys**.
 
 Deployment order for the temporary compatibility mode:
 
-1. In Cloudinary, keep `pro_povo_imagens` set to **Unsigned** and restrict its
+1. In Cloudinary, keep `ProPovo` set to **Unsigned** and restrict its
    accepted formats and maximum file size.
 2. If the signed-upload rules were already deployed, deploy the compatibility
    Realtime Database rules with
@@ -360,7 +360,7 @@ and municipal access boundaries.
 Technical considerations of this design:
 
 - Home counters describe only its limited feed, and city selectors use the IBGE municipality list; browsers do not read all reports to calculate either one.
-- Cloudinary temporarily accepts direct browser uploads through the unsigned `pro_povo_imagens` preset. Restrict formats and file size in Cloudinary; this mode is operationally simpler but less resistant to abuse than signed uploads.
+- Cloudinary temporarily accepts direct browser uploads through the unsigned `ProPovo` preset. Restrict formats and file size in Cloudinary; this mode is operationally simpler but less resistant to abuse than signed uploads.
 - Coordinates and the IBGE municipality pair are format/range checked, but a static client cannot prove that a user did not intentionally choose another valid municipality. A trusted reference dataset in Firebase Rules or a backend would be required for stronger geographic attestation.
 - App Check can be added as defense in depth against scripted clients, but it does not replace Authentication or Security Rules.
 

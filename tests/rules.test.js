@@ -186,12 +186,13 @@ test("regras bloqueiam adulterações e preservam operações legítimas", async
     "limitesEnvio/novoCidadao": naoVerificado.dataCriacao,
   }));
 
+  const horarioFoto = serverTimestamp();
   const relatoComFoto = {
     ...novoRelato,
     autorId: "fotografo",
     autorNome: "Usuario com Foto",
     fotoUrl: "https://res.cloudinary.com/dk8uky6m/image/upload/v1785000000/pro_povo/fotografo/relatoComFoto.jpg",
-    dataCriacao: Date.now(),
+    dataCriacao: horarioFoto,
   };
   await assertFails(update(ref(fotografo), {
     "relatos/relatoComFoto": { ...relatoComFoto, fotoPublicId: "pro_povo/outro/relatoComFoto" },
@@ -199,7 +200,14 @@ test("regras bloqueiam adulterações e preservam operações legítimas", async
   }));
   await assertSucceeds(update(ref(fotografo), {
     "relatos/relatoComFoto": relatoComFoto,
-    "limitesEnvio/fotografo": relatoComFoto.dataCriacao,
+    "contatosRelatos/relatoComFoto": {
+      autorId: "fotografo",
+      nome: "Usuario com Foto",
+      email: "foto@example.com",
+      cityId: relatoComFoto.cityId,
+      dataCriacao: horarioFoto,
+    },
+    "limitesEnvio/fotografo": horarioFoto,
   }));
 
   // O cliente usa o timestamp do servidor para não depender da data/hora

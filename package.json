@@ -2,8 +2,9 @@
   "name": "pro-povo-security-tests",
   "private": true,
   "scripts": {
-    "test": "node --test tests/api-relatos.test.js && node --experimental-vm-modules --test tests/endereco.test.js",
+    "test": "node --test tests/api-relatos.test.js && node --experimental-vm-modules --test tests/cloudinary.test.js tests/endereco.test.js",
     "test:api": "node --test tests/api-relatos.test.js",
+    "test:cloudinary": "node --experimental-vm-modules --test tests/cloudinary.test.js",
     "test:rules": "node --test tests/rules.test.js",
     "test:endereco": "node --experimental-vm-modules --test tests/endereco.test.js"
   },
