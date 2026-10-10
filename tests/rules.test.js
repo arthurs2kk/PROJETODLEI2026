@@ -199,7 +199,10 @@ test("regras bloqueiam adulterações e preservam operações legítimas", async
     "limitesEnvio/fotografo": relatoComFoto.dataCriacao,
   }));
   await assertSucceeds(update(ref(fotografo), {
-    "relatos/relatoComFoto": relatoComFoto,
+    "relatos/relatoComFoto": {
+      ...relatoComFoto,
+      fotoPublicId: "pro_povo/fotografo/relatoComFoto",
+    },
     "contatosRelatos/relatoComFoto": {
       autorId: "fotografo",
       nome: "Usuario com Foto",

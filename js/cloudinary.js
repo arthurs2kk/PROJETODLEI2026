@@ -1,8 +1,55 @@
 // ── Pro Povo — cloudinary.js ──
-// Upload de imagens direto do navegador, sem backend, usando preset "unsigned"
+// Upload direto do navegador com preset unsigned. Operações destrutivas usam
+// a função autenticada da Vercel para que o API Secret nunca chegue ao cliente.
 
 const CLOUD_NAME = "dk8uky6m";
+const API_RELATOS = "/api/relatos";
 export const UPLOAD_PRESET = "ProPovo";
+
+export function publicIdImagem(uid, relatoId) {
+  if (typeof uid !== "string" || !/^[A-Za-z0-9_-]+$/.test(uid)) {
+    throw new Error("Identificador de usuário inválido para a imagem.");
+  }
+  if (typeof relatoId !== "string" || !/^[-A-Za-z0-9_]{20}$/.test(relatoId)) {
+    throw new Error("Identificador de relato inválido para a imagem.");
+  }
+  return `pro_povo/${uid}/${relatoId}`;
+}
+
+async function chamarApiRelatos(acao, relatoId, idToken) {
+  const resposta = await fetch(API_RELATOS, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${idToken}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ acao, relatoId })
+  });
+
+  let dados = null;
+  try { dados = await resposta.json(); } catch { /* resposta sem corpo JSON */ }
+
+  if (!resposta.ok) {
+    const erro = new Error(dados?.erro || "Não foi possível concluir a operação com a imagem.");
+    erro.code = dados?.codigo || "ERRO_API_RELATOS";
+    erro.status = resposta.status;
+    throw erro;
+  }
+
+  return dados;
+}
+
+export async function excluirImagemComToken(deleteToken) {
+  if (!deleteToken) return false;
+
+  const formData = new FormData();
+  formData.append("token", deleteToken);
+  const resposta = await fetch("https://api.cloudinary.com/v1_1/delete_by_token", {
+    method: "POST",
+    body: formData
+  });
+  return resposta.ok;
+}
 
 export function criarErroUpload(status, dados) {
   const detalhe = typeof dados?.error?.message === "string"
@@ -66,14 +113,18 @@ export function otimizarImagem(url, largura = 600) {
 }
 
 // ── Envia o arquivo de imagem e retorna a URL pública ──
-export async function uploadImagem(file) {
+export async function uploadImagem(file, relatoId, uid) {
   if (!file) return null;
 
   const url = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`;
+  const publicId = publicIdImagem(uid, relatoId);
 
   const formData = new FormData();
   formData.append("file", file);
   formData.append("upload_preset", UPLOAD_PRESET);
+  formData.append("public_id", publicId);
+  formData.append("overwrite", "false");
+  formData.append("return_delete_token", "true");
 
   let resp;
   try {
@@ -89,7 +140,19 @@ export async function uploadImagem(file) {
   let dados = null;
   try { dados = await resp.json(); } catch { /* resposta sem corpo JSON */ }
 
-  if (resp.ok && dados?.secure_url) return dados.secure_url;
+  if (resp.ok && dados?.secure_url) {
+    if (dados.public_id !== publicId) {
+      await excluirImagemComToken(dados.delete_token);
+      const erro = new Error("O Cloudinary alterou o identificador reservado para a imagem.");
+      erro.code = "PUBLIC_ID_INESPERADO";
+      throw erro;
+    }
+    return {
+      deleteToken: dados.delete_token || null,
+      publicId: dados.public_id,
+      url: dados.secure_url
+    };
+  }
 
   const erro = criarErroUpload(resp.status, dados);
   console.error(
@@ -98,4 +161,14 @@ export async function uploadImagem(file) {
     dados
   );
   throw erro;
+}
+
+// Remove um upload cujo relato não chegou a ser gravado no Firebase.
+export async function excluirUploadPendente(relatoId, idToken) {
+  return chamarApiRelatos("cancelar-upload", relatoId, idToken);
+}
+
+// Exclui a imagem no Cloudinary e, depois, relato, votos e contato no Firebase.
+export async function excluirRelatoNoServidor(relatoId, idToken) {
+  return chamarApiRelatos("excluir", relatoId, idToken);
 }

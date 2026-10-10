@@ -6,7 +6,12 @@ import {
   ref, set, get, onValue, update, push,
   query, orderByChild, equalTo, limitToLast, startAt, endAt, serverTimestamp
 } from "./firebase.js";
-import { uploadImagem } from "./cloudinary.js";
+import {
+  uploadImagem,
+  excluirImagemComToken,
+  excluirUploadPendente,
+  excluirRelatoNoServidor
+} from "./cloudinary.js";
 import { resolverCityId } from "./cidades.js";
 import { invalidarCacheRelatos, lerCache, salvarCache } from "./cache.js";
 
@@ -94,7 +99,7 @@ export async function criarRelato(dados, fotoFile) {
   }
 
   // Atualiza a claim email_verified usada pelas regras do banco.
-  await auth.currentUser.getIdToken(true);
+  const idToken = await auth.currentUser.getIdToken(true);
 
   if (typeof dados.titulo !== 'string' || dados.titulo.length < 5 || dados.titulo.length > 100) {
     throw erroEnvio('TITULO_INVALIDO', 'O título deve ter entre 5 e 100 caracteres.');
@@ -150,7 +155,8 @@ export async function criarRelato(dados, fotoFile) {
     throw erro;
   }
 
-  let fotoUrl = null;
+  const novoRef = push(ref(db, 'relatos'));
+  let foto = null;
 
   // Upload da foto via Cloudinary (se houver)
   if (fotoFile) {
@@ -158,8 +164,8 @@ export async function criarRelato(dados, fotoFile) {
     if (!tiposPermitidos.has(fotoFile.type) || fotoFile.size > 10 * 1024 * 1024) {
       throw erroEnvio('FOTO_INVALIDA', 'A foto deve ser JPG, PNG, WebP ou HEIC e ter no máximo 10 MB.');
     }
-    fotoUrl = await uploadImagem(fotoFile);
-    if (!fotoUrl) {
+    foto = await uploadImagem(fotoFile, novoRef.key, dados.autorId);
+    if (!foto) {
       throw erroEnvio(
         'ERRO_UPLOAD_IMAGEM',
         'A foto não pôde ser enviada. Verifique sua conexão e tente novamente.'
@@ -170,7 +176,6 @@ export async function criarRelato(dados, fotoFile) {
   // Usa o relógio do Firebase. Assim, um celular ou computador com data/hora
   // incorreta não é recusado pelas regras de segurança.
   const agora = serverTimestamp();
-  const novoRef = push(ref(db, 'relatos'));
   const relato = {
     titulo:      dados.titulo,
     categoria:   dados.categoria,
@@ -194,7 +199,10 @@ export async function criarRelato(dados, fotoFile) {
     dataCriacao: agora
   };
   if (dados.bairro) relato.bairro = dados.bairro;
-  if (fotoUrl) relato.fotoUrl = fotoUrl;
+  if (foto) {
+    relato.fotoUrl = foto.url;
+    relato.fotoPublicId = foto.publicId;
+  }
 
   // As Rules só aceitam a criação se relato e cooldown forem atualizados juntos.
   // O cliente não consegue criar um relato isolado, forjar votos/status nem
@@ -207,6 +215,22 @@ export async function criarRelato(dados, fotoFile) {
     });
     invalidarCacheRelatos();
   } catch (erro) {
+    if (foto) {
+      let removidaComToken = false;
+      try {
+        removidaComToken = await excluirImagemComToken(foto.deleteToken);
+      } catch (erroToken) {
+        console.warn('A limpeza pelo token temporário falhou:', erroToken);
+      }
+      if (!removidaComToken) {
+        try {
+          await excluirUploadPendente(novoRef.key, idToken);
+        } catch (erroLimpeza) {
+          console.error('Não foi possível desfazer o upload da imagem:', erroLimpeza);
+        }
+      }
+    }
+
     if (ehErroPermissao(erro)) {
       try {
         if (await tempoRestanteParaEnviar(dados.autorId) > 0) {
@@ -505,10 +529,12 @@ export async function salvarResposta(relatoId, resposta) {
 
 // ── Excluir relato ──
 export async function excluirRelato(relatoId) {
-  await update(ref(db), {
-    [`relatos/${relatoId}`]: null,
-    [`votos/${relatoId}`]: null
-  });
+  if (!auth.currentUser) {
+    throw new Error('Faça login para excluir um relato.');
+  }
+
+  const idToken = await auth.currentUser.getIdToken(true);
+  await excluirRelatoNoServidor(relatoId, idToken);
   invalidarCacheRelatos();
 }
 
