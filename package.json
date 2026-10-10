@@ -1,6 +1,9 @@
 {
   "name": "pro-povo-security-tests",
   "private": true,
+  "engines": {
+    "node": "22.x"
+  },
   "scripts": {
     "test": "node --test tests/api-relatos.test.js && node --experimental-vm-modules --test tests/cloudinary.test.js tests/endereco.test.js",
     "test:api": "node --test tests/api-relatos.test.js",
