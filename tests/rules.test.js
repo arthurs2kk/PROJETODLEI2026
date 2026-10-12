@@ -69,6 +69,20 @@ before(async () => {
         relatoA: relatoBase,
         relatoSemVotos: relatoBase,
         relatoContatoPendente: relatoBase,
+        relatoLegado: {
+          titulo: "Poste quebrado",
+          categoria: "Iluminação pública",
+          descricao: "Poste quebrado e sem iluminação na rua.",
+          endereco: "Rua Exemplo",
+          lat: -7.12,
+          lng: -35.88,
+          cityId: 2504009,
+          status: "andamento",
+          votos: 2,
+          autorId: "autorLegado",
+          autorNome: "Autor Legado",
+          dataCriacao: agora,
+        },
       },
       contatosRelatos: {
         relatoA: contatoBase,
@@ -292,6 +306,14 @@ test("regras bloqueiam adulterações e preservam operações legítimas", async
   await assertSucceeds(update(ref(cidadao), {
     "votos/relatoA/cidadao": null,
     "relatos/relatoA/votos": 0,
+  }));
+  await assertSucceeds(update(ref(cidadao), {
+    "votos/relatoLegado/cidadao": true,
+    "relatos/relatoLegado/votos": 3,
+  }));
+  await assertSucceeds(update(ref(cidadao), {
+    "votos/relatoLegado/cidadao": null,
+    "relatos/relatoLegado/votos": 2,
   }));
 
   await assertFails(update(ref(adminCG, "relatos/relatoA"), { status: "andamento" }));
