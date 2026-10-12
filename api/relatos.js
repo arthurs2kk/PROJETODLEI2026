@@ -255,6 +255,7 @@ async function excluirRelato(decoded, relatoId) {
   // "not found" para uma imagem que já tenha sido removida.
   await db.ref().update({
     [`relatos/${relatoId}`]: null,
+    [`relatosResumo/${relatoId}`]: null,
     [`votos/${relatoId}`]: null,
     [`contatosRelatos/${relatoId}`]: null
   });

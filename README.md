@@ -24,7 +24,7 @@ Main Features
 
 Report loading without Cloud Functions
 
-The static frontend never reads the complete public report collection to build the home, public report list, city selector, or map. The home reuses its limited 20-report feed for visible counters, the public list loads 25 reports at a time with indexed server-side city/category/status filters, the management panel loads 25 at a time, city selectors use the official IBGE municipality list, and the map queries one city with a 500-marker cap. Administrative charts intentionally traverse the authorized scope in bounded batches because they require complete aggregates.
+The static frontend never reads the complete public report collection to build the home, public report list, city selector, or map. Home and the public list query `relatosResumo`, which excludes the full description, official response, coordinates, author ID and internal image metadata; the complete `relatos/{id}` record is fetched only when a visitor opens the details modal. The home reuses its limited 20-report feed for visible counters, the public list loads 25 reports at a time with indexed server-side city/category/status filters, the management panel loads 25 at a time, city selectors use the official IBGE municipality list, and the map queries one city with a 500-marker cap. Administrative charts intentionally traverse the authorized scope in bounded batches because they require complete aggregates.
 
 Because Realtime Database has no browser-side aggregate query such as `COUNT()`, the numbers shown on the home describe the currently loaded batch rather than a global total. Exact global counters would require a trusted backend or a separate manually maintained data source.
 
@@ -125,16 +125,28 @@ the additive migration with:
 The script never changes report content or IDs; it only creates or repairs the
 derived filter-key fields in batches of 200 reports.
 
+After the filter keys exist, inspect and then create the lightweight public
+records used by home and the public report list:
+
+`npm run migrate:relatos-resumo`
+
+`npm run migrate:relatos-resumo -- --apply`
+
+The first command is a dry run. The second writes `relatosResumo` in batches of
+200 without removing or changing the complete records in `relatos`.
+
 Deployment order:
 
 1. In Cloudinary, keep `ProPovo` set to **Unsigned** and restrict its
    accepted formats and maximum file size.
-2. During the filter-index rollout, briefly pause report submissions and back up
-   the Realtime Database.
-3. Deploy the Realtime Database rules that bind each image to its user and report:
+2. During the data-index rollout, briefly pause report submissions, votes and
+   administrative changes, then back up the Realtime Database.
+3. Run the filter-key migration and then the public-summary migration described
+   above. Confirm that neither dry run reports invalid records before applying.
+4. Deploy the Realtime Database rules that bind each image to its user and report
+   and keep every public summary synchronized:
    `npx firebase-tools deploy --only database --project pro--povo` (run
    `npx firebase-tools login` first if necessary).
-4. Run the filter-key migration described above.
 5. Configure the EmailJS service, template and three public identifiers described
    above.
 6. Deploy the repository to Vercel and resume submissions.
@@ -319,6 +331,11 @@ City name and cityId (IBGE municipality code), and neighborhood — used both fo
 Photo URL (Cloudinary), status, vote count
 Author info, creation date, resolution date
 Municipality's official response (if any)
+
+relatosResumo - Lightweight public listing records
+Title, category, a description preview of at most 240 characters, address and optional photo URL
+City/filter keys, status, votes, public author name and creation date
+Kept synchronized atomically with report creation, editing, voting, status changes and deletion
 
 usuarios - Citizen accounts
 Name, email, city of residence

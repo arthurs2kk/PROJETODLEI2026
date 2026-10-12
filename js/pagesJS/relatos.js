@@ -1,5 +1,5 @@
 // ── Pro Povo — relatos.js ──
-import { buscarRelatosPagina } from "../db.js";
+import { buscarRelatosPagina, buscarRelatoPorId } from "../db.js";
 import { obterMunicipiosPB } from "../cidades.js";
 import { initNavbar } from "../navbar.js";
 import { otimizarImagem } from "../cloudinary.js";
@@ -236,7 +236,35 @@ function linhaHTML(r) {
 }
 
 // ── Modal de detalhes (mesmo padrão da home) ──
-function abrirDetalhe(r) {
+const detalhesRelatos = new Map();
+let detalheSolicitacao = 0;
+
+async function abrirDetalhe(resumo) {
+  const solicitacao = ++detalheSolicitacao;
+  document.getElementById('detalhe-titulo').textContent = resumo.titulo;
+  document.getElementById('detalhe-desc').textContent = 'Carregando detalhes...';
+  document.getElementById('detalhe-foto').innerHTML = '';
+  document.getElementById('detalhe-resposta').innerHTML = '';
+  document.getElementById('modal-detalhe-overlay').classList.add('open');
+
+  try {
+    let r = detalhesRelatos.get(resumo.id);
+    if (!r) {
+      r = await buscarRelatoPorId(resumo.id);
+      if (r) detalhesRelatos.set(resumo.id, r);
+    }
+    if (solicitacao !== detalheSolicitacao) return;
+    if (!r) throw new Error('Relato não encontrado.');
+    preencherDetalhe(r);
+  } catch (erro) {
+    console.error('Não foi possível carregar os detalhes:', erro);
+    if (solicitacao === detalheSolicitacao) {
+      document.getElementById('detalhe-desc').textContent = 'Não foi possível carregar os detalhes deste relato.';
+    }
+  }
+}
+
+function preencherDetalhe(r) {
   const cat = CATS[r.categoria] || CATS['Outros'];
   const st  = STATUS[r.status]  || STATUS.aberto;
 
@@ -255,7 +283,6 @@ function abrirDetalhe(r) {
     <span><i class="ti ti-map-pin"></i> ${escapeHTML(r.endereco)}</span>
     <span><i class="ti ti-user"></i> ${escapeHTML(r.autorNome)}</span>
     <span><i class="ti ti-clock"></i> ${new Date(r.dataCriacao).toLocaleString('pt-BR')}</span>`;
-  document.getElementById('modal-detalhe-overlay').classList.add('open');
 }
 
 document.getElementById('detalhe-close')?.addEventListener('click', fecharDetalhe);

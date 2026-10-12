@@ -83,6 +83,28 @@ function camposFiltroRelato({ cityId, categoria, status }) {
   };
 }
 
+// Versao enxuta usada nas listagens publicas. O texto completo, a resposta
+// oficial, coordenadas e dados internos continuam somente em /relatos e sao
+// baixados quando o visitante abre os detalhes.
+function resumoPublicoRelato(relato) {
+  const filtros = camposFiltroRelato(relato);
+  const descricao = String(relato.descricao || '');
+  const resumo = {
+    titulo: relato.titulo,
+    categoria: relato.categoria,
+    descricaoResumo: descricao.slice(0, 240),
+    endereco: relato.endereco,
+    cityId: relato.cityId,
+    status: relato.status,
+    votos: Number(relato.votos) || 0,
+    autorNome: relato.autorNome,
+    dataCriacao: relato.dataCriacao,
+    ...filtros
+  };
+  if (relato.fotoUrl) resumo.fotoUrl = relato.fotoUrl;
+  return resumo;
+}
+
 
 export async function tempoRestanteParaEnviar(uid) {
   const snapshot = await get(ref(db, `limitesEnvio/${uid}`));
@@ -223,6 +245,7 @@ export async function criarRelato(dados, fotoFile) {
   try {
     await update(ref(db), {
       [`relatos/${novoRef.key}`]: relato,
+      [`relatosResumo/${novoRef.key}`]: resumoPublicoRelato(relato),
       [`contatosRelatos/${novoRef.key}`]: contatoRelato,
       [`limitesEnvio/${dados.autorId}`]: agora
     });
@@ -357,7 +380,7 @@ export async function atualizarRelatoDoUsuario(relatoId, dados) {
   if (!snapshot.exists()) throw new Error('Relato não encontrado.');
   const relatoAtual = snapshot.val();
 
-  await update(ref(db, `relatos/${relatoId}`), {
+  const camposAtualizados = {
     titulo:     dados.titulo,
     categoria:  dados.categoria,
     descricao:  dados.descricao,
@@ -367,6 +390,10 @@ export async function atualizarRelatoDoUsuario(relatoId, dados) {
       categoria: dados.categoria,
       status: relatoAtual.status
     })
+  };
+  await update(ref(db), {
+    [`relatos/${relatoId}`]: camposAtualizados,
+    [`relatosResumo/${relatoId}`]: resumoPublicoRelato({ ...relatoAtual, ...camposAtualizados })
   });
   invalidarCacheRelatos();
 }
@@ -414,13 +441,13 @@ export async function buscarRelatosMapa(cityId, tamanho = 500, usarCache = true)
 // sobrar folga pros filtros de categoria/status feitos no cliente.
 export async function buscarRelatosDestaque(tamanho = 50, usarCache = true) {
   const limite = Math.min(Math.max(Number(tamanho) || 1, 1), 100);
-  const chaveCache = `relatos:destaque:${limite}`;
+  const chaveCache = `relatos:resumo:destaque:${limite}`;
   if (usarCache) {
     const cache = lerCache(chaveCache);
     if (cache !== undefined) return cache;
   }
 
-  const consulta = query(ref(db, "relatos"), orderByChild("votos"), limitToLast(limite));
+  const consulta = query(ref(db, "relatosResumo"), orderByChild("votos"), limitToLast(limite));
   const snapshot = await get(consulta);
   const lista = Object.entries(snapshot.val() || {}).map(([id, r]) => ({ id, ...r }));
   lista.sort((a, b) => (b.votos || 0) - (a.votos || 0));
@@ -431,13 +458,13 @@ export async function buscarRelatosDestaque(tamanho = 50, usarCache = true) {
 // ── Feed limitado pra home: só os N relatos mais recentes ──
 export async function buscarRelatosRecentes(tamanho = 50, usarCache = true) {
   const limite = Math.min(Math.max(Number(tamanho) || 1, 1), 100);
-  const chaveCache = `relatos:recentes:${limite}`;
+  const chaveCache = `relatos:resumo:recentes:${limite}`;
   if (usarCache) {
     const cache = lerCache(chaveCache);
     if (cache !== undefined) return cache;
   }
 
-  const consulta = query(ref(db, "relatos"), orderByChild("dataCriacao"), limitToLast(limite));
+  const consulta = query(ref(db, "relatosResumo"), orderByChild("dataCriacao"), limitToLast(limite));
   const snapshot = await get(consulta);
   const lista = Object.entries(snapshot.val() || {}).map(([id, r]) => ({ id, ...r }));
   lista.sort((a, b) => b.dataCriacao - a.dataCriacao);
@@ -494,7 +521,7 @@ export async function buscarRelatosPagina(cursor = null, tamanho = TAMANHO_PAGIN
     ? 'recentes'
     : `${campoOrdenacao}:${valorFiltro}`;
   const chaveCache = !cursor
-    ? `relatos:pagina-inicial:${tamanho}:${encodeURIComponent(identificadorFiltro)}`
+    ? `relatos:resumo:pagina-inicial:${tamanho}:${encodeURIComponent(identificadorFiltro)}`
     : null;
   if (usarCache && chaveCache) {
     const cache = lerCache(chaveCache);
@@ -504,19 +531,19 @@ export async function buscarRelatosPagina(cursor = null, tamanho = TAMANHO_PAGIN
   let consulta;
   if (valorFiltro === null) {
     consulta = cursor
-      ? query(ref(db, "relatos"), orderByChild("dataCriacao"), endAt(cursor.dataCriacao, cursor.id), limitToLast(tamanho + 2))
-      : query(ref(db, "relatos"), orderByChild("dataCriacao"), limitToLast(tamanho + 1));
+      ? query(ref(db, "relatosResumo"), orderByChild("dataCriacao"), endAt(cursor.dataCriacao, cursor.id), limitToLast(tamanho + 2))
+      : query(ref(db, "relatosResumo"), orderByChild("dataCriacao"), limitToLast(tamanho + 1));
   } else {
     consulta = cursor
       ? query(
-          ref(db, "relatos"),
+          ref(db, "relatosResumo"),
           orderByChild(campoOrdenacao),
           startAt(valorFiltro),
           endAt(valorFiltro, cursor.id),
           limitToLast(tamanho + 2)
         )
       : query(
-          ref(db, "relatos"),
+          ref(db, "relatosResumo"),
           orderByChild(campoOrdenacao),
           equalTo(valorFiltro),
           limitToLast(tamanho + 1)
@@ -545,6 +572,14 @@ export async function buscarRelatosPagina(cursor = null, tamanho = TAMANHO_PAGIN
   const resultado = { itens: lista, temMais };
   if (usarCache && chaveCache) salvarCache(chaveCache, resultado);
   return resultado;
+}
+
+export async function buscarRelatoPorId(relatoId) {
+  if (typeof relatoId !== 'string' || relatoId.length < 1 || relatoId.length > 100) {
+    throw new Error('Relato invalido.');
+  }
+  const snapshot = await get(ref(db, `relatos/${relatoId}`));
+  return snapshot.exists() ? { id: relatoId, ...snapshot.val() } : null;
 }
 
 // ── Votar num relato (sem voto duplo) ──
@@ -578,9 +613,11 @@ export async function votar(relatoId, userId) {
 
     const jaExiste = votoSnapshot.exists();
     const totalAtual = Number(totalSnapshot.val()) || 0;
+    const novoTotal = jaExiste ? Math.max(0, totalAtual - 1) : totalAtual + 1;
     const atualizacoes = {
       [`votos/${relatoId}/${userId}`]: jaExiste ? null : true,
-      [`relatos/${relatoId}/votos`]: jaExiste ? Math.max(0, totalAtual - 1) : totalAtual + 1
+      [`relatos/${relatoId}/votos`]: novoTotal,
+      [`relatosResumo/${relatoId}/votos`]: novoTotal
     };
 
     try {
@@ -608,7 +645,7 @@ export async function atualizarStatus(relatoId, novoStatus) {
   if (!snapshot.exists()) throw new Error('Relato não encontrado.');
   const relatoAtual = snapshot.val();
 
-  await update(ref(db, `relatos/${relatoId}`), {
+  const camposAtualizados = {
     status: novoStatus,
     dataResolucao: novoStatus === 'resolvido' ? serverTimestamp() : null,
     ...camposFiltroRelato({
@@ -616,6 +653,10 @@ export async function atualizarStatus(relatoId, novoStatus) {
       categoria: relatoAtual.categoria,
       status: novoStatus
     })
+  };
+  await update(ref(db), {
+    [`relatos/${relatoId}`]: camposAtualizados,
+    [`relatosResumo/${relatoId}`]: resumoPublicoRelato({ ...relatoAtual, ...camposAtualizados })
   });
   invalidarCacheRelatos();
 }
@@ -648,7 +689,30 @@ export async function buscarRelatosGestaoPagina(admin, cursor = null, tamanho = 
   tamanho = Math.min(Math.max(Number(tamanho) || TAMANHO_PAGINA_PADRAO, 1), 500);
 
   if (admin.papel === 'superadmin') {
-    return buscarRelatosPagina(cursor, tamanho);
+    const consulta = cursor
+      ? query(
+          ref(db, "relatos"),
+          orderByChild("dataCriacao"),
+          endAt(cursor.dataCriacao, cursor.id),
+          limitToLast(tamanho + 2)
+        )
+      : query(
+          ref(db, "relatos"),
+          orderByChild("dataCriacao"),
+          limitToLast(tamanho + 1)
+        );
+
+    const snapshot = await get(consulta);
+    let lista = Object.entries(snapshot.val() || {})
+      .map(([id, relato]) => ({ id, ...relato }));
+    if (cursor) lista = lista.filter(relato => relato.id !== cursor.id);
+
+    lista.sort((a, b) =>
+      ((b.dataCriacao || 0) - (a.dataCriacao || 0)) || b.id.localeCompare(a.id)
+    );
+    const temMais = lista.length > tamanho;
+    if (temMais) lista = lista.slice(0, tamanho);
+    return { itens: lista, temMais };
   }
 
   if (!admin.cityId) {

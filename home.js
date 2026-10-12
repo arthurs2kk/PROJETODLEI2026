@@ -1,6 +1,6 @@
 // ── Pro Povo — app.js ──
 import { auth, onAuthStateChanged } from "./js/firebase.js";
-import { criarRelato, buscarRelatosDestaque, buscarRelatosRecentes, votar, jaVotou, tempoRestanteParaEnviar } from "./js/db.js";
+import { criarRelato, buscarRelatosDestaque, buscarRelatosRecentes, buscarRelatoPorId, votar, jaVotou, tempoRestanteParaEnviar } from "./js/db.js";
 import {
   buscarSugestoesEndereco,
   buscarEnderecoPorCoordenadas,
@@ -422,7 +422,35 @@ async function renderCards() {
   });
 }
 
-function abrirDetalhe(r) {
+const detalhesRelatos = new Map();
+let detalheSolicitacao = 0;
+
+async function abrirDetalhe(resumo) {
+  const solicitacao = ++detalheSolicitacao;
+  document.getElementById('detalhe-titulo').textContent = resumo.titulo;
+  document.getElementById('detalhe-desc').textContent = 'Carregando detalhes...';
+  document.getElementById('detalhe-foto').innerHTML = '';
+  document.getElementById('detalhe-resposta').innerHTML = '';
+  document.getElementById('modal-detalhe-overlay').classList.add('open');
+
+  try {
+    let r = detalhesRelatos.get(resumo.id);
+    if (!r) {
+      r = await buscarRelatoPorId(resumo.id);
+      if (r) detalhesRelatos.set(resumo.id, r);
+    }
+    if (solicitacao !== detalheSolicitacao) return;
+    if (!r) throw new Error('Relato não encontrado.');
+    preencherDetalhe(r);
+  } catch (erro) {
+    console.error('Não foi possível carregar os detalhes:', erro);
+    if (solicitacao === detalheSolicitacao) {
+      document.getElementById('detalhe-desc').textContent = 'Não foi possível carregar os detalhes deste relato.';
+    }
+  }
+}
+
+function preencherDetalhe(r) {
   const badgeClass = BADGE_BY_CATEGORY[r.categoria] || BADGE_BY_CATEGORY.Outros;
   document.getElementById('detalhe-titulo').textContent = r.titulo;
   document.getElementById('detalhe-desc').textContent   = r.descricao;
@@ -439,7 +467,6 @@ function abrirDetalhe(r) {
     <span><i class="ti ti-map-pin"></i> ${escapeHTML(r.endereco)}</span>
     <span><i class="ti ti-user"></i> ${escapeHTML(r.autorNome)}</span>
     <span><i class="ti ti-clock"></i> ${tempoRelativo(r.dataCriacao)}</span>`;
-  document.getElementById('modal-detalhe-overlay').classList.add('open');
 }
 
 document.getElementById('detalhe-close')?.addEventListener('click', () => {
@@ -483,12 +510,7 @@ function cardHTML(r) {
           <span class="status ${st.css}"><i class="ti ${st.icon}"></i> ${st.label}</span>
         </div>
         <h3 class="card-title">${escapeHTML(r.titulo)}</h3>
-        <p class="card-desc">${escapeHTML(r.descricao)}</p>
-        ${r.respostaOficial ? `
-         <div class="resposta-cidadao">
-           <strong><i class="ti ti-building-community"></i> Resposta da prefeitura:</strong>
-           <p>${escapeHTML(r.respostaOficial)}</p>
-         </div>` : ''}
+        <p class="card-desc">${escapeHTML(r.descricaoResumo || '')}</p>
         <div class="card-meta">
           <span><i class="ti ti-map-pin"></i> ${escapeHTML(r.endereco)}</span>
           <span><i class="ti ti-clock"></i> ${tempo}</span>
