@@ -11,3 +11,7 @@ node_modules/
 *-firebase-adminsdk-*.json
 
 .vercel
+
+# Renders temporários usados na conferência visual dos PDFs
+tmp/pdfs/**/*.png
+tmp/pdfs/*.png

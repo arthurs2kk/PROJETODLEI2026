@@ -71,6 +71,18 @@ function ehErroPermissao(erro) {
   return codigo.includes('permission-denied');
 }
 
+// O Realtime Database só consegue ordenar/filtrar por um campo em cada
+// consulta. Estas chaves pequenas permitem combinar os filtros da listagem sem
+// duplicar o relato inteiro em vários caminhos do banco.
+function camposFiltroRelato({ cityId, categoria, status }) {
+  return {
+    filtroCidadeCategoria: `${cityId}|${categoria}`,
+    filtroCidadeStatus: `${cityId}|${status}`,
+    filtroCategoriaStatus: `${categoria}|${status}`,
+    filtroCidadeCategoriaStatus: `${cityId}|${categoria}|${status}`
+  };
+}
+
 
 export async function tempoRestanteParaEnviar(uid) {
   const snapshot = await get(ref(db, `limitesEnvio/${uid}`));
@@ -189,7 +201,8 @@ export async function criarRelato(dados, fotoFile) {
     votos:       0,
     autorId:     dados.autorId,
     autorNome:   perfil.nome,
-    dataCriacao: agora
+    dataCriacao: agora,
+    ...camposFiltroRelato({ cityId, categoria: dados.categoria, status: 'aberto' })
   };
   const contatoRelato = {
     autorId:     dados.autorId,
@@ -340,11 +353,20 @@ export function ouvirRelatosDoUsuario(uid, callback) {
 
 // ── Cidadão edita seu próprio relato (só título, categoria e descrição) ──
 export async function atualizarRelatoDoUsuario(relatoId, dados) {
+  const snapshot = await get(ref(db, `relatos/${relatoId}`));
+  if (!snapshot.exists()) throw new Error('Relato não encontrado.');
+  const relatoAtual = snapshot.val();
+
   await update(ref(db, `relatos/${relatoId}`), {
     titulo:     dados.titulo,
     categoria:  dados.categoria,
     descricao:  dados.descricao,
-    dataEdicao: serverTimestamp()
+    dataEdicao: serverTimestamp(),
+    ...camposFiltroRelato({
+      cityId: relatoAtual.cityId,
+      categoria: dados.categoria,
+      status: relatoAtual.status
+    })
   });
   invalidarCacheRelatos();
 }
@@ -356,7 +378,7 @@ export async function buscarOrganizacao(organizacaoId) {
 }
 
 // Mapa público: consulta somente uma cidade, limita os marcadores e reaproveita
-// por cinco minutos a última cidade visitada.
+// por um período curto a última cidade visitada.
 export async function buscarRelatosMapa(cityId, tamanho = 500, usarCache = true) {
   if (!/^25\d{5}$/.test(String(cityId || ''))) {
     throw new Error('Cidade inválida para consulta do mapa.');
@@ -432,16 +454,74 @@ const TAMANHO_PAGINA_PADRAO = 30;
 // carregado. O par (dataCriacao, id) no endAt evita pular ou repetir relatos
 // quando dois deles têm exatamente o mesmo timestamp.
 export async function buscarRelatosPagina(cursor = null, tamanho = TAMANHO_PAGINA_PADRAO, opcoes = {}) {
-  const { usarCache = false } = opcoes;
-  const chaveCache = !cursor ? `relatos:pagina-inicial:${tamanho}` : null;
+  const {
+    usarCache = false,
+    cidade = '',
+    categoria = 'todos',
+    status = 'todos'
+  } = opcoes;
+  const cidadeAtiva = cidade || '';
+  const categoriaAtiva = categoria !== 'todos' ? categoria : '';
+  const statusAtivo = status !== 'todos' ? status : '';
+
+  let campoOrdenacao = 'dataCriacao';
+  let valorFiltro = null;
+
+  if (cidadeAtiva && categoriaAtiva && statusAtivo) {
+    campoOrdenacao = 'filtroCidadeCategoriaStatus';
+    valorFiltro = `${cidadeAtiva}|${categoriaAtiva}|${statusAtivo}`;
+  } else if (cidadeAtiva && categoriaAtiva) {
+    campoOrdenacao = 'filtroCidadeCategoria';
+    valorFiltro = `${cidadeAtiva}|${categoriaAtiva}`;
+  } else if (cidadeAtiva && statusAtivo) {
+    campoOrdenacao = 'filtroCidadeStatus';
+    valorFiltro = `${cidadeAtiva}|${statusAtivo}`;
+  } else if (categoriaAtiva && statusAtivo) {
+    campoOrdenacao = 'filtroCategoriaStatus';
+    valorFiltro = `${categoriaAtiva}|${statusAtivo}`;
+  } else if (cidadeAtiva) {
+    campoOrdenacao = 'cityId';
+    valorFiltro = cidadeAtiva;
+  } else if (categoriaAtiva) {
+    campoOrdenacao = 'categoria';
+    valorFiltro = categoriaAtiva;
+  } else if (statusAtivo) {
+    campoOrdenacao = 'status';
+    valorFiltro = statusAtivo;
+  }
+
+  const identificadorFiltro = valorFiltro === null
+    ? 'recentes'
+    : `${campoOrdenacao}:${valorFiltro}`;
+  const chaveCache = !cursor
+    ? `relatos:pagina-inicial:${tamanho}:${encodeURIComponent(identificadorFiltro)}`
+    : null;
   if (usarCache && chaveCache) {
     const cache = lerCache(chaveCache);
     if (cache !== undefined) return cache;
   }
 
-  const consulta = cursor
-    ? query(ref(db, "relatos"), orderByChild("dataCriacao"), endAt(cursor.dataCriacao, cursor.id), limitToLast(tamanho + 2))
-    : query(ref(db, "relatos"), orderByChild("dataCriacao"), limitToLast(tamanho + 1));
+  let consulta;
+  if (valorFiltro === null) {
+    consulta = cursor
+      ? query(ref(db, "relatos"), orderByChild("dataCriacao"), endAt(cursor.dataCriacao, cursor.id), limitToLast(tamanho + 2))
+      : query(ref(db, "relatos"), orderByChild("dataCriacao"), limitToLast(tamanho + 1));
+  } else {
+    consulta = cursor
+      ? query(
+          ref(db, "relatos"),
+          orderByChild(campoOrdenacao),
+          startAt(valorFiltro),
+          endAt(valorFiltro, cursor.id),
+          limitToLast(tamanho + 2)
+        )
+      : query(
+          ref(db, "relatos"),
+          orderByChild(campoOrdenacao),
+          equalTo(valorFiltro),
+          limitToLast(tamanho + 1)
+        );
+  }
 
   const snapshot = await get(consulta);
   const dados = snapshot.val();
@@ -454,9 +534,10 @@ export async function buscarRelatosPagina(cursor = null, tamanho = TAMANHO_PAGIN
   let lista = Object.entries(dados).map(([id, r]) => ({ id, ...r }));
   if (cursor) lista = lista.filter(r => r.id !== cursor.id); // o endAt inclui de novo o cursor
 
-  lista.sort((a, b) =>
-    (b.dataCriacao - a.dataCriacao) || b.id.localeCompare(a.id)
-  ); // mais recente primeiro; a chave desempata timestamps iguais
+  lista.sort((a, b) => valorFiltro === null
+    ? (b.dataCriacao - a.dataCriacao) || b.id.localeCompare(a.id)
+    : b.id.localeCompare(a.id)
+  ); // push IDs são cronológicos; dataCriacao desempata a consulta global
 
   const temMais = lista.length > tamanho;
   if (temMais) lista = lista.slice(0, tamanho);
@@ -468,10 +549,22 @@ export async function buscarRelatosPagina(cursor = null, tamanho = TAMANHO_PAGIN
 
 // ── Votar num relato (sem voto duplo) ──
 export async function votar(relatoId, userId) {
-  if (!auth.currentUser || auth.currentUser.uid !== userId) {
-    throw new Error('Usuário autenticado inválido.');
+  const usuario = auth.currentUser;
+  if (!usuario || usuario.uid !== userId) {
+    throw erroEnvio('USUARIO_NAO_AUTENTICADO', 'Faça login novamente antes de votar.');
   }
-  await auth.currentUser.getIdToken(true);
+
+  // As Rules aceitam votos somente de contas com e-mail confirmado. Recarregar
+  // quando o estado local ainda diz "não confirmado" contempla quem confirmou
+  // o endereço em outra aba/dispositivo sem atrasar todos os demais votos.
+  if (!usuario.emailVerified) await usuario.reload();
+  if (!auth.currentUser || auth.currentUser.uid !== userId) {
+    throw erroEnvio('USUARIO_NAO_AUTENTICADO', 'Faça login novamente antes de votar.');
+  }
+  if (!usuario.emailVerified) {
+    throw erroEnvio('EMAIL_NAO_VERIFICADO', 'Confirme seu e-mail antes de votar.');
+  }
+  await usuario.getIdToken(true);
 
   // A atualização atômica mantém o voto individual e o total sincronizados.
   // Em concorrência, as Rules rejeitam um total obsoleto; a nova tentativa lê
@@ -511,9 +604,18 @@ export async function jaVotou(relatoId, userId) {
 
 // ── Atualizar status de um relato ──
 export async function atualizarStatus(relatoId, novoStatus) {
+  const snapshot = await get(ref(db, `relatos/${relatoId}`));
+  if (!snapshot.exists()) throw new Error('Relato não encontrado.');
+  const relatoAtual = snapshot.val();
+
   await update(ref(db, `relatos/${relatoId}`), {
     status: novoStatus,
-    dataResolucao: novoStatus === 'resolvido' ? serverTimestamp() : null
+    dataResolucao: novoStatus === 'resolvido' ? serverTimestamp() : null,
+    ...camposFiltroRelato({
+      cityId: relatoAtual.cityId,
+      categoria: relatoAtual.categoria,
+      status: novoStatus
+    })
   });
   invalidarCacheRelatos();
 }

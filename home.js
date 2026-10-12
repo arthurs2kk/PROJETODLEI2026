@@ -277,9 +277,10 @@ function limparFormulario() {
 
 // ── Feed em destaque: busca só um lote limitado, não a tabela inteira ──
 // A home sempre baixa, no máximo, TAMANHO_FEED relatos (os mais votados ou os
-// mais recentes, dependendo do "Ordenar por"). Isso evita que a página
-// inicial — a mais visitada do site — baixe o banco inteiro a cada visita.
-const TAMANHO_FEED = 50;
+// mais recentes, dependendo do "Ordenar por"). Vinte itens dão folga para os
+// filtros antes de exibir os cinco cards sem transferir cinquenta relatos
+// completos em toda visita à página mais acessada do site.
+const TAMANHO_FEED = 20;
 let solicitacaoFeed = 0;
 
 function mostrarCarregamentoFeed(carregando) {
@@ -406,7 +407,13 @@ async function renderCards() {
         if (contagem && relato) contagem.textContent = relato.votos;
       } catch (e) {
         console.error('Não foi possível registrar o voto:', e);
-        showToast('❌ Não foi possível registrar seu voto. Tente novamente.');
+        if (e?.code === 'EMAIL_NAO_VERIFICADO') {
+          showToast('⚠️ Confirme seu e-mail antes de votar. Você pode reenviar a confirmação em "Meu perfil".');
+        } else if (e?.code === 'USUARIO_NAO_AUTENTICADO') {
+          showToast('⚠️ Sua sessão expirou. Entre novamente para votar.');
+        } else {
+          showToast('❌ Não foi possível registrar seu voto. Tente novamente.');
+        }
       } finally {
         state.votosEmAndamento.delete(id);
         btn.disabled = false;

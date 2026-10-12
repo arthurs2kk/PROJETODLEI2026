@@ -10,12 +10,26 @@ const {
   assertFails,
 } = require("@firebase/rules-unit-testing");
 const {
-  ref, set, update, get, query, orderByChild, startAt, endAt, limitToLast, serverTimestamp
+  ref, set, update, get, query, orderByChild, equalTo, startAt, endAt, limitToLast, serverTimestamp
 } = require("firebase/database");
 
 let ambiente;
 const agora = Date.now();
-const relatoBase = {
+
+function camposFiltroRelato({ cityId, categoria, status }) {
+  return {
+    filtroCidadeCategoria: `${cityId}|${categoria}`,
+    filtroCidadeStatus: `${cityId}|${status}`,
+    filtroCategoriaStatus: `${categoria}|${status}`,
+    filtroCidadeCategoriaStatus: `${cityId}|${categoria}|${status}`,
+  };
+}
+
+function comCamposFiltro(relato) {
+  return { ...relato, ...camposFiltroRelato(relato) };
+}
+
+const relatoBase = comCamposFiltro({
   titulo: "Falta iluminação na rua",
   categoria: "Iluminação pública",
   descricao: "A rua está sem iluminação há vários dias.",
@@ -30,7 +44,7 @@ const relatoBase = {
   autorId: "cidadao",
   autorNome: "Cidadão de Teste",
   dataCriacao: agora,
-};
+});
 const contatoBase = {
   autorId: "cidadao",
   nome: "Cidadão de Teste",
@@ -162,6 +176,19 @@ test("regras bloqueiam adulterações e preservam operações legítimas", async
 
   const novoRelato = { ...relatoBase, dataCriacao: Date.now() };
   await assertFails(set(ref(cidadao, "relatos/relatoCriadoNoCliente"), novoRelato));
+  const relatoSemFiltros = { ...novoRelato };
+  delete relatoSemFiltros.filtroCidadeCategoria;
+  delete relatoSemFiltros.filtroCidadeStatus;
+  delete relatoSemFiltros.filtroCategoriaStatus;
+  delete relatoSemFiltros.filtroCidadeCategoriaStatus;
+  await assertFails(update(ref(cidadao), {
+    "relatos/relatoSemFiltros": relatoSemFiltros,
+    "contatosRelatos/relatoSemFiltros": {
+      ...contatoBase,
+      dataCriacao: relatoSemFiltros.dataCriacao,
+    },
+    "limitesEnvio/cidadao": relatoSemFiltros.dataCriacao,
+  }));
   await assertSucceeds(update(ref(cidadao), {
     "relatos/relatoCriadoAtomicamente": novoRelato,
     "contatosRelatos/relatoCriadoAtomicamente": {
@@ -216,7 +243,7 @@ test("regras bloqueiam adulterações e preservam operações legítimas", async
   // O cliente usa o timestamp do servidor para não depender da data/hora
   // configurada no computador ou celular do cidadão.
   const horarioServidor = serverTimestamp();
-  const relatoComHorarioServidor = {
+  const relatoComHorarioServidor = comCamposFiltro({
     ...novoRelato,
     autorId: "relogioIncorreto",
     autorNome: "Usuário com relógio incorreto",
@@ -224,7 +251,7 @@ test("regras bloqueiam adulterações e preservam operações legítimas", async
     cityId: "2503100",
     bairro: "Centro",
     dataCriacao: horarioServidor,
-  };
+  });
   await assertSucceeds(update(ref(relogioIncorreto), {
     "relatos/relatoComHorarioServidor": relatoComHorarioServidor,
     "contatosRelatos/relatoComHorarioServidor": {
@@ -249,6 +276,10 @@ test("regras bloqueiam adulterações e preservam operações legítimas", async
   }));
 
   await assertFails(set(ref(cidadao, "votos/relatoA/cidadao"), true));
+  await assertFails(update(ref(novoCidadao), {
+    "votos/relatoA/novoCidadao": true,
+    "relatos/relatoA/votos": 1,
+  }));
   await assertSucceeds(update(ref(cidadao), {
     "votos/relatoA/cidadao": true,
     "relatos/relatoA/votos": 1,
@@ -264,7 +295,11 @@ test("regras bloqueiam adulterações e preservam operações legítimas", async
   }));
 
   await assertFails(update(ref(adminCG, "relatos/relatoA"), { status: "andamento" }));
-  await assertSucceeds(update(ref(adminJP, "relatos/relatoA"), { status: "andamento" }));
+  await assertFails(update(ref(adminJP, "relatos/relatoA"), { status: "andamento" }));
+  await assertSucceeds(update(ref(adminJP, "relatos/relatoA"), {
+    status: "andamento",
+    ...camposFiltroRelato({ ...relatoBase, status: "andamento" }),
+  }));
 
   await assertFails(set(ref(cidadao, "contatosRelatos/relatoContatoPendente"), {
     ...contatoBase,
@@ -312,9 +347,9 @@ test("regras bloqueiam adulterações e preservam operações legítimas", async
 test("consulta administrativa combina cidade e limite sem trazer outros municípios", async () => {
   await ambiente.withSecurityRulesDisabled(async (contexto) => {
     await update(ref(contexto.database(), "relatos"), {
-      "pagina-001": { ...relatoBase, cidade: "João Pessoa", cityId: "2507507" },
-      "pagina-002": { ...relatoBase, cidade: "João Pessoa", cityId: "2507507" },
-      "pagina-003": { ...relatoBase, cidade: "Campina Grande", cityId: "2504009" },
+      "pagina-001": comCamposFiltro({ ...relatoBase, cidade: "João Pessoa", cityId: "2507507" }),
+      "pagina-002": comCamposFiltro({ ...relatoBase, cidade: "João Pessoa", cityId: "2507507" }),
+      "pagina-003": comCamposFiltro({ ...relatoBase, cidade: "Campina Grande", cityId: "2504009" }),
     });
   });
 
@@ -331,4 +366,18 @@ test("consulta administrativa combina cidade e limite sem trazer outros municíp
 
   assert.equal(relatos.length, 2);
   assert.ok(relatos.every(relato => relato.cityId === "2507507"));
+
+  const consultaComposta = query(
+    ref(publico, "relatos"),
+    orderByChild("filtroCidadeStatus"),
+    equalTo("2507507|aberto"),
+    limitToLast(2)
+  );
+  const snapshotComposto = await assertSucceeds(get(consultaComposta));
+  const relatosCompostos = Object.values(snapshotComposto.val() || {});
+
+  assert.equal(relatosCompostos.length, 2);
+  assert.ok(relatosCompostos.every(relato =>
+    relato.cityId === "2507507" && relato.status === "aberto"
+  ));
 });

@@ -24,7 +24,7 @@ Main Features
 
 Report loading without Cloud Functions
 
-The static frontend never reads the complete public report collection to build the home, report lists, city selector, map, or charts. The home reuses its limited 50-report feed for visible counters, the public list loads 30 reports at a time, the management panel loads 25 at a time, city selectors use the official IBGE municipality list, the map queries one city with a 500-marker cap, and charts use at most the 500 most recent authorized reports.
+The static frontend never reads the complete public report collection to build the home, public report list, city selector, or map. The home reuses its limited 20-report feed for visible counters, the public list loads 25 reports at a time with indexed server-side city/category/status filters, the management panel loads 25 at a time, city selectors use the official IBGE municipality list, and the map queries one city with a 500-marker cap. Administrative charts intentionally traverse the authorized scope in bounded batches because they require complete aggregates.
 
 Because Realtime Database has no browser-side aggregate query such as `COUNT()`, the numbers shown on the home describe the currently loaded batch rather than a global total. Exact global counters would require a trusted backend or a separate manually maintained data source.
 
@@ -111,17 +111,34 @@ Accounts > Generate new private key**. Copy `client_email`, `private_key` and
 Cloudinary key and secret are available under **Cloudinary Console > Settings >
 API Keys**.
 
+Existing reports need the four derived filter keys before deploying the frontend
+that queries combined filters. With the same Firebase Admin environment variables,
+first inspect the migration without writing anything:
+
+`npm run migrate:relato-filtros`
+
+After creating a Realtime Database backup and checking the reported counts, apply
+the additive migration with:
+
+`npm run migrate:relato-filtros -- --apply`
+
+The script never changes report content or IDs; it only creates or repairs the
+derived filter-key fields in batches of 200 reports.
+
 Deployment order:
 
 1. In Cloudinary, keep `ProPovo` set to **Unsigned** and restrict its
    accepted formats and maximum file size.
-2. Deploy the Realtime Database rules that bind each image to its user and report:
+2. During the filter-index rollout, briefly pause report submissions and back up
+   the Realtime Database.
+3. Deploy the Realtime Database rules that bind each image to its user and report:
    `npx firebase-tools deploy --only database --project pro--povo` (run
    `npx firebase-tools login` first if necessary).
-3. Configure the EmailJS service, template and three public identifiers described
+4. Run the filter-key migration described above.
+5. Configure the EmailJS service, template and three public identifiers described
    above.
-4. Deploy the repository to Vercel.
-5. Test creating and deleting one report with an image, then change its status
+6. Deploy the repository to Vercel and resume submissions.
+7. Test creating and deleting one report with an image, then change its status
    and save an official response to verify both emails.
 
 Image upload works from a plain static server. Image deletion requires either the

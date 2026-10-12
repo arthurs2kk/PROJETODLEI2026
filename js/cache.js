@@ -1,7 +1,11 @@
 // Cache curto para consultas públicas. Enquanto o item estiver válido, a página
 // usa o localStorage e não abre uma nova leitura no Realtime Database.
 const PREFIXO = 'proPovo:cache:v1:';
-export const TTL_CACHE_PUBLICO = 5 * 60 * 1000;
+
+// Mantém a navegação rápida sem deixar listagens públicas congeladas por vários
+// minutos. O cache continua sendo invalidado imediatamente pelas alterações
+// feitas neste navegador (criação, edição, voto, resposta ou exclusão).
+export const TTL_CACHE_PUBLICO = 90 * 1000;
 
 export function lerCache(chave, ttl = TTL_CACHE_PUBLICO) {
   try {

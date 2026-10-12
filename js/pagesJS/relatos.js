@@ -8,7 +8,7 @@ import { escapeHTML } from "../escapeHtml.js";
 // ── Navbar (login/cadastro/nome do usuário/sair/perfil) ──
 initNavbar();
 
-const TAMANHO_PAGINA = 30;
+const TAMANHO_PAGINA = 25;
 
 const state = {
   todos: [],          // relatos já carregados (todas as páginas somadas)
@@ -19,7 +19,9 @@ const state = {
   sortCol: 'dataCriacao',
   sortDir: 'desc',
   temMais: false,
-  carregando: false
+  carregando: false,
+  erroCarregamento: false,
+  versaoConsulta: 0
 };
 
 // ── Configurações visuais por categoria/status ──
@@ -55,7 +57,7 @@ async function preencherSeletorCidades() {
 
 document.getElementById('filtro-cidade')?.addEventListener('change', (e) => {
   state.cidade = e.target.value;
-  render();
+  reiniciarConsulta();
 });
 
 // ── Busca ──
@@ -67,12 +69,12 @@ document.getElementById('busca-input')?.addEventListener('input', (e) => {
 // ── Filtros ──
 document.getElementById('filtro-categoria')?.addEventListener('change', (e) => {
   state.categoria = e.target.value;
-  render();
+  reiniciarConsulta();
 });
 
 document.getElementById('filtro-status')?.addEventListener('change', (e) => {
   state.status = e.target.value;
-  render();
+  reiniciarConsulta();
 });
 
 // ── Ordenação por coluna ──
@@ -91,9 +93,23 @@ document.querySelectorAll('th[data-sort]').forEach(th => {
 
 // ── Paginação: carrega em lotes de TAMANHO_PAGINA, do mais recente pro mais
 // antigo. Isso substitui o antigo "baixar a tabela inteira de uma vez". ──
+function reiniciarConsulta() {
+  // Uma resposta antiga pode chegar depois que o usuário trocar novamente os
+  // filtros. A versão permite ignorá-la sem precisar cancelar a conexão.
+  state.versaoConsulta += 1;
+  state.todos = [];
+  state.temMais = true;
+  state.carregando = false;
+  state.erroCarregamento = false;
+  render();
+  void carregarProximaPagina();
+}
+
 async function carregarProximaPagina() {
   if (state.carregando || (!state.temMais && state.todos.length > 0)) return;
+  const versao = state.versaoConsulta;
   state.carregando = true;
+  state.erroCarregamento = false;
   atualizarIndicadorCarregamento();
   atualizarBotaoCarregarMais();
 
@@ -102,13 +118,21 @@ async function carregarProximaPagina() {
 
   try {
     const { itens, temMais } = await buscarRelatosPagina(cursor, TAMANHO_PAGINA, {
-      usarCache: cursor === null
+      usarCache: cursor === null,
+      cidade: state.cidade,
+      categoria: state.categoria,
+      status: state.status
     });
-    state.todos.push(...itens);
+    if (versao !== state.versaoConsulta) return;
+    const idsCarregados = new Set(state.todos.map(relato => relato.id));
+    state.todos.push(...itens.filter(relato => !idsCarregados.has(relato.id)));
     state.temMais = temMais;
   } catch (e) {
+    if (versao !== state.versaoConsulta) return;
+    state.erroCarregamento = true;
     console.error('Não foi possível carregar os relatos:', e);
   } finally {
+    if (versao !== state.versaoConsulta) return;
     state.carregando = false;
     render();
   }
@@ -123,12 +147,16 @@ function atualizarBotaoCarregarMais() {
   const btn = document.getElementById('btn-carregar-mais');
   if (!btn) return;
   const carregamentoInicial = state.carregando && state.todos.length === 0;
-  const mostrar = !carregamentoInicial && (state.temMais || state.carregando);
+  const mostrar = !carregamentoInicial && (state.temMais || state.carregando || state.erroCarregamento);
   btn.style.display = mostrar ? 'inline-flex' : 'none';
   btn.disabled = state.carregando;
-  btn.innerHTML = state.carregando
-    ? '<i class="ti ti-loader-2" style="animation:spin 0.8s linear infinite"></i> Carregando...'
-    : '<i class="ti ti-chevron-down"></i> Carregar mais relatos';
+  if (state.carregando) {
+    btn.innerHTML = '<i class="ti ti-loader-2" style="animation:spin 0.8s linear infinite"></i> Carregando...';
+  } else if (state.erroCarregamento) {
+    btn.innerHTML = '<i class="ti ti-refresh"></i> Tentar novamente';
+  } else {
+    btn.innerHTML = '<i class="ti ti-chevron-down"></i> Carregar mais relatos';
+  }
 }
 
 document.getElementById('btn-carregar-mais')?.addEventListener('click', carregarProximaPagina);
@@ -137,19 +165,12 @@ document.getElementById('btn-carregar-mais')?.addEventListener('click', carregar
 function render() {
   let lista = [...state.todos];
 
-  if (state.cidade) {
-    lista = lista.filter(r => r.cityId === state.cidade);
-  }
-
   if (state.busca) {
     lista = lista.filter(r =>
       r.titulo.toLowerCase().includes(state.busca) ||
       r.endereco.toLowerCase().includes(state.busca)
     );
   }
-
-  if (state.categoria !== 'todos') lista = lista.filter(r => r.categoria === state.categoria);
-  if (state.status !== 'todos')    lista = lista.filter(r => r.status === state.status);
 
   lista.sort((a, b) => {
     let va = a[state.sortCol], vb = b[state.sortCol];
@@ -161,16 +182,30 @@ function render() {
 
   const tbody = document.getElementById('tabela-body');
   const empty = document.getElementById('tabela-empty');
+  const emptyIcon = document.getElementById('tabela-empty-icon');
+  const emptyText = document.getElementById('tabela-empty-texto');
   const contagem = document.getElementById('relatos-contagem');
 
-  const filtroAtivo = Boolean(state.busca || state.categoria !== 'todos' || state.status !== 'todos' || state.cidade);
+  const buscaAtiva = Boolean(state.busca);
 
   let texto = `Mostrando ${lista.length} de ${state.todos.length} relato${state.todos.length !== 1 ? 's' : ''} carregado${state.todos.length !== 1 ? 's' : ''}`;
-  if (filtroAtivo && state.temMais) texto += ' — clique em "Carregar mais" pra incluir relatos mais antigos nesse filtro';
+  if (state.erroCarregamento) {
+    texto = state.todos.length === 0
+      ? 'Não foi possível carregar os relatos.'
+      : `${texto} — não foi possível buscar o próximo lote.`;
+  } else if (buscaAtiva && state.temMais) {
+    texto += ' — a busca por texto considera os relatos já carregados neste filtro';
+  }
   contagem.textContent = texto;
 
   atualizarIndicadorCarregamento();
   empty.style.display = !state.carregando && lista.length === 0 ? 'block' : 'none';
+  if (emptyIcon) emptyIcon.className = state.erroCarregamento
+    ? 'ti ti-alert-triangle'
+    : 'ti ti-mood-empty';
+  if (emptyText) emptyText.textContent = state.erroCarregamento
+    ? 'Não foi possível carregar os relatos. Tente novamente.'
+    : 'Nenhum relato encontrado com esses filtros.';
 
   tbody.innerHTML = lista.map(linhaHTML).join('');
 
