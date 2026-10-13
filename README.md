@@ -24,7 +24,7 @@ Main Features
 
 Report loading without Cloud Functions
 
-The static frontend never reads the complete public report collection to build the home, public report list, city selector, or map. Home and the public list query `relatosResumo`, which excludes the full description, official response, coordinates, author ID and internal image metadata; the complete `relatos/{id}` record is fetched only when a visitor opens the details modal. The home reuses its limited 20-report feed for visible counters, the public list loads 25 reports at a time with indexed server-side city/category/status filters, the management panel loads 25 at a time, city selectors use the official IBGE municipality list, and the map queries one city with a 500-marker cap. Administrative charts intentionally traverse the authorized scope in bounded batches because they require complete aggregates.
+The static frontend never reads the complete public report collection to build the home, public report list, city selector, or map. Home and the public list query `relatosResumo`, which excludes the full description, official response, coordinates, author ID and internal image metadata; the complete `relatos/{id}` record is fetched only when a visitor opens the details modal. The home reuses its limited 20-report feed for visible counters, the public list loads 25 reports at a time with indexed server-side city/category/status filters, the management panel loads 25 at a time, city selectors use the official IBGE municipality list, and the map queries `relatosMapa/{cityId}` ordered by `dataCriacao` with a 500-record cap. This map projection contains only the title, category, address, city ID, status, vote count, author name, creation timestamp and available coordinates. Administrative charts intentionally traverse the authorized scope in bounded batches because they require complete aggregates.
 
 Because Realtime Database has no browser-side aggregate query such as `COUNT()`, the numbers shown on the home describe the currently loaded batch rather than a global total. Exact global counters would require a trusted backend or a separate manually maintained data source.
 
@@ -135,16 +135,75 @@ records used by home and the public report list:
 The first command is a dry run. The second writes `relatosResumo` in batches of
 200 without removing or changing the complete records in `relatos`.
 
+Map index migration
+
+For the map rollout, inspect the new projection without changing production data:
+
+`npm run migrate:relatos-mapa`
+
+`npm run migrate:relatos-mapa -- --dry-run`
+
+Both commands only read `relatos` and `relatosMapa`. Authentication uses the same
+Firebase Admin environment variables as the other migrations, or Application
+Default Credentials (for example, an existing `GOOGLE_APPLICATION_CREDENTIALS`
+path loaded directly by the SDK). Keep credential files outside the repository;
+the script never prints credentials, report IDs, addresses or individual records.
+`FIREBASE_PROJECT_ID` and `FIREBASE_DATABASE_URL` select the target; defaults are
+the existing `pro--povo` project and its default Realtime Database.
+
+The report shows counts for new, outdated, synchronized and invalid records,
+missing coordinates, and orphaned index entries. Invalid records and orphaned
+entries require review and prevent applying the migration; exit code 2 from a
+dry run means review is needed. Values are not coerced or silently filled in.
+Legacy numeric city IDs retain their original type in the projection, and absent
+coordinates remain absent. Records without both coordinates cannot render a map
+marker. The migration does not change `relatos`, `relatosResumo` or any contact
+data, and does not delete orphaned entries automatically.
+
+For an installation whose filter keys and public summaries are already populated,
+use this rollout sequence without rerunning their migrations:
+
+1. Inspect the map dry run and resolve invalid source records or orphaned entries
+   through a separate reviewed repair, if any. Retest the dry run.
+2. Schedule a maintenance window, pause report submissions, edits, votes, status
+   changes and deletions, and take a Realtime Database backup. A UI banner alone
+   cannot stop old tabs; enforce the pause at the write boundary and the deletion
+   API while deploying.
+3. Only after the dry run is reviewed and production application is authorized,
+   run `npm run migrate:relatos-mapa -- --apply`.
+4. Repeat the dry run. Expect zero creates, updates, invalid records and orphans.
+   Resolve reported concurrency conflicts before continuing.
+5. Deploy the rules, deletion API and frontend that maintain the map index
+   together, while writes remain paused. The new rules require atomic source and
+   map updates; old clients cannot make writes that leave the index stale.
+6. Verify creating, editing, voting, changing status and deleting a report, then
+   restore normal writes. Verify the selected city's map loads from
+   `relatosMapa/{cityId}` and fetching details still uses `relatos/{id}`.
+
+`--apply` is idempotent and handles at most 200 pending projections per batch.
+Each batch uses a transaction at the database root so its comparison of the
+source and existing index is atomic. It reads and transmits the root tree, while
+changing only the selected `relatosMapa` entries; unchanged branches are
+preserved. This is an exceptional migration for a small database, not an ongoing
+sync mechanism. Root transactions have database-wide bandwidth, size and
+contention costs. Review that cost before applying to a large database. Any
+concurrent source or index change causes that entry to be skipped instead of
+overwriting a fresh vote/edit or recreating an already deleted report. A fresh
+dry run is required after such conflicts. The dry-run path never performs root
+reads or transactions.
+
 Deployment order:
 
 1. In Cloudinary, keep `ProPovo` set to **Unsigned** and restrict its
    accepted formats and maximum file size.
 2. During the data-index rollout, briefly pause report submissions, votes and
    administrative changes, then back up the Realtime Database.
-3. Run the filter-key migration and then the public-summary migration described
-   above. Confirm that neither dry run reports invalid records before applying.
+3. For initial setup, run the filter-key migration, the public-summary migration
+   and then the map-index migration described above. Review every dry run before
+   applying. For an existing installation adding only the map index, follow the
+   map rollout sequence instead.
 4. Deploy the Realtime Database rules that bind each image to its user and report
-   and keep every public summary synchronized:
+   and keep every public summary and map index synchronized:
    `npx firebase-tools deploy --only database --project pro--povo` (run
    `npx firebase-tools login` first if necessary).
 5. Configure the EmailJS service, template and three public identifiers described

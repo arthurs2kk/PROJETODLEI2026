@@ -84,8 +84,8 @@ function camposFiltroRelato({ cityId, categoria, status }) {
 }
 
 // Versao enxuta usada nas listagens publicas. O texto completo, a resposta
-// oficial, coordenadas e dados internos continuam somente em /relatos e sao
-// baixados quando o visitante abre os detalhes.
+// oficial e dados internos continuam somente em /relatos e sao baixados
+// nos detalhes. As coordenadas tambem fazem parte da projecao /relatosMapa.
 function resumoPublicoRelato(relato) {
   const filtros = camposFiltroRelato(relato);
   const descricao = String(relato.descricao || '');
@@ -103,6 +103,32 @@ function resumoPublicoRelato(relato) {
   };
   if (relato.fotoUrl) resumo.fotoUrl = relato.fotoUrl;
   return resumo;
+}
+
+// Marcadores usam apenas os dados mostrados no mapa. Relatos antigos sem
+// coordenadas continuam representados, mas não geram um marcador na tela.
+function marcadorPublicoRelato(relato) {
+  const marcador = {
+    titulo: relato.titulo,
+    categoria: relato.categoria,
+    endereco: relato.endereco,
+    cityId: relato.cityId,
+    status: relato.status,
+    votos: Number(relato.votos) || 0,
+    autorNome: relato.autorNome,
+    dataCriacao: relato.dataCriacao
+  };
+  if (relato.lat != null) marcador.lat = relato.lat;
+  if (relato.lng != null) marcador.lng = relato.lng;
+  return marcador;
+}
+
+// update na raiz substitui objetos em caminhos inteiros. Caminhos de campos
+// preservam os demais dados e votos recebidos depois da leitura do relato.
+function atualizacoesPorCampo(caminho, campos) {
+  return Object.fromEntries(
+    Object.entries(campos).map(([campo, valor]) => [`${caminho}/${campo}`, valor])
+  );
 }
 
 
@@ -246,6 +272,7 @@ export async function criarRelato(dados, fotoFile) {
     await update(ref(db), {
       [`relatos/${novoRef.key}`]: relato,
       [`relatosResumo/${novoRef.key}`]: resumoPublicoRelato(relato),
+      [`relatosMapa/${cityId}/${novoRef.key}`]: marcadorPublicoRelato(relato),
       [`contatosRelatos/${novoRef.key}`]: contatoRelato,
       [`limitesEnvio/${dados.autorId}`]: agora
     });
@@ -392,8 +419,21 @@ export async function atualizarRelatoDoUsuario(relatoId, dados) {
     })
   };
   await update(ref(db), {
-    [`relatos/${relatoId}`]: camposAtualizados,
-    [`relatosResumo/${relatoId}`]: resumoPublicoRelato({ ...relatoAtual, ...camposAtualizados })
+    ...atualizacoesPorCampo(`relatos/${relatoId}`, camposAtualizados),
+    ...atualizacoesPorCampo(`relatosResumo/${relatoId}`, {
+      titulo: dados.titulo,
+      categoria: dados.categoria,
+      descricaoResumo: dados.descricao.slice(0, 240),
+      ...camposFiltroRelato({
+        cityId: relatoAtual.cityId,
+        categoria: dados.categoria,
+        status: relatoAtual.status
+      })
+    }),
+    ...atualizacoesPorCampo(`relatosMapa/${relatoAtual.cityId}/${relatoId}`, {
+      titulo: dados.titulo,
+      categoria: dados.categoria
+    })
   });
   invalidarCacheRelatos();
 }
@@ -411,26 +451,25 @@ export async function buscarRelatosMapa(cityId, tamanho = 500, usarCache = true)
     throw new Error('Cidade inválida para consulta do mapa.');
   }
 
-  const limite = Math.min(Math.max(Number(tamanho) || 1, 1), 500);
+  const limite = Math.min(Math.max(Math.floor(Number(tamanho)) || 1, 1), 500);
   // Mantém apenas uma cidade do mapa por limite, evitando ocupar o
   // localStorage com até 500 relatos para cada município visitado.
-  const chaveCache = `relatos:mapa:${limite}`;
+  const chaveCache = `relatos:mapa:v2:${limite}`;
   if (usarCache) {
     const cache = lerCache(chaveCache);
     if (cache?.cityId === cityId) return cache.relatos;
   }
 
   const consulta = query(
-    ref(db, "relatos"),
-    orderByChild("cityId"),
-    equalTo(cityId),
+    ref(db, `relatosMapa/${cityId}`),
+    orderByChild("dataCriacao"),
     limitToLast(limite)
   );
 
   const snapshot = await get(consulta);
   const lista = Object.entries(snapshot.val() || {})
     .map(([id, relato]) => ({ id, ...relato }))
-    .sort((a, b) => (b.dataCriacao || 0) - (a.dataCriacao || 0));
+    .sort((a, b) => ((b.dataCriacao || 0) - (a.dataCriacao || 0)) || b.id.localeCompare(a.id));
   salvarCache(chaveCache, { cityId, relatos: lista });
   return lista;
 }
@@ -601,6 +640,11 @@ export async function votar(relatoId, userId) {
   }
   await usuario.getIdToken(true);
 
+  // A cidade é imutável e basta ser lida uma vez, sem baixar o relato completo.
+  const cidadeSnapshot = await get(ref(db, `relatos/${relatoId}/cityId`));
+  if (!cidadeSnapshot.exists()) throw new Error('Relato não encontrado.');
+  const cityId = cidadeSnapshot.val();
+
   // A atualização atômica mantém o voto individual e o total sincronizados.
   // Em concorrência, as Rules rejeitam um total obsoleto; a nova tentativa lê
   // o valor atual sem permitir contagem dupla ou alteração arbitrária.
@@ -617,7 +661,8 @@ export async function votar(relatoId, userId) {
     const atualizacoes = {
       [`votos/${relatoId}/${userId}`]: jaExiste ? null : true,
       [`relatos/${relatoId}/votos`]: novoTotal,
-      [`relatosResumo/${relatoId}/votos`]: novoTotal
+      [`relatosResumo/${relatoId}/votos`]: novoTotal,
+      [`relatosMapa/${cityId}/${relatoId}/votos`]: novoTotal
     };
 
     try {
@@ -655,8 +700,16 @@ export async function atualizarStatus(relatoId, novoStatus) {
     })
   };
   await update(ref(db), {
-    [`relatos/${relatoId}`]: camposAtualizados,
-    [`relatosResumo/${relatoId}`]: resumoPublicoRelato({ ...relatoAtual, ...camposAtualizados })
+    ...atualizacoesPorCampo(`relatos/${relatoId}`, camposAtualizados),
+    ...atualizacoesPorCampo(`relatosResumo/${relatoId}`, {
+      status: novoStatus,
+      ...camposFiltroRelato({
+        cityId: relatoAtual.cityId,
+        categoria: relatoAtual.categoria,
+        status: novoStatus
+      })
+    }),
+    [`relatosMapa/${relatoAtual.cityId}/${relatoId}/status`]: novoStatus
   });
   invalidarCacheRelatos();
 }

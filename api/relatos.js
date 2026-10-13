@@ -85,6 +85,14 @@ function validarRelatoId(relatoId) {
   return relatoId;
 }
 
+function validarCityIdMapa(cityId) {
+  const valor = String(cityId ?? '');
+  if (!/^25\d{5}$/.test(valor)) {
+    throw new ErroHttp(409, 'CIDADE_INCONSISTENTE', 'A cidade do relato é inconsistente.');
+  }
+  return valor;
+}
+
 function publicIdEsperado(uid, relatoId) {
   return `pro_povo/${uid}/${relatoId}`;
 }
@@ -214,6 +222,7 @@ async function excluirRelato(decoded, relatoId) {
   if (!podeExcluirRelato(decoded.uid, relato, adminSnapshot.val())) {
     throw new ErroHttp(403, 'SEM_PERMISSAO', 'Você não tem permissão para excluir este relato.');
   }
+  const cityIdMapa = validarCityIdMapa(relato.cityId);
 
   let publicId = null;
   let imagem = 'ausente';
@@ -250,12 +259,13 @@ async function excluirRelato(decoded, relatoId) {
 
   if (publicId) imagem = await destruirImagem(publicId);
 
-  // A remoção do relato, dos votos e do contato privado continua atômica.
+  // Remove também as projeções públicas na mesma atualização atômica.
   // Se esta etapa falhar, repetir a chamada é seguro: o Cloudinary responde
   // "not found" para uma imagem que já tenha sido removida.
   await db.ref().update({
     [`relatos/${relatoId}`]: null,
     [`relatosResumo/${relatoId}`]: null,
+    [`relatosMapa/${cityIdMapa}/${relatoId}`]: null,
     [`votos/${relatoId}`]: null,
     [`contatosRelatos/${relatoId}`]: null
   });
@@ -299,5 +309,6 @@ module.exports._internals = {
   extrairPublicIdCloudinary,
   podeExcluirRelato,
   publicIdEsperado,
+  validarCityIdMapa,
   validarRelatoId
 };
