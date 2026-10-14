@@ -2,6 +2,45 @@ READEME - Pro Povo
 
 A citizen platform that connects your city's problems to the municipality
 
+Abrangência temporária dos novos relatos
+
+Novos relatos estão limitados a **Campina Grande/PB** (IBGE `2504009`).
+A busca manual e o GPS filtram o município identificado pelo Nominatim; o
+cliente confere o município antes de enviar fotos, e as regras do Firebase
+recusam a criação com outro `cityId` ou nome de cidade. Cadastros continuam
+aceitando moradores de outras cidades: a restrição é ao local do problema.
+Relatos existentes de outros municípios continuam disponíveis para consulta,
+edição, votos e gestão. A API de imagens/exclusão não cria relatos e mantém
+compatibilidade com esses registros, assim como os filtros e o mapa.
+
+Para **desfazer a restrição** e voltar a aceitar municípios da Paraíba:
+
+```sh
+npm run abrangencia:relatos -- paraiba
+```
+
+Para reativar apenas Campina Grande:
+
+```sh
+npm run abrangencia:relatos -- campina-grande
+```
+
+No PowerShell com scripts bloqueados, use `npm.cmd` no lugar de `npm`.
+O comando sincroniza `js/abrangencia-relatos.js` e `database.rules.json`;
+não edite apenas um deles. Após qualquer mudança, rode `npm test`, os testes
+de regras com o emulador e publique **o site e as regras**. As alterações locais
+só protegem o banco em produção depois de publicar `database.rules.json`:
+
+```sh
+npx firebase-tools deploy --only database --project pro--povo
+```
+
+Essa validação usa o código/nome do município declarado e a identificação do
+Nominatim, mantendo a checagem de coordenadas da Paraíba já existente. Não
+comprova a correspondência exata entre as coordenadas e a malha municipal
+contra um cliente que falsifique código, nome e localização; essa garantia
+exige validação geográfica confiável no servidor.
+
 📋 About the Project
 
 Pro Povo is a web platform that facilitates communication between citizens and municipal administration. Citizens can report urban problems (potholes, lighting, garbage, water/sewage, green areas), the community votes on the most urgent ones, and the municipality tracks and responds to each report in real-time.

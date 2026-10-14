@@ -117,7 +117,7 @@
           </div>
         </div>
         <ul class="participacao-beneficios">
-          <li><i class="ti ti-map-pin-check"></i> Relatos localizados na Paraíba</li>
+          <li><i class="ti ti-map-pin-check"></i> <span id="abrangencia-relatos">Relatos com localização validada</span></li>
           <li><i class="ti ti-progress-check"></i> Acompanhamento de cada atualização</li>
           <li><i class="ti ti-thumb-up"></i> Apoio às prioridades da comunidade</li>
         </ul>
@@ -278,7 +278,7 @@
   <div class="endereco-wrap">
     <div class="endereco-busca-linha">
       <input type="text" class="form-input" id="f-local" name="endereco-relato-unico" placeholder="Digite rua, número e cidade..." autocomplete="street-address" maxlength="300" />
-      <button type="button" class="btn-buscar-endereco" id="btn-buscar-endereco" aria-label="Buscar endereço na Paraíba">
+      <button type="button" class="btn-buscar-endereco" id="btn-buscar-endereco" aria-label="Buscar endereço">
         <i class="ti ti-search"></i>
         <span>Buscar</span>
       </button>
@@ -287,9 +287,10 @@
         <span>Usar localização atual</span>
       </button>
     </div>
-    <div class="endereco-sugestoes" id="endereco-sugestoes" role="listbox" aria-label="Endereços encontrados na Paraíba"></div>
+    <div class="endereco-sugestoes" id="endereco-sugestoes" role="listbox" aria-label="Endereços encontrados"></div>
   </div>
   <span class="endereco-status" id="endereco-status" aria-live="polite"></span>
+  <small class="endereco-attribution" id="aviso-abrangencia-relatos"></small>
   <small class="endereco-attribution">
     Dados de endereço © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">colaboradores do OpenStreetMap</a>
   </small>

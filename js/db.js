@@ -13,6 +13,7 @@ import {
   excluirRelatoNoServidor
 } from "./cloudinary.js";
 import { resolverCityId } from "./cidades.js";
+import { municipioAceitoParaRelato, MENSAGEM_ABRANGENCIA } from "./abrangencia-relatos.js";
 import { invalidarCacheRelatos, lerCache, salvarCache } from "./cache.js";
 
 // ── Salvar usuário após cadastro ──
@@ -185,6 +186,10 @@ export async function criarRelato(dados, fotoFile) {
   if (!/^25\d{5}$/.test(String(cityId || '')) ||
       typeof dados.cidade !== 'string' || dados.cidade.length < 2 || dados.cidade.length > 100) {
     throw erroEnvio('CIDADE_INVALIDA', 'Selecione uma cidade válida da Paraíba.');
+  }
+
+  if (!municipioAceitoParaRelato(cityId, dados.cidade)) {
+    throw erroEnvio('FORA_ABRANGENCIA', MENSAGEM_ABRANGENCIA);
   }
 
   const perfil = await buscarUsuario(dados.autorId);

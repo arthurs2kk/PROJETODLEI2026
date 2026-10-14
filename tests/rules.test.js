@@ -4,6 +4,7 @@ const { before, after, test } = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
+const { configurarAbrangencia } = require('../scripts/configurar-abrangencia-relatos.js');
 const {
   initializeTestEnvironment,
   assertSucceeds,
@@ -237,7 +238,17 @@ test("regras bloqueiam adulterações e preservam operações legítimas", async
     dataAtualizacao: Date.now(),
   }));
 
-  const novoRelato = { ...relatoBase, dataCriacao: Date.now() };
+  const novoRelato = comCamposFiltro({ ...relatoBase, cidade: 'Campina Grande', cityId: '2504009', lat: -7.216, lng: -35.888, dataCriacao: Date.now() });
+  // Escrita direta com todas as projeções corretas ainda deve recusar outra cidade.
+  for (const [cityId, cidade] of [['2507507', 'João Pessoa'], ['2504009', 'João Pessoa'], ['2507507', 'Campina Grande']]) {
+    const fora = comCamposFiltro({ ...novoRelato, cityId, cidade });
+    await assertFails(update(ref(cidadao), {
+      'relatos/foraAbrangencia': fora,
+      'relatosResumo/foraAbrangencia': resumoPublico(fora),
+      [`relatosMapa/${cityId}/foraAbrangencia`]: marcadorPublico(fora),
+      'limitesEnvio/cidadao': fora.dataCriacao,
+    }));
+  }
   await assertFails(set(ref(cidadao, "relatos/relatoCriadoNoCliente"), novoRelato));
   const relatoSemFiltros = { ...novoRelato };
   delete relatoSemFiltros.filtroCidadeCategoria;
@@ -263,9 +274,10 @@ test("regras bloqueiam adulterações e preservam operações legítimas", async
   await assertSucceeds(update(ref(cidadao), {
     "relatos/relatoCriadoAtomicamente": novoRelato,
     "relatosResumo/relatoCriadoAtomicamente": resumoPublico(novoRelato),
-    "relatosMapa/2507507/relatoCriadoAtomicamente": marcadorPublico(novoRelato),
+    "relatosMapa/2504009/relatoCriadoAtomicamente": marcadorPublico(novoRelato),
     "contatosRelatos/relatoCriadoAtomicamente": {
       ...contatoBase,
+      cityId: novoRelato.cityId,
       dataCriacao: novoRelato.dataCriacao,
     },
     "limitesEnvio/cidadao": novoRelato.dataCriacao,
@@ -304,7 +316,7 @@ test("regras bloqueiam adulterações e preservam operações legítimas", async
       fotoPublicId: "pro_povo/fotografo/relatoComFoto",
     },
     "relatosResumo/relatoComFoto": resumoPublico(relatoComFoto),
-    "relatosMapa/2507507/relatoComFoto": marcadorPublico(relatoComFoto),
+    "relatosMapa/2504009/relatoComFoto": marcadorPublico(relatoComFoto),
     "contatosRelatos/relatoComFoto": {
       autorId: "fotografo",
       nome: "Usuario com Foto",
@@ -322,20 +334,20 @@ test("regras bloqueiam adulterações e preservam operações legítimas", async
     ...novoRelato,
     autorId: "relogioIncorreto",
     autorNome: "Usuário com relógio incorreto",
-    cidade: "Cabaceiras",
-    cityId: "2503100",
+    cidade: "Campina Grande",
+    cityId: "2504009",
     bairro: "Centro",
     dataCriacao: horarioServidor,
   });
   await assertSucceeds(update(ref(relogioIncorreto), {
     "relatos/relatoComHorarioServidor": relatoComHorarioServidor,
     "relatosResumo/relatoComHorarioServidor": resumoPublico(relatoComHorarioServidor),
-    "relatosMapa/2503100/relatoComHorarioServidor": marcadorPublico(relatoComHorarioServidor),
+    "relatosMapa/2504009/relatoComHorarioServidor": marcadorPublico(relatoComHorarioServidor),
     "contatosRelatos/relatoComHorarioServidor": {
       autorId: "relogioIncorreto",
       nome: "Usuário com relógio incorreto",
       email: "relogio@example.com",
-      cityId: "2503100",
+      cityId: "2504009",
       dataCriacao: horarioServidor,
     },
     "limitesEnvio/relogioIncorreto": horarioServidor,
@@ -588,8 +600,8 @@ test("criação exige fonte, resumo e mapa iguais e rejeita dados privados e coo
       nome: "Criador do Mapa", email: "mapa@example.com", cidade: "João Pessoa", dataCadastro: Date.now(),
     });
   });
-  const relato = { ...relatoBase, autorId: uid, autorNome: "Criador do Mapa", dataCriacao: serverTimestamp() };
-  const mapaPath = "relatosMapa/2507507/criacaoMapa";
+  const relato = comCamposFiltro({ ...relatoBase, cidade: 'Campina Grande', cityId: '2504009', lat: -7.216, lng: -35.888, autorId: uid, autorNome: "Criador do Mapa", dataCriacao: serverTimestamp() });
+  const mapaPath = "relatosMapa/2504009/criacaoMapa";
   const payload = {
     "relatos/criacaoMapa": relato,
     "relatosResumo/criacaoMapa": resumoPublico(relato),
@@ -600,7 +612,7 @@ test("criação exige fonte, resumo e mapa iguais e rejeita dados privados e coo
   await assertFails(set(ref(db, mapaPath), marcadorPublico(relato)));
   for (const [campo, valor] of Object.entries({
     titulo: "Título falsificado", categoria: "Outros", endereco: "Outro endereço",
-    cityId: "2504009", status: "resolvido", votos: 90, autorNome: "Outra pessoa",
+    cityId: "2507507", status: "resolvido", votos: 90, autorNome: "Outra pessoa",
     dataCriacao: 1, lat: -7.2, lng: -35.1,
   })) {
     await assertFails(update(ref(db), { ...payload, [mapaPath]: { ...marcadorPublico(relato), [campo]: valor } }));
@@ -613,7 +625,7 @@ test("criação exige fonte, resumo e mapa iguais e rejeita dados privados e coo
     delete semCampo[campo];
     await assertFails(update(ref(db), { ...payload, [mapaPath]: semCampo }));
   }
-  const cidadeIncorreta = { ...payload, "relatosMapa/2504009/criacaoMapa": payload[mapaPath] };
+  const cidadeIncorreta = { ...payload, "relatosMapa/2507507/criacaoMapa": payload[mapaPath] };
   delete cidadeIncorreta[mapaPath];
   await assertFails(update(ref(db), cidadeIncorreta));
   const semVerificacao = ambiente.authenticatedContext(uid, { email: "mapa@example.com", email_verified: false }).database();
@@ -718,6 +730,34 @@ test("edição, votos, status e exclusão exigem todas as projeções na mesma a
   await assertSucceeds(update(ref(adminJP), exclusao));
   for (const caminho of [relatoPath, resumoPath, mapaPath]) {
     assert.equal((await get(ref(cidadao, caminho))).exists(), false);
+  }
+});
+
+test('reversão para Paraíba permite criar relato de João Pessoa com as demais validações', async () => {
+  const regras = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'database.rules.json'), 'utf8'));
+  configurarAbrangencia(fs.readFileSync(path.join(__dirname, '..', 'js', 'abrangencia-relatos.js'), 'utf8'), regras, 'paraiba');
+  const ambientePB = await initializeTestEnvironment({
+    projectId: 'demo-pro-povo-reversao',
+    database: { host: '127.0.0.1', port: 9012, rules: JSON.stringify(regras) }
+  });
+  try {
+    await ambientePB.withSecurityRulesDisabled(async contexto => {
+      await set(ref(contexto.database(), 'usuarios/cidadao'), {
+        nome: relatoBase.autorNome, email: 'cidadao@example.com', cidade: 'João Pessoa', dataCadastro: Date.now()
+      });
+    });
+    const db = ambientePB.authenticatedContext('cidadao', { email: 'cidadao@example.com', email_verified: true }).database();
+    const relato = { ...relatoBase, dataCriacao: serverTimestamp() };
+    const payload = {
+      'relatos/reversao': relato,
+      'relatosResumo/reversao': resumoPublico(relato),
+      'relatosMapa/2507507/reversao': marcadorPublico(relato),
+      'limitesEnvio/cidadao': relato.dataCriacao
+    };
+    await assertFails(set(ref(db, 'relatos/reversao'), relato));
+    await assertSucceeds(update(ref(db), payload));
+  } finally {
+    await ambientePB.cleanup();
   }
 });
 

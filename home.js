@@ -11,7 +11,13 @@ import { otimizarImagem } from "./js/cloudinary.js";
 import { initNavbar } from "./js/navbar.js";
 import { escapeHTML } from "./js/escapeHtml.js";
 import { paraChaveFirebase } from "./js/populacao.js";
+import { AREA_RELATOS, MENSAGEM_ABRANGENCIA, municipioAceitoParaRelato } from "./js/abrangencia-relatos.js";
 
+// Textos derivados da mesma configuração usada para validar o envio.
+document.getElementById('abrangencia-relatos').textContent = `Relatos localizados em ${AREA_RELATOS}`;
+document.getElementById('aviso-abrangencia-relatos').textContent = MENSAGEM_ABRANGENCIA;
+document.getElementById('btn-buscar-endereco').setAttribute('aria-label', `Buscar endereço em ${AREA_RELATOS}`);
+document.getElementById('endereco-sugestoes').setAttribute('aria-label', `Endereços encontrados em ${AREA_RELATOS}`);
 
 // ── Estado ──
 const state = {
@@ -161,6 +167,7 @@ function mensagemErroEnvio(erro) {
     ENDERECO_INVALIDO: '⚠️ Selecione um endereço válido na lista de sugestões.',
     LOCALIZACAO_INVALIDA: '⚠️ O endereço precisa estar localizado na Paraíba.',
     CIDADE_INVALIDA: '⚠️ Não foi possível identificar uma cidade válida da Paraíba nesse endereço.',
+    FORA_ABRANGENCIA: `⚠️ ${MENSAGEM_ABRANGENCIA}`,
     BAIRRO_INVALIDO: '⚠️ Informe um bairro válido para o relato.',
     FOTO_INVALIDA: '⚠️ A foto deve ser JPG, PNG, WebP ou HEIC e ter no máximo 10 MB.',
     CONFIGURACAO_UPLOAD_IMAGEM: '❌ O envio de fotos está temporariamente indisponível. Tente novamente mais tarde.',
@@ -220,6 +227,11 @@ document.getElementById('btn-enviar')?.addEventListener('click', async () => {
 
   if (!estaNaParaiba(state.enderecoSelecionado.lat, state.enderecoSelecionado.lng)) {
     showToast('⚠️ O Pro Povo aceita relatos apenas de endereços na Paraíba.');
+    return;
+  }
+
+  if (!municipioAceitoParaRelato(state.enderecoSelecionado.cityId, state.enderecoSelecionado.cidade)) {
+    showToast(`⚠️ ${MENSAGEM_ABRANGENCIA}`);
     return;
   }
 
@@ -624,7 +636,7 @@ async function executarBuscaEndereco() {
   btnBuscarEndereco.classList.add('carregando');
   btnBuscarEndereco.querySelector('i').className = 'ti ti-loader-2';
   btnBuscarEndereco.querySelector('span').textContent = 'Buscando';
-  statusEndereco.textContent = 'Buscando endereços na Paraíba...';
+  statusEndereco.textContent = `Buscando endereços em ${AREA_RELATOS}...`;
   statusEndereco.className = 'endereco-status buscando';
 
   try {
@@ -637,11 +649,11 @@ async function executarBuscaEndereco() {
     // Defesa adicional: mesmo que o serviço externo retorne algo inesperado,
     // somente coordenadas e municípios reconhecidos da Paraíba são exibidos.
     sugestoesAtuais = sugestoes.filter(s =>
-      s.cityId && s.cidade && estaNaParaiba(s.lat, s.lng)
+      municipioAceitoParaRelato(s.cityId, s.cidade) && estaNaParaiba(s.lat, s.lng)
     );
 
     if (sugestoesAtuais.length === 0) {
-      statusEndereco.textContent = 'Nenhum endereço válido foi encontrado na Paraíba.';
+      statusEndereco.textContent = `Nenhum endereço válido foi encontrado em ${AREA_RELATOS}.`;
       statusEndereco.className = 'endereco-status invalido';
       return;
     }
@@ -715,6 +727,7 @@ async function usarLocalizacaoAtual() {
       GPS_TIMEOUT: 'O GPS demorou mais que o esperado. Tente novamente ou digite o endereço.',
       LOCALIZACAO_INVALIDA: 'O GPS retornou uma localização inválida. Digite o endereço manualmente.',
       FORA_PARAIBA: 'Sua localização atual não pertence a um município da Paraíba.',
+      FORA_ABRANGENCIA: MENSAGEM_ABRANGENCIA,
       ENDERECO_NAO_ENCONTRADO: 'Não foi possível identificar o endereço atual. Digite-o manualmente.',
       LIMITE_NOMINATIM: 'O serviço de endereços está ocupado. Aguarde alguns segundos e tente novamente.',
       TIMEOUT: 'A identificação do endereço demorou mais que o esperado. Tente novamente.'
@@ -744,7 +757,7 @@ dropSugestoes?.addEventListener('click', (e) => {
 
   const i = Number(item.dataset.i);
   const s = sugestoesAtuais[i];
-  if (!s || !estaNaParaiba(s.lat, s.lng)) return;
+  if (!s || !estaNaParaiba(s.lat, s.lng) || !municipioAceitoParaRelato(s.cityId, s.cidade)) return;
 
   inputLocal.value = s.texto;
   inputBairro.value = s.bairro || '';

@@ -1,5 +1,6 @@
 import { normalizar } from "./populacao.js";
 import { obterMunicipiosPB } from "./cidades.js";
+import { municipioAceitoParaRelato, MENSAGEM_ABRANGENCIA, RESTRINGIR_RELATOS_A_CAMPINA_GRANDE } from "./abrangencia-relatos.js";
 
 const cacheBuscas = new Map();
 let ultimaConsulta = 0;
@@ -169,9 +170,11 @@ export async function buscarSugestoesEndereco(query) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 8000);
   try {
-    const termoBusca = normalizar(termo).includes('paraiba')
-      ? termo
-      : `${termo}, Paraíba`;
+    const termoRegional = RESTRINGIR_RELATOS_A_CAMPINA_GRANDE && !normalizar(termo).includes('campina grande')
+      ? `${termo}, Campina Grande` : termo;
+    const termoBusca = normalizar(termoRegional).includes('paraiba')
+      ? termoRegional
+      : `${termoRegional}, Paraíba`;
     const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=8` +
                 `&countrycodes=br&viewbox=${VIEWBOX_PARAIBA}&bounded=1` +
                 `&q=${encodeURIComponent(termoBusca)}`;
@@ -198,7 +201,7 @@ export async function buscarSugestoesEndereco(query) {
   
     const naParaiba = sugestoes.filter(pertenceAParaiba);
 
-    const validas = removerDuplicadas(naParaiba);
+    const validas = removerDuplicadas(naParaiba.filter(s => municipioAceitoParaRelato(s.cityId, s.cidade)));
 
     salvarNoCache(chaveCache, validas);
 
@@ -300,6 +303,9 @@ export async function buscarEnderecoPorCoordenadas(lat, lng) {
 
     if (!pertenceAParaiba(sugestao)) {
       throw new ErroBuscaEndereco('FORA_PARAIBA', 'A localização não pertence a um município da Paraíba.');
+    }
+    if (!municipioAceitoParaRelato(sugestao.cityId, sugestao.cidade)) {
+      throw new ErroBuscaEndereco('FORA_ABRANGENCIA', MENSAGEM_ABRANGENCIA);
     }
     salvarNoCache(chaveCache, sugestao);
     return sugestao;

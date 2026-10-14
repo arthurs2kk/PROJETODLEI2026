@@ -148,7 +148,7 @@ test("a busca converte a resposta realista em endereço com bairro", async () =>
   assert.equal(resultado[0].bairro, "Centro");
 });
 
-test("aceita endereço válido quando o OSM não fornece o bairro", async () => {
+test("recusa sugestões de outro município mesmo quando o OSM não fornece o bairro", async () => {
   const endereco = await carregarModuloEndereco(async url => {
     const alvo = String(url);
     if (alvo.includes("nominatim")) {
@@ -177,9 +177,27 @@ test("aceita endereço válido quando o OSM não fornece o bairro", async () => 
   });
 
   const resultado = await endereco.buscarSugestoesEndereco("Rua Coronel Maracajá, Cabaceiras");
+  assert.equal(resultado.length, 0);
+});
+
+test('busca filtra município vizinho com Campina Grande como referência e aceita CG sem bairro', async () => {
+  const endereco = await carregarModuloEndereco(async url => {
+    if (!String(url).includes('nominatim')) {
+      return { ok: true, json: async () => municipios };
+    }
+    assert.ok(new URL(url).searchParams.get('q').includes('Campina Grande'));
+    const base = {
+      display_name: 'Rua de teste, Paraíba, Brasil', lat: '-7.216', lon: '-35.888',
+      address: { city: 'Campina Grande', state: 'Paraíba', road: 'Rua de teste' }
+    };
+    return { ok: true, json: async () => [
+      { ...base, address: { ...base.address, municipality: 'Cabaceiras' } },
+      base
+    ] };
+  });
+  const resultado = await endereco.buscarSugestoesEndereco('Rua de teste');
   assert.equal(resultado.length, 1);
-  assert.equal(resultado[0].cidade, "Cabaceiras");
-  assert.equal(resultado[0].cityId, "2503100");
+  assert.equal(resultado[0].cityId, '2504009');
   assert.equal(resultado[0].bairro, null);
 });
 
@@ -245,7 +263,7 @@ test("converte a localização atual em endereço válido da Paraíba", async ()
   assert.equal(resultado.rua, "Rua João Suassuna");
 });
 
-test("aceita a localização do GPS quando o OSM não informa o bairro", async () => {
+test("recusa GPS de Cabaceiras mesmo com estado e município válidos da Paraíba", async () => {
   const endereco = await carregarModuloEndereco(async url => {
     const urlConsultada = String(url);
     if (urlConsultada.includes("/reverse?")) {
@@ -275,9 +293,10 @@ test("aceita a localização do GPS quando o OSM não informa o bairro", async (
     throw new Error("consulta inesperada");
   });
 
-  const resultado = await endereco.buscarEnderecoPorCoordenadas(-7.4880218, -36.2858430);
-  assert.equal(resultado.cidade, "Cabaceiras");
-  assert.equal(resultado.bairro, null);
+  await assert.rejects(
+    endereco.buscarEnderecoPorCoordenadas(-7.4880218, -36.2858430),
+    erro => erro.codigo === 'FORA_ABRANGENCIA'
+  );
 });
 
 test("recusa o GPS fora dos limites da Paraíba sem consultar serviços externos", async () => {

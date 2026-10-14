@@ -142,6 +142,9 @@ async function carregarDb(iniciais = {}, opcoes = {}) {
     { context: contexto }
   );
   await modulo.link(especificador => {
+    if (especificador === './abrangencia-relatos.js') {
+      return new vm.SourceTextModule(fs.readFileSync(path.join(__dirname, '..', 'js', 'abrangencia-relatos.js'), 'utf8'), { context: contexto });
+    }
     const exports = dependencias[especificador];
     assert.ok(exports, `dependência inesperada: ${especificador}`);
     return new vm.SyntheticModule(Object.keys(exports), function () {
@@ -204,21 +207,31 @@ test("mapa valida cidade e normaliza limite para inteiro positivo", async () => 
 });
 
 test("criação grava relato, resumo, marcador, contato e cooldown em único update", async () => {
+  const relatoCG = { ...relatoBase, cityId: '2504009', cidade: 'Campina Grande', lat: -7.216, lng: -35.888 };
   const ambiente = await carregarDb({ usuarios: { cidadao: {
     nome: relatoBase.autorNome, email: "cidadao@example.com", cidade: "João Pessoa", dataCadastro: 1
   } } });
-  assert.equal(await ambiente.db.criarRelato(relatoBase), RELATO_ID);
+  assert.equal(await ambiente.db.criarRelato(relatoCG), RELATO_ID);
   assert.equal(ambiente.escritas.length, 1);
   assert.equal(ambiente.escritas[0].caminho, "");
   const payload = ambiente.escritas[0].alteracoes;
   assert.deepEqual(Object.keys(payload).sort(), [
-    `relatos/${RELATO_ID}`, `relatosResumo/${RELATO_ID}`, `relatosMapa/${CITY_ID}/${RELATO_ID}`,
+    `relatos/${RELATO_ID}`, `relatosResumo/${RELATO_ID}`, `relatosMapa/2504009/${RELATO_ID}`,
     `contatosRelatos/${RELATO_ID}`, "limitesEnvio/cidadao"
   ].sort());
-  assert.deepEqual(payload[`relatosMapa/${CITY_ID}/${RELATO_ID}`], {
-    ...marcador(relatoBase), dataCriacao: timestamp
+  assert.deepEqual(payload[`relatosMapa/2504009/${RELATO_ID}`], {
+    ...marcador(relatoCG), dataCriacao: timestamp
   });
   assert.equal(ambiente.invalidacoes, 1);
+});
+
+test("criação fora de Campina Grande é recusada antes de upload e escrita", async () => {
+  const ambiente = await carregarDb();
+  for (const relato of [relatoBase, { ...relatoBase, cityId: '2504009' }, { ...relatoBase, cidade: 'Campina Grande' }]) {
+    await assert.rejects(ambiente.db.criarRelato(relato, { type: 'image/jpeg', size: 100 }), erro => erro.code === 'FORA_ABRANGENCIA');
+  }
+  assert.equal(ambiente.escritas.length, 0);
+  assert.equal(ambiente.leituras.length, 0);
 });
 
 test("edição preserva relato completo e votos concorrentes nas três estruturas", async () => {
