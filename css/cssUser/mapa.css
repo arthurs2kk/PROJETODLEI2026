@@ -69,6 +69,25 @@
   padding: 0 20px;
 }
 
+.mapa-aviso {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--borda);
+  border-left: 4px solid var(--azul);
+  border-radius: var(--radius-md);
+  background: var(--azul-claro);
+  color: var(--cinza-5);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.mapa-aviso[hidden] { display: none; }
+.mapa-aviso i { color: var(--azul); font-size: 22px; flex-shrink: 0; }
+.mapa-aviso p { margin: 0; }
+
 .mapa-filtro {
   display: flex;
   align-items: center;

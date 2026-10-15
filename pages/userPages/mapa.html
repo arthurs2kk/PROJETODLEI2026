@@ -97,9 +97,13 @@
 
   <!-- MAPA -->
   <div class="mapa-wrapper">
+    <div class="mapa-aviso" id="mapa-aviso-cidade" role="status">
+      <i class="ti ti-info-circle" aria-hidden="true"></i>
+      <p><strong>Selecione uma cidade antes de explorar o mapa.</strong> Use o campo abaixo para carregar os relatos. Apenas as cidades ativas estão disponíveis.</p>
+    </div>
     <div class="mapa-filtro">
       <label for="mapa-cidade"><i class="ti ti-building-community"></i> Cidade</label>
-      <select id="mapa-cidade" class="mapa-select" disabled>
+      <select id="mapa-cidade" class="mapa-select" aria-describedby="mapa-aviso-cidade" disabled>
         <option value="">Carregando cidades...</option>
       </select>
     </div>

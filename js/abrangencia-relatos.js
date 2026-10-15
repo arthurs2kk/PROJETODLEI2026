@@ -2,14 +2,17 @@
 // O comando mantém este módulo e as regras do Firebase sincronizados.
 export const RESTRINGIR_RELATOS_A_CAMPINA_GRANDE = true;
 
-export const AREA_RELATOS = RESTRINGIR_RELATOS_A_CAMPINA_GRANDE
-  ? 'Campina Grande'
-  : 'Paraíba';
+// null mantém todos os municípios da Paraíba ativos ao desfazer a restrição.
+export const CIDADES_ATIVAS_RELATOS = RESTRINGIR_RELATOS_A_CAMPINA_GRANDE
+  ? [{ id: '2504009', nome: 'Campina Grande' }]
+  : null;
+
+export const AREA_RELATOS = CIDADES_ATIVAS_RELATOS?.[0].nome || 'Paraíba';
 export const MENSAGEM_ABRANGENCIA = `No momento, aceitamos relatos apenas de endereços em ${AREA_RELATOS}.`;
 
 export function municipioAceitoParaRelato(cityId, cidade) {
-  if (RESTRINGIR_RELATOS_A_CAMPINA_GRANDE) {
-    return cityId === '2504009' && cidade === 'Campina Grande';
+  if (CIDADES_ATIVAS_RELATOS) {
+    return CIDADES_ATIVAS_RELATOS.some(ativa => ativa.id === cityId && ativa.nome === cidade);
   }
   return typeof cityId === 'string' && /^25\d{5}$/.test(cityId);
 }

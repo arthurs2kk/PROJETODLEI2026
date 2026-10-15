@@ -1,6 +1,7 @@
 // ── Pro Povo — relatos.js ──
 import { buscarRelatosPagina, buscarRelatoPorId } from "../db.js";
 import { obterMunicipiosPB } from "../cidades.js";
+import { CIDADES_ATIVAS_RELATOS } from "../abrangencia-relatos.js";
 import { initNavbar } from "../navbar.js";
 import { otimizarImagem } from "../cloudinary.js";
 import { escapeHTML } from "../escapeHtml.js";
@@ -13,7 +14,7 @@ const TAMANHO_PAGINA = 25;
 const state = {
   todos: [],          // relatos já carregados (todas as páginas somadas)
   busca: '',
-  cidade: '',
+  cidade: CIDADES_ATIVAS_RELATOS?.length === 1 ? CIDADES_ATIVAS_RELATOS[0].id : '',
   categoria: 'todos',
   status: 'todos',
   sortCol: 'dataCriacao',
@@ -40,14 +41,15 @@ const STATUS = {
   resolvido: { label: 'Resolvido',    css: 'status-resolvido' },
 };
 
-// ── Seletor de cidade: usa a lista oficial do IBGE ──
+// ── Seletor de cidade: acompanha a abrangência ativa dos relatos ──
 async function preencherSeletorCidades() {
   const select = document.getElementById('filtro-cidade');
   if (!select) return;
 
   try {
-    const cidades = await obterMunicipiosPB();
-    select.replaceChildren(new Option('Todas as cidades', ''));
+    const cidades = CIDADES_ATIVAS_RELATOS || await obterMunicipiosPB();
+    select.replaceChildren();
+    if (cidades.length > 1) select.appendChild(new Option('Todas as cidades ativas', ''));
     cidades.forEach(cidade => select.appendChild(new Option(cidade.nome, cidade.id)));
     select.value = state.cidade;
   } catch (e) {

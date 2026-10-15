@@ -1,6 +1,7 @@
 // ── Pro Povo — mapa.js ──
 import { buscarRelatosMapa } from "../db.js";
 import { obterMunicipiosPB } from "../cidades.js";
+import { CIDADES_ATIVAS_RELATOS } from "../abrangencia-relatos.js";
 import { initNavbar } from "../navbar.js";
 import { escapeHTML } from "../escapeHtml.js";
 
@@ -50,6 +51,7 @@ L.rectangle(BOUNDS_PB, {
 
 let marcadores = [];
 let solicitacaoAtual = 0;
+let cidadesDisponiveis = [];
 const LIMITE_MARCADORES = 500;
 const CHAVE_CIDADE_MAPA = 'proPovoMapaCityId';
 
@@ -64,7 +66,11 @@ async function carregarCidade(cityId) {
   limparMarcadores();
 
   const contagem = document.getElementById('mapa-contagem');
-  if (!cityId) {
+  const cidadeValida = cidadesDisponiveis.some(cidade => cidade.id === cityId);
+  document.getElementById('mapa-aviso-cidade').hidden = cidadeValida;
+  if (!cidadeValida) {
+    document.getElementById('mapa-cidade').value = '';
+    localStorage.removeItem(CHAVE_CIDADE_MAPA);
     contagem.textContent = 'Selecione uma cidade para carregar o mapa.';
     return;
   }
@@ -130,21 +136,24 @@ async function iniciarSeletorCidades() {
   const contagem = document.getElementById('mapa-contagem');
 
   try {
-    const cidades = await obterMunicipiosPB();
-    select.replaceChildren(new Option('Selecione uma cidade', ''));
-    cidades.forEach(cidade => {
+    cidadesDisponiveis = CIDADES_ATIVAS_RELATOS || await obterMunicipiosPB();
+    select.replaceChildren(new Option('Selecione uma cidade ativa', ''));
+    cidadesDisponiveis.forEach(cidade => {
       select.appendChild(new Option(cidade.nome, cidade.id));
     });
     select.disabled = false;
 
     const salva = localStorage.getItem(CHAVE_CIDADE_MAPA);
-    if (cidades.some(cidade => cidade.id === salva)) {
+    if (cidadesDisponiveis.some(cidade => cidade.id === salva)) {
       select.value = salva;
       carregarCidade(salva);
+    } else {
+      carregarCidade('');
     }
   } catch (erro) {
     console.warn('Não foi possível carregar as cidades:', erro);
     select.replaceChildren(new Option('Cidades indisponíveis', ''));
+    select.disabled = true;
     contagem.textContent = 'Não foi possível carregar a lista de cidades.';
   }
 }
