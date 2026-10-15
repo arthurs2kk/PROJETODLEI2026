@@ -509,3 +509,57 @@ Multi-Tenant Security - Practical, rules-enforced data isolation between municip
 Scalability - Public and administrative listings are paginated, charts use a bounded sample, and the map is city-scoped with a marker cap
 
 Pro Povo — Making your city more transparent, one report at a time. 🌍
+
+### Mapa de gestão e prioridades municipais
+
+O painel administrativo (`AdminPage.html`) possui abas de relatos, mapa e
+prioridades. O mapa oferece visualizações por categoria, situação, apoio da
+população (tamanho dos círculos) e concentração de registros em células fixas
+de aproximadamente 300 m. Concentração representa quantidade de relatos,
+sem inferir gravidade nem população afetada. Busca, cidade (superadmin), bairro,
+categoria, situação e período são combinados nas três abas.
+
+A lista de relatos mantém a paginação de 25 registros. Ao abrir o mapa ou as
+prioridades, todos os lotes do escopo autorizado são consultados antes de exibir
+essas visões, incluindo prioridades antigas. Os indicadores representam os
+relatos consultados, independentemente dos filtros. Use **Atualizar** para
+buscar mudanças feitas em outros acessos.
+
+Existe uma lista de prioridades compartilhada por município em
+`prioridadesMunicipais/{cityId}/{relatoId}`. Cada entrada guarda apenas ordem,
+autor e data da inclusão; não duplica os dados públicos do relato. É possível
+adicionar/remover pela lista ou por um ponto no mapa e reordenar com setas na
+aba Prioridades, sem filtros ativos. Superadmins selecionam um município para
+reordenar. A seleção não muda status nem votos e fica restrita aos admins
+ativos do município e superadmins, inclusive quando consultada fora da interface.
+Alterações nas prioridades são sincronizadas entre os acessos. Exclusões pela
+API removem também a entrada correspondente na lista.
+
+O mapa público mantém os pontos por categoria, endereço e situação. Quando há
+apenas uma cidade ativa, ela é carregada automaticamente. Não apresenta as
+prioridades internas nem as ferramentas administrativas.
+
+Para disponibilizar esta versão, publique **o site, a função de exclusão e as
+regras do Realtime Database**. Sem as regras atualizadas, a lista de prioridades
+não estará disponível; a interface apresenta um aviso. Não há migração de dados
+para criar a primeira lista. Validação: `npm test` e `npm run test:rules` com o
+emulador configurado em `127.0.0.1:9012`.
+
+### Refinamento de usabilidade do painel
+
+A análise crítica, as justificativas das melhorias e as
+instruções dos testes isolados de interface estão em
+[docs/analise-ui-prefeitura.md](docs/analise-ui-prefeitura.md).
+
+### Compatibilidade dos relatos públicos antigos
+
+A listagem pública reconhece `cityId` em texto e em número nos registros
+legados. Ao filtrar somente por cidade, combina duas consultas indexadas e
+limitadas antes de ordenar e paginar. Os filtros compostos continuam usando
+seus índices de texto. O cache da primeira página tem uma nova versão para
+descartar resultados antigos incompletos imediatamente.
+
+Essa correção não exige migração nem alteração das regras do banco. A leitura
+continua restrita aos resumos públicos e mantém os tipos originais armazenados.
+Os testes cobrem a correspondência com o mapa, a paginação sem duplicações,
+o isolamento por cidade, os filtros compostos, o cache e falhas de consulta.

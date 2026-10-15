@@ -1588,6 +1588,27 @@ html[data-theme="dark"] .resposta-cidadao small {
   color: #e2e8f0 !important;
 }
 
+/* A conclusão fica explícita junto da resposta, além do status do relato. */
+.resposta-cidadao.resposta-resolvida,
+.resposta-existente.resposta-resolvida {
+  background: var(--verde-claro);
+  border-left-color: var(--verde);
+  color: var(--cinza-5);
+}
+.resposta-resolvida strong.resposta-resolvida-titulo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+  font-size: 14px;
+  color: var(--cinza-5);
+}
+html[data-theme="dark"] .resposta-cidadao.resposta-resolvida,
+html[data-theme="dark"] .resposta-existente.resposta-resolvida {
+  background: var(--verde-claro) !important;
+  border-left-color: var(--verde) !important;
+}
+
 html[data-theme="dark"] .vote-btn {
   display: inline-flex !important;
   align-items: center;

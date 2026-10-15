@@ -180,6 +180,51 @@ after(async () => {
   await ambiente?.cleanup();
 });
 
+test('prioridades são internas, compartilhadas por município e preservam autoria ao reordenar', async () => {
+  const jp = ambiente.authenticatedContext('adminJP').database();
+  const cg = ambiente.authenticatedContext('adminCG').database();
+  const superadmin = ambiente.authenticatedContext('super').database();
+  const publico = ambiente.unauthenticatedContext().database();
+  const cidadao = ambiente.authenticatedContext('cidadao').database();
+  const inativo = ambiente.authenticatedContext('adminInativo').database();
+  const legado = ambiente.authenticatedContext('superLegado').database();
+  const caminho = 'prioridadesMunicipais/2507507/prioridadeTeste';
+  await ambiente.withSecurityRulesDisabled(async contexto => {
+    await set(ref(contexto.database(), 'relatos/prioridadeTeste'), relatoBase);
+    await set(ref(contexto.database(), 'admins/colegaJP'), { ativo: true, papel: 'admin', cityId: '2507507' });
+  });
+  const prioridade = { ordem: 1024, adicionadoPor: 'adminJP', adicionadoEm: serverTimestamp() };
+  for (const db of [publico, cidadao, inativo, cg]) {
+    await assertFails(get(ref(db, 'prioridadesMunicipais/2507507')));
+    await assertFails(set(ref(db, caminho), prioridade));
+  }
+  await assertFails(get(ref(jp, 'prioridadesMunicipais')));
+  await assertFails(set(ref(jp, caminho), { ...prioridade, adicionadoPor: 'outro' }));
+  await assertFails(set(ref(jp, caminho), { ...prioridade, adicionadoEm: 1 }));
+  await assertFails(set(ref(jp, 'prioridadesMunicipais/2507507/inexistente'), prioridade));
+  await assertFails(set(ref(cg, 'prioridadesMunicipais/2504009/prioridadeTeste'), { ...prioridade, adicionadoPor: 'adminCG' }));
+  await assertSucceeds(set(ref(jp, caminho), prioridade));
+  await assertSucceeds(get(ref(jp, 'prioridadesMunicipais/2507507')));
+  const colega = ambiente.authenticatedContext('colegaJP').database();
+  await assertSucceeds(get(ref(colega, caminho)));
+  await assertSucceeds(update(ref(colega), { [`${caminho}/ordem`]: 2048 }));
+  await assertSucceeds(get(ref(superadmin, 'prioridadesMunicipais')));
+  await assertSucceeds(get(ref(legado, 'prioridadesMunicipais')));
+  const antes = (await get(ref(jp, caminho))).val();
+  await assertSucceeds(update(ref(superadmin, caminho), { ordem: -1024 }));
+  assert.equal((await get(ref(jp, caminho))).val().adicionadoPor, 'adminJP');
+  await assertFails(update(ref(jp, caminho), { adicionadoPor: 'super' }));
+  await assertFails(update(ref(jp, caminho), { adicionadoEm: antes.adicionadoEm + 1 }));
+  await assertFails(update(ref(jp, caminho), { ordem: 'primeiro' }));
+  await assertFails(update(ref(jp, caminho), { publico: true }));
+  await assertFails(update(ref(jp, caminho), { adicionadoPor: null }));
+  await assertFails(set(ref(cg, caminho), null));
+  await assertSucceeds(set(ref(jp, caminho), null));
+  // O cityId numérico de relatos antigos pode ser referenciado sem alterar o relato.
+  await assertSucceeds(set(ref(cg, 'prioridadesMunicipais/2504009/relatoLegado'), { ...prioridade, adicionadoPor: 'adminCG' }));
+  await assertSucceeds(set(ref(cg, 'prioridadesMunicipais/2504009/relatoLegado'), null));
+});
+
 test("regras bloqueiam adulterações e preservam operações legítimas", async () => {
   const cidadao = ambiente.authenticatedContext("cidadao", {
     email: "cidadao@example.com",
@@ -741,6 +786,7 @@ test('reversão para Paraíba permite criar relato de João Pessoa com as demais
     database: { host: '127.0.0.1', port: 9012, rules: JSON.stringify(regras) }
   });
   try {
+    await ambientePB.clearDatabase();
     await ambientePB.withSecurityRulesDisabled(async contexto => {
       await set(ref(contexto.database(), 'usuarios/cidadao'), {
         nome: relatoBase.autorNome, email: 'cidadao@example.com', cidade: 'João Pessoa', dataCadastro: Date.now()

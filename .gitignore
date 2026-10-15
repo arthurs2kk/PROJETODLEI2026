@@ -12,6 +12,8 @@ node_modules/
 
 .vercel
 
-# Renders temporários usados na conferência visual dos PDFs
-tmp/pdfs/**/*.png
-tmp/pdfs/*.png
+# Arquivos temporários de validação e trabalho local
+/tmp/
+
+# Capturas, PDFs e outros artefatos gerados localmente
+/output/

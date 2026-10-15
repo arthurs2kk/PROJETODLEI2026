@@ -32,7 +32,7 @@
     <span><i class="ti ti-lock"></i> Área restrita · Acesso exclusivo para funcionários públicos autorizados</span>
   </div>
 
-  <div class="admin-wrapper">
+  <main class="admin-wrapper">
     <div class="admin-card">
 
       <div class="admin-header">
@@ -45,41 +45,42 @@
         <span class="admin-badge"><i class="ti ti-shield-lock"></i> Área restrita</span>
       </div>
 
-      <div class="admin-body">
+      <form class="admin-body" id="admin-login-form">
         <div class="form-group">
-          <label class="form-label">E-mail institucional <span class="required">*</span></label>
+          <label class="form-label" for="admin-email">E-mail institucional <span class="required">*</span></label>
           <div class="input-icon-wrap">
             <i class="ti ti-mail input-icon"></i>
-            <input type="email" class="form-input with-icon" id="admin-email" placeholder="seunome@prefeitura.gov.br" />
+            <input type="email" class="form-input with-icon" id="admin-email" name="email" autocomplete="username" required placeholder="seunome@prefeitura.gov.br" />
           </div>
         </div>
 
         <div class="form-group">
-          <label class="form-label">Senha <span class="required">*</span></label>
+          <label class="form-label" for="admin-senha">Senha <span class="required">*</span></label>
           <div class="input-icon-wrap">
             <i class="ti ti-lock input-icon"></i>
-            <input type="password" class="form-input with-icon" id="admin-senha" placeholder="Sua senha" />
+            <input type="password" class="form-input with-icon" id="admin-senha" name="password" autocomplete="current-password" required placeholder="Sua senha" />
             <button class="toggle-senha" id="toggle-admin-senha" type="button" aria-label="Mostrar senha">
               <i class="ti ti-eye"></i>
             </button>
           </div>
         </div>
 
-        <button class="btn-login admin-btn" id="btn-admin-login">
+        <p id="admin-login-erro" class="admin-login-erro" role="alert" hidden></p>
+        <button type="submit" class="btn-login admin-btn" id="btn-admin-login">
           <i class="ti ti-shield-lock"></i> Acessar painel
         </button>
-      </div>
+      </form>
 
       <div class="admin-footer-note">
         <i class="ti ti-info-circle"></i>
-        Esse acesso é exclusivo para funcionários cadastrados pela administração. Cidadãos devem usar a <a href="../userPages/login.html">tela de login comum</a>.
+        <p>Esse acesso é exclusivo para funcionários cadastrados pela administração. Cidadãos devem usar a <a href="../userPages/login.html">tela de login comum</a>.</p>
       </div>
     </div>
 
     <a href="../../index.html" class="admin-voltar"><i class="ti ti-arrow-left"></i> Voltar ao site</a>
-  </div>
+  </main>
 
-  <div class="toast" id="toast"></div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script type="module" src="../../js/admJS/AdmLogin.js"></script>
   <script src="../../js/theme.js"></script>
 <script src="../../js/pagesJS/menu.js"></script>

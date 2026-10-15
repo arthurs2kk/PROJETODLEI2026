@@ -266,6 +266,7 @@ async function excluirRelato(decoded, relatoId) {
     [`relatos/${relatoId}`]: null,
     [`relatosResumo/${relatoId}`]: null,
     [`relatosMapa/${cityIdMapa}/${relatoId}`]: null,
+    [`prioridadesMunicipais/${cityIdMapa}/${relatoId}`]: null,
     [`votos/${relatoId}`]: null,
     [`contatosRelatos/${relatoId}`]: null
   });

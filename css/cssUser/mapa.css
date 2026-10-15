@@ -197,6 +197,9 @@
 }
 
 
+[hidden] { display: none !important; }
+.dot-verde { background: #637d16; }
+
 /* ── Modo Escuro ── */
 [data-theme="dark"] {
   --cinza-1: #121212;

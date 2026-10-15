@@ -4,6 +4,7 @@ import { buscarTodosRelatosGestao, buscarOrganizacao } from "../db.js";
 import { buscarAdmin, ehSuperAdmin } from "./adminAuth.js";
 import { obterPopulacaoPB, normalizar } from "../populacao.js";
 import { escapeHTML } from "../escapeHtml.js";
+import { mostrarFalhaVerificacao } from './acessoFeedback.js';
 
 const state = {
   relatos: [],
@@ -12,6 +13,7 @@ const state = {
   admin: null
 };
 let chartAtual = null;
+let renderVersao = 0;
 
 // ── Esconde/trava opções que não fazem sentido pra um admin restrito a uma
 // única cidade. A visão "cidades com mais relatos por habitante" compara
@@ -24,9 +26,7 @@ function aplicarRestricoesPorCidade(admin) {
 
   const selectTipo = document.getElementById('grafico-tipo');
   selectTipo?.querySelector('option[value="cidades"]')?.remove();
-  if (selectTipo && selectTipo.value === 'cidades') {
-    selectTipo.value = 'bairros';
-  }
+  if (selectTipo) selectTipo.value = 'bairros';
 
   document.getElementById('grafico-filtro-cidade')?.setAttribute('disabled', 'disabled');
 }
@@ -35,7 +35,9 @@ function aplicarRestricoesPorCidade(admin) {
 onAuthStateChanged(auth, async (user) => {
   if (!user) { window.location.href = 'AdmLogin.html'; return; }
 
-  const admin = await buscarAdmin(user.uid);
+  let admin;
+  try { admin = await buscarAdmin(user.uid); }
+  catch (erro) { console.warn('Falha ao verificar acesso:', erro); mostrarFalhaVerificacao(); return; }
   if (!admin) {
     await signOut(auth);
     window.location.href = 'AdmLogin.html';
@@ -70,18 +72,32 @@ onAuthStateChanged(auth, async (user) => {
 
   aplicarRestricoesPorCidade(admin);
 
+  await carregarDados();
+});
+
+async function carregarDados() {
+  document.getElementById('graf-tentar-novamente').hidden = true;
+  document.getElementById('grafico-tipo').disabled = true;
+  definirExportacao(false);
+  document.querySelector('.graf-canvas-wrap').setAttribute('aria-busy', 'true');
   try {
     atualizarAviso('Carregando todos os relatos do escopo autorizado...');
-    state.relatos = await buscarTodosRelatosGestao(admin, (quantidade) => {
+    state.relatos = await buscarTodosRelatosGestao(state.admin, (quantidade) => {
       atualizarAviso(`Carregando relatos para os gráficos... ${quantidade} recebido${quantidade !== 1 ? 's' : ''}.`);
     });
     atualizarSeletorCidades();
+    document.getElementById('grafico-tipo').disabled = false;
     await renderizar();
   } catch (erro) {
     console.error('Não foi possível carregar os dados completos dos gráficos:', erro);
-    atualizarAviso('Não foi possível carregar os dados dos gráficos.');
+    atualizarAviso('Não foi possível carregar os dados dos gráficos. Confira sua conexão e tente novamente.');
+    document.getElementById('graf-tentar-novamente').hidden = false;
+    document.getElementById('graf-resumo').textContent = 'Dados indisponíveis.';
+  } finally {
+    document.querySelector('.graf-canvas-wrap').setAttribute('aria-busy', 'false');
   }
-});
+}
+document.getElementById('graf-tentar-novamente').addEventListener('click', carregarDados);
 
 document.getElementById('btn-sair')?.addEventListener('click', async () => {
   await signOut(auth);
@@ -152,12 +168,12 @@ function opcoesBase(titulo, extra = {}) {
   return {
     responsive: true,
     maintainAspectRatio: false,
+    ...extra,
     plugins: {
       title: { display: true, text: titulo, font: { size: 15 } },
       legend: { display: false },
       ...extra.plugins
-    },
-    ...extra
+    }
   };
 }
 
@@ -322,15 +338,18 @@ function montarConfigEvolucao() {
 
 // ── Renderização principal: troca o tipo/dados do gráfico único ──
 async function renderizar() {
+  const versao = ++renderVersao;
   const tipo = document.getElementById('grafico-tipo').value;
-  const wrapCidade = document.getElementById('grafico-filtro-cidade');
-  wrapCidade.style.display = tipo === 'bairros' ? '' : 'none';
+  document.getElementById('grafico-campo-cidade').hidden = tipo !== 'bairros';
+  definirExportacao(false);
+  state.dadosExport = null;
 
   let config;
   if (tipo === 'cidades') {
     if (state.popMap.size === 0) {
       atualizarAviso('Carregando dados de população do IBGE...');
       state.popMap = await obterPopulacaoPB();
+      if (versao !== renderVersao) return;
     }
     config = montarConfigCidades();
   } else if (tipo === 'bairros') {
@@ -343,32 +362,83 @@ async function renderizar() {
     config = montarConfigEvolucao();
   }
 
-  if (!config) return;
-
   if (chartAtual) chartAtual.destroy();
-  chartAtual = new Chart(document.getElementById('grafico-canvas'), config);
+  chartAtual = null;
+  const canvas = document.getElementById('grafico-canvas');
+  const temDados = !!state.dadosExport?.linhas.length;
+  canvas.hidden = !config || !temDados;
+  document.getElementById('graf-resumo').textContent = temDados ? `${state.relatos.length} relato(s) consultados no escopo autorizado. A tabela e as exportações correspondem à análise selecionada.` : 'Nenhum dado disponível para esta análise. Escolha outra análise ou cidade.';
+  const tabela = document.getElementById('graf-tabela');
+  tabela.querySelector('caption').textContent = config?.options.plugins.title.text || 'Dados da análise atual';
+  tabela.querySelector('thead').innerHTML = `<tr>${(state.dadosExport?.colunas || []).map(c => `<th scope="col">${escapeHTML(c)}</th>`).join('')}</tr>`;
+  tabela.querySelector('tbody').innerHTML = (state.dadosExport?.linhas || []).map(l => `<tr>${l.map((v, i) => i === 0 ? `<th scope="row">${escapeHTML(String(v ?? '—'))}</th>` : `<td>${escapeHTML(String(v ?? '—'))}</td>`).join('')}</tr>`).join('');
+  if (!config || !temDados) return;
+  const corTexto = getComputedStyle(document.documentElement).getPropertyValue('--cinza-5').trim();
+  config.options.color = corTexto;
+  config.options.plugins.title.color = corTexto;
+  if (config.options.plugins.legend) {
+    config.options.plugins.legend.position = matchMedia('(max-width: 640px)').matches ? 'bottom' : 'right';
+    config.options.plugins.legend.labels = { color: corTexto };
+  }
+  if (!['pie', 'doughnut'].includes(config.type)) {
+    config.options.scales ||= {};
+    for (const id of ['x', 'y']) {
+      const eixo = config.options.scales[id] ||= {};
+      eixo.ticks = { ...eixo.ticks, color: corTexto };
+      eixo.grid = { color: getComputedStyle(document.documentElement).getPropertyValue('--borda').trim() };
+    }
+  }
+  canvas.setAttribute('aria-label', config.options.plugins.title.text);
+  chartAtual = new Chart(canvas, config);
+  definirExportacao(true);
 }
+
+function definirExportacao(pronta) {
+  document.getElementById('btn-baixar-csv').disabled = !pronta;
+  document.getElementById('btn-baixar-png').disabled = !pronta;
+}
+
+new MutationObserver(() => {
+  if (chartAtual) renderizar();
+}).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 
 document.getElementById('grafico-tipo')?.addEventListener('change', renderizar);
 document.getElementById('grafico-filtro-cidade')?.addEventListener('change', renderizar);
 
 // ── Baixar gráfico como PNG (com fundo branco, pra abrir bem em qualquer visualizador) ──
 document.getElementById('btn-baixar-png')?.addEventListener('click', () => {
+  if (!chartAtual) return;
   const original = document.getElementById('grafico-canvas');
   const exportado = document.createElement('canvas');
   exportado.width = original.width;
   exportado.height = original.height;
 
   const ctx = exportado.getContext('2d');
+  // Mantém a exportação branca legível mesmo quando a interface está no tema escuro.
+  const corOriginal = chartAtual.options.color;
+  const corTitulo = chartAtual.options.plugins.title.color;
+  const corLegenda = chartAtual.options.plugins.legend.labels.color;
+  const coresEixos = Object.entries(chartAtual.options.scales || {}).map(([id, eixo]) => [id, eixo.ticks.color]);
+  chartAtual.options.color = '#333333';
+  chartAtual.options.plugins.title.color = '#333333';
+  chartAtual.options.plugins.legend.labels.color = '#333333';
+  coresEixos.forEach(([id]) => { chartAtual.options.scales[id].ticks.color = '#333333'; });
+  chartAtual.update('none');
   ctx.fillStyle = '#ffffff';
   ctx.fillRect(0, 0, exportado.width, exportado.height);
   ctx.drawImage(original, 0, 0);
+  chartAtual.options.color = corOriginal;
+  chartAtual.options.plugins.title.color = corTitulo;
+  chartAtual.options.plugins.legend.labels.color = corLegenda;
+  coresEixos.forEach(([id, cor]) => { chartAtual.options.scales[id].ticks.color = cor; });
+  chartAtual.update('none');
 
   const tipo = document.getElementById('grafico-tipo').value;
   const a = document.createElement('a');
   a.href = exportado.toDataURL('image/png');
   a.download = `grafico-${tipo}.png`;
   a.click();
+  showToast('Gráfico preparado para download.');
 });
 
 // ── Baixar os dados do gráfico atual como CSV ──
@@ -388,14 +458,17 @@ document.getElementById('btn-baixar-csv')?.addEventListener('click', () => {
   a.download = `${titulo}.csv`;
   a.click();
   URL.revokeObjectURL(url);
+  showToast('Dados preparados para download.');
 });
 
 // ── Toast ──
+let toastTimer;
 function showToast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg;
   t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 3500);
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 6500);
 }
 
 // ── Spinner ──

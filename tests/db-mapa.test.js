@@ -90,20 +90,34 @@ async function carregarDb(iniciais = {}, opcoes = {}) {
     orderByChild: valor => ({ tipo: "orderByChild", valor }),
     equalTo: valor => ({ tipo: "equalTo", valor }),
     limitToLast: valor => ({ tipo: "limitToLast", valor }),
-    startAt: valor => ({ tipo: "startAt", valor }),
-    endAt: valor => ({ tipo: "endAt", valor }),
+    startAt: (valor, chave) => ({ tipo: "startAt", valor, chave }),
+    endAt: (valor, chave) => ({ tipo: "endAt", valor, chave }),
     serverTimestamp: () => copiar(timestamp),
     push: referencia => ({ caminho: `${referencia.caminho}/${RELATO_ID}`, key: RELATO_ID }),
     set: async () => { throw new Error("set inesperado"); },
     onValue: () => { throw new Error("onValue inesperado"); },
     async get(referencia) {
       leituras.push(copiar(referencia));
+      await opcoes.antesLer?.(referencia);
       let valor = copiar(ler(referencia.caminho));
       if (referencia.restricoes && valor) {
         const campo = referencia.restricoes.find(item => item.tipo === "orderByChild")?.valor;
         const limite = referencia.restricoes.find(item => item.tipo === "limitToLast")?.valor;
-        const pares = Object.entries(valor).sort(([idA, a], [idB, b]) =>
-          (a[campo] - b[campo]) || idA.localeCompare(idB));
+        const compararValor = (a, b) => {
+          if (a === b) return 0;
+          const tipo = v => v == null ? 0 : typeof v === 'boolean' ? 1 : typeof v === 'number' ? 2 : typeof v === 'string' ? 3 : 4;
+          return tipo(a) - tipo(b) || (a < b ? -1 : 1);
+        };
+        const igual = referencia.restricoes.find(item => item.tipo === 'equalTo');
+        const inicio = referencia.restricoes.find(item => item.tipo === 'startAt');
+        const fim = referencia.restricoes.find(item => item.tipo === 'endAt');
+        const pares = Object.entries(valor).filter(([id, item]) => {
+          if (igual && item[campo] !== igual.valor) return false;
+          const desde = inicio && compararValor(item[campo], inicio.valor);
+          if (inicio && (desde < 0 || (desde === 0 && inicio.chave && id.localeCompare(inicio.chave) < 0))) return false;
+          const ate = fim && compararValor(item[campo], fim.valor);
+          return !(fim && (ate > 0 || (ate === 0 && fim.chave && id.localeCompare(fim.chave) > 0)));
+        }).sort(([idA, a], [idB, b]) => compararValor(a[campo], b[campo]) || idA.localeCompare(idB));
         valor = Object.fromEntries(limite ? pares.slice(-limite) : pares);
       }
       return { exists: () => valor != null, val: () => valor ?? null };
@@ -204,6 +218,90 @@ test("mapa valida cidade e normaliza limite para inteiro positivo", async () => 
     await ambiente.db.buscarRelatosMapa(CITY_ID, pedido, false);
     assert.equal(ambiente.leituras.at(-1).restricoes.at(-1).valor, esperado);
   }
+});
+
+function dadosComTiposDeCidade(total = 7, formato = 'misto') {
+  const dados = { relatosResumo: {}, relatosMapa: { '2504009': {} } };
+  for (let i = 0; i < total; i++) {
+    const id = `relato-${String(i).padStart(3, '0')}`;
+    const cityId = formato === 'numero' || (formato === 'misto' && i % 2) ? 2504009 : '2504009';
+    const relato = { ...relatoBase, cityId, dataCriacao: i + 1 };
+    dados.relatosResumo[id] = {
+      ...marcador(relato), descricaoResumo: relato.descricao,
+      filtroCidadeCategoria: `${cityId}|${relato.categoria}`,
+      filtroCidadeStatus: `${cityId}|${relato.status}`,
+      filtroCidadeCategoriaStatus: `${cityId}|${relato.categoria}|${relato.status}`
+    };
+    dados.relatosMapa['2504009'][id] = marcador(relato);
+  }
+  dados.relatosResumo.outraCidade = { ...marcador(relatoBase), cityId: '2507507', dataCriacao: 9999 };
+  return dados;
+}
+
+test('listagem pública e mapa incluem os mesmos sete relatos com cityId misto, sem incluir outra cidade', async () => {
+  const ambiente = await carregarDb(dadosComTiposDeCidade());
+  const pagina = await ambiente.db.buscarRelatosPagina(null, 25, { cidade: '2504009' });
+  const mapa = await ambiente.db.buscarRelatosMapa('2504009');
+  assert.equal(pagina.itens.length, 7);
+  assert.equal(pagina.temMais, false);
+  assert.deepEqual(Array.from(pagina.itens, r => r.id).sort(), Array.from(mapa, r => r.id).sort());
+  assert.equal(pagina.itens.some(r => r.id === 'outraCidade'), false);
+  assert.equal(pagina.itens.filter(r => typeof r.cityId === 'number').length, 3);
+  assert.deepEqual(ambiente.leituras.slice(0, 2).map(r => r.restricoes.find(c => c.tipo === 'equalTo').valor), ['2504009', 2504009]);
+  assert.ok(ambiente.leituras.every(r => r.caminho !== 'relatos'));
+});
+
+test('paginação pública percorre tipos mistos ou únicos sem saltos, duplicações ou leitura ilimitada', async () => {
+  for (const formato of ['misto', 'numero', 'texto']) {
+    const ambiente = await carregarDb(dadosComTiposDeCidade(11, formato));
+    const ids = [];
+    let cursor = null;
+    let temMais = true;
+    let paginas = 0;
+    while (temMais && paginas < 10) {
+      const pagina = await ambiente.db.buscarRelatosPagina(cursor, 3, { cidade: '2504009' });
+      assert.ok(pagina.itens.length <= 3);
+      ids.push(...Array.from(pagina.itens, r => r.id));
+      const ultimo = pagina.itens.at(-1);
+      cursor = ultimo && { id: ultimo.id, dataCriacao: ultimo.dataCriacao };
+      temMais = pagina.temMais;
+      paginas++;
+    }
+    assert.equal(temMais, false, formato);
+    assert.equal(paginas, 4, formato);
+    assert.deepEqual(ids, Array.from({ length: 11 }, (_, i) => `relato-${String(10 - i).padStart(3, '0')}`));
+    assert.ok(ambiente.leituras.every(r => r.restricoes.some(c => c.tipo === 'limitToLast' && c.valor <= 5)));
+  }
+});
+
+test('filtros compostos incluem legados e mantêm uma única consulta indexada', async () => {
+  for (const filtros of [{ categoria: relatoBase.categoria }, { status: 'aberto' }, { categoria: relatoBase.categoria, status: 'aberto' }]) {
+    const ambiente = await carregarDb(dadosComTiposDeCidade());
+    const pagina = await ambiente.db.buscarRelatosPagina(null, 25, { cidade: '2504009', ...filtros });
+    assert.equal(pagina.itens.length, 7);
+    assert.equal(ambiente.leituras.length, 1);
+  }
+});
+
+test('consulta corrigida ignora cache antigo incompleto e reutiliza o novo resultado completo', async () => {
+  const ambiente = await carregarDb(dadosComTiposDeCidade());
+  ambiente.cache.set('relatos:resumo:pagina-inicial:25:cityId%3A2504009', { itens: [{ id: 'cache-incompleto' }], temMais: false });
+  const opcoes = { cidade: '2504009', usarCache: true };
+  const primeira = await ambiente.db.buscarRelatosPagina(null, 25, opcoes);
+  assert.equal(primeira.itens.length, 7);
+  assert.equal(ambiente.leituras.length, 2);
+  assert.deepEqual(copiar(await ambiente.db.buscarRelatosPagina(null, 25, opcoes)), copiar(primeira));
+  assert.equal(ambiente.leituras.length, 2);
+});
+
+test('falha na consulta de legados não publica nem guarda uma listagem parcial como completa', async () => {
+  const ambiente = await carregarDb(dadosComTiposDeCidade(), {
+    antesLer(referencia) {
+      if (referencia.restricoes?.some(c => c.tipo === 'equalTo' && typeof c.valor === 'number')) throw new Error('Consulta indisponível');
+    }
+  });
+  await assert.rejects(ambiente.db.buscarRelatosPagina(null, 25, { cidade: '2504009', usarCache: true }), /Consulta indisponível/);
+  assert.equal(ambiente.cache.size, 0);
 });
 
 test("criação grava relato, resumo, marcador, contato e cooldown em único update", async () => {

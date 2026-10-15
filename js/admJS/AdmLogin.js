@@ -8,6 +8,8 @@ document.getElementById('toggle-admin-senha')?.addEventListener('click', () => {
   const btn   = document.getElementById('toggle-admin-senha');
   const mostrar = input.type === 'password';
   input.type = mostrar ? 'text' : 'password';
+  btn.setAttribute('aria-label', mostrar ? 'Ocultar senha' : 'Mostrar senha');
+  btn.setAttribute('aria-pressed', String(mostrar));
   btn.querySelector('i').className = mostrar ? 'ti ti-eye-off' : 'ti ti-eye';
 });
 
@@ -24,7 +26,11 @@ function traduzirErro(code) {
 }
 
 // ── Login administrativo ──
-document.getElementById('btn-admin-login')?.addEventListener('click', async () => {
+document.getElementById('admin-login-form')?.addEventListener('submit', async event => {
+  event.preventDefault();
+  if (document.getElementById('btn-admin-login').disabled) return;
+  const erroEl = document.getElementById('admin-login-erro');
+  erroEl.hidden = true;
   const email = document.getElementById('admin-email').value.trim();
   const senha = document.getElementById('admin-senha').value;
 
@@ -48,6 +54,8 @@ document.getElementById('btn-admin-login')?.addEventListener('click', async () =
     if (!admin) {
       await signOut(auth);
       showToast('🚫 Essa conta não tem permissão de administrador.');
+      erroEl.textContent = 'Essa conta não tem permissão de administrador. Use uma conta autorizada pela administração.';
+      erroEl.hidden = false;
       btn.disabled = false;
       btn.innerHTML = '<i class="ti ti-shield-lock"></i> Acessar painel';
       return;
@@ -58,6 +66,8 @@ document.getElementById('btn-admin-login')?.addEventListener('click', async () =
 
   } catch (e) {
     showToast('❌ ' + traduzirErro(e.code));
+    erroEl.textContent = traduzirErro(e.code);
+    erroEl.hidden = false;
     btn.disabled = false;
     btn.innerHTML = '<i class="ti ti-shield-lock"></i> Acessar painel';
   }

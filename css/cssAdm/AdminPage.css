@@ -13,6 +13,47 @@
 
 .admin-gov-bar { background: var(--azul-escuro); }
 
+[hidden] { display: none !important; }
+.admin-abas { max-width: 1200px; margin: 24px auto 0; padding: 0 20px; display: flex; gap: 8px; flex-wrap: wrap; }
+.admin-abas button { display: inline-flex; align-items: center; gap: 8px; padding: 12px 18px; border: 1px solid var(--borda); border-radius: var(--radius); background: var(--branco); color: var(--cinza-5); font: 600 14px var(--font); cursor: pointer; }
+.admin-abas button[aria-selected="true"] { background: var(--azul); color: #fff; border-color: var(--azul); }
+.admin-abas button span { background: rgba(127,127,127,.18); border-radius: 20px; padding: 2px 8px; }
+.admin-abas button:focus-visible, .btn-gestao:focus-visible { outline: 3px solid var(--azul); outline-offset: 3px; }
+.admin-abas ~ .relatos-controls { margin-top: 18px; }
+.admin-aviso { max-width: 1160px; margin: 16px auto; padding: 14px 18px; background: var(--azul-claro); color: var(--cinza-5); border-left: 4px solid var(--azul); border-radius: 8px; }
+.prioridades-intro { padding: 20px; margin-bottom: 18px; background: var(--azul-claro); border-radius: var(--radius-lg); color: var(--cinza-5); }
+.prioridades-intro h2 { font-size: 20px; margin-bottom: 8px; }
+.prioridades-intro p { font-size: 13px; line-height: 1.7; }
+.badge-prioridade { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700; background: #fff2ba; color: #624800; padding: 4px 10px; border-radius: 20px; }
+.btn-prioridade[aria-pressed="true"] { border-color: #b28c1d; }
+.btn-gestao:disabled { cursor: default; opacity: .5; transform: none; }
+.prioridade-ordem { display: flex; align-items: center; gap: 6px; color: var(--cinza-4); font-size: 12px; }
+.admin-mapa-painel { width: calc(100% - 40px); max-width: 1160px; margin: 20px auto 40px; padding: 20px; background: var(--branco); border: 1px solid var(--borda); border-radius: var(--radius-lg); box-shadow: var(--shadow); }
+.admin-mapa-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; margin-bottom: 18px; color: var(--cinza-5); }
+.admin-mapa-toolbar > div { flex: 1; min-width: 230px; }
+.admin-mapa-toolbar h2 { font-size: 20px; margin-bottom: 5px; }
+.admin-mapa-toolbar p { font-size: 13px; color: var(--cinza-4); }
+.admin-mapa-toolbar label { display: flex; gap: 8px; flex-direction: column; font-size: 12px; }
+#admin-mapa { height: 560px; border-radius: 10px; background: #e4e9ed; z-index: 0; }
+.admin-mapa-legenda { display: flex; gap: 12px; flex-wrap: wrap; margin: 14px 0; color: var(--cinza-5); font-size: 12px; }
+.admin-mapa-legenda span { display: inline-flex; align-items: center; gap: 6px; }
+.admin-mapa-legenda i { display: inline-block; width: 11px; height: 11px; border-radius: 50%; }
+.admin-mapa-popup { min-width: 200px; color: #252525; line-height: 1.5; }
+.admin-mapa-popup strong { font-size: 14px; }
+.admin-mapa-popup p { margin: 8px 0; }
+@media (max-width: 1200px) {
+  .navbar .nav-links, .navbar .nav-btns { display: none; }
+  .navbar .hamburger { display: flex; }
+}
+@media (max-width: 640px) {
+  .admin-abas { flex-direction: column; padding: 0 12px; }
+  .admin-abas button { justify-content: center; }
+  .admin-mapa-painel { width: calc(100% - 24px); margin: 16px 12px 30px; padding: 12px; }
+  .admin-mapa-toolbar label, .admin-mapa-toolbar > button { width: 100%; }
+  #admin-mapa { height: 430px; }
+  .admin-aviso { margin: 16px 12px; }
+}
+
 .admin-user-tag {
   display: flex;
   align-items: center;
@@ -340,4 +381,80 @@ html[data-theme="dark"] .resposta-existente strong {
 
 @media (max-width: 640px) {
   .lightbox-close { top: 12px; right: 12px; }
+}
+
+/* Refinamentos de uso: mesmos tokens, componentes e hierarquia da plataforma. */
+.admin-pular { position: fixed; top: 8px; left: 12px; z-index: 2000; transform: translateY(-180%); padding: 12px 18px; border-radius: var(--radius); background: var(--branco); color: var(--azul); }
+.admin-pular:focus { transform: none; }
+.admin-page :is(button, a, input, select, textarea, summary, [tabindex]):focus-visible { outline: 3px solid var(--azul); outline-offset: 3px; }
+.admin-page .navbar :focus-visible { outline-color: var(--amarelo); }
+.admin-page .btn-outline:disabled { opacity: .55; cursor: wait; }
+.admin-page :is(.admin-resultados-barra, .admin-mapa-toolbar, .admin-paginacao) .btn-outline { color: var(--cinza-5); background: var(--branco); border-color: var(--borda); }
+.admin-page :is(.admin-resultados-barra, .admin-mapa-toolbar, .admin-paginacao) .btn-outline:hover { background: var(--cinza-2); }
+.admin-page :is(.btn-gestao, .btn-outline, .filtro-select, .gestao-select, summary) { min-height: 44px; }
+.admin-resumo-escopo { max-width: 1200px; margin: 12px auto 0; padding: 0 20px; font-size: 12px; color: var(--cinza-5); line-height: 1.6; }
+.admin-page .relatos-controls { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: 18px; gap: 14px; }
+.admin-page .relatos-controls:has(#campo-cidade:not([hidden])) { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.admin-filtros-cabecalho { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 44px; }
+.admin-filtros-cabecalho h2 { font-size: 16px; color: var(--cinza-5); }
+.admin-campo { display: flex; flex-direction: column; gap: 6px; color: var(--cinza-5); font-size: 12px; font-weight: 600; min-width: 0; }
+.admin-campo-busca { grid-column: 1 / -1; }
+.admin-campo .busca-wrap { display: block; min-width: 0; }
+.admin-campo :is(input, select) { width: 100%; min-width: 0; }
+.admin-resultados-barra { max-width: 1200px; margin: 20px auto 0; padding: 0 20px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; color: var(--cinza-5); }
+.admin-resultados-barra > div { flex: 1; min-width: 240px; }
+#admin-resultados { font-size: 14px; font-weight: 700; }
+.admin-ajuda { color: var(--cinza-5); font-size: 12px; line-height: 1.6; margin: 6px 0 10px; font-weight: 400; }
+.gestao-status-campo { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; color: var(--cinza-5); }
+.gestao-card { scroll-margin-top: 90px; }
+.gestao-titulo, .gestao-desc, .gestao-meta, .resposta-existente { overflow-wrap: anywhere; }
+.gestao-desc, .resposta-existente { white-space: pre-line; }
+.gestao-controles .btn-gestao-excluir { margin-left: auto; }
+.gestao-resposta-area.open { max-height: none; overflow: visible; }
+.admin-page .gestao-desc, .admin-page .gestao-meta, .admin-page .resumo-label, .admin-page .admin-lote-info, .admin-page .admin-mapa-toolbar p { color: var(--cinza-5); }
+.admin-page .status { color: var(--cinza-5); }
+html[data-theme="dark"] .admin-page .btn-gestao-resposta { color: #A9C7F7; }
+html[data-theme="dark"] .admin-page .btn-gestao-excluir { color: #F5B7AE; }
+.admin-mapa-wrap { position: relative; }
+#admin-mapa { height: clamp(330px, 60vh, 560px); }
+.admin-mapa-vazio { position: absolute; left: 60px; right: 16px; top: 16px; padding: 14px; background: var(--branco); color: var(--cinza-5); border: 1px solid var(--borda); border-radius: var(--radius); box-shadow: var(--shadow); font-size: 13px; pointer-events: none; }
+.admin-mapa-popup .btn-gestao { display: flex; margin-top: 8px; width: 100%; justify-content: center; }
+.admin-mapa-popup { min-width: 0; overflow-wrap: anywhere; }
+.admin-mapa-alternativa { margin-top: 18px; border-top: 1px solid var(--borda); padding-top: 12px; color: var(--cinza-5); }
+.admin-mapa-alternativa summary { cursor: pointer; padding: 10px 0; font-size: 14px; font-weight: 600; }
+#admin-mapa-lista { list-style: none; }
+#admin-mapa-lista li { padding: 12px 0; border-top: 1px solid var(--borda); display: flex; gap: 8px; flex-wrap: wrap; align-items: center; font-size: 13px; }
+#admin-mapa-lista li > div { flex: 1; min-width: 200px; overflow-wrap: anywhere; }
+#admin-mapa-lista p { margin-top: 5px; font-size: 12px; }
+.admin-page .leaflet-control-zoom a { width: 44px; height: 44px; line-height: 44px; }
+.admin-page .leaflet-popup-close-button { width: 44px !important; height: 44px !important; line-height: 44px !important; }
+.admin-page .leaflet-popup-content { margin-top: 32px; }
+.admin-page .leaflet-popup-content p { color: #333; }
+html[data-theme="dark"] .admin-mapa-popup .btn-gestao { color: var(--cinza-5); }
+html[data-theme="dark"] .admin-page :focus-visible { outline-color: #A9C7F7; }
+html[data-theme="dark"] .admin-pular { color: #A9C7F7; }
+@media (min-width: 641px) and (max-width: 900px) {
+  .admin-page .relatos-controls, .admin-page .relatos-controls:has(#campo-cidade:not([hidden])) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+  .admin-abas { flex-direction: row; gap: 6px; }
+  .admin-abas button { flex: 1 1 100px; padding: 10px 8px; font-size: 12px; gap: 5px; }
+  .admin-abas button i { display: none; }
+  .admin-page .relatos-controls, .admin-page .relatos-controls:has(#campo-cidade:not([hidden])) { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 0 12px; gap: 12px 8px; }
+  .admin-campo .filtro-select { font-size: 13px; padding: 10px 8px; }
+  .admin-resultados-barra { padding: 0 12px; }
+  .admin-resultados-barra > div { min-width: 100%; }
+  .admin-resultados-barra > .admin-campo { flex: 1; }
+  .admin-resumo { padding: 0 12px; gap: 8px; }
+  .admin-resumo-escopo { padding: 0 12px; }
+  .admin-page .relatos-wrapper { padding-left: 12px; padding-right: 12px; }
+  .admin-page .gestao-card { padding: 14px 12px; }
+  .gestao-controles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .gestao-controles .btn-gestao { justify-content: center; padding: 10px 8px; }
+  .gestao-controles .btn-prioridade, .gestao-status-campo, .prioridade-ordem { grid-column: 1 / -1; }
+  .gestao-controles .btn-gestao-excluir { margin-left: 0; }
+  .gestao-status-campo .gestao-select { flex: 1; width: auto; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .admin-page *, .admin-page *::before, .admin-page *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
 }

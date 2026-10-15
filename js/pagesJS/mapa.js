@@ -16,6 +16,7 @@ const CORES = {
   'Iluminação pública':      '#C45C00',
   'Lixo / Entulho':          '#168821',
   'Água / Esgoto':           '#1351B4',
+  'Áreas verdes':            '#637d16',
 };
 function corDaCategoria(cat) { return CORES[cat] || '#888888'; }
 
@@ -32,7 +33,9 @@ const cidadeInicial = CIDADES_ATIVAS_RELATOS?.length === 1 ? CIDADES_ATIVAS_RELA
 const tituloMapa = cidadeInicial ? `Mapa de ${AREA_RELATOS}` : 'Mapa da Paraíba';
 document.title = `${tituloMapa} — Pro Povo`;
 document.getElementById('mapa-titulo').textContent = tituloMapa;
-document.getElementById('mapa-subtitulo').textContent = `Selecione uma cidade ativa para consultar os relatos em ${AREA_RELATOS}.`;
+document.getElementById('mapa-subtitulo').textContent = cidadeInicial
+  ? `Veja os problemas relatados pela população em ${AREA_RELATOS}. Toque em um ponto para consultar os detalhes.`
+  : `Selecione uma cidade ativa para consultar os relatos em ${AREA_RELATOS}.`;
 
 // ── Inicializar o mapa restrito à Paraíba ──
 const mapa = L.map('mapa-container', {
@@ -44,14 +47,6 @@ const mapa = L.map('mapa-container', {
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   attribution: '&copy; OpenStreetMap contributors',
   maxZoom: 18
-}).addTo(mapa);
-
-// Destaca visualmente o contorno aproximado da Paraíba
-L.rectangle(BOUNDS_PB, {
-  color: '#1351B4',
-  weight: 1,
-  fillOpacity: 0,
-  dashArray: '6,6'
 }).addTo(mapa);
 
 let marcadores = [];
@@ -100,7 +95,6 @@ async function carregarCidade(cityId) {
     const comCoordenadas = relatos.filter(r => Number.isFinite(r.lat) && Number.isFinite(r.lng));
 
     comCoordenadas.forEach(r => {
-      const votos = Number.isFinite(Number(r.votos)) ? Math.max(0, Number(r.votos)) : 0;
       const statusCor = STATUS_COR[r.status] || STATUS_COR.aberto;
       const marker = L.circleMarker([r.lat, r.lng], {
         radius: 9,
@@ -115,8 +109,7 @@ async function carregarCidade(cityId) {
           <div class="popup-titulo">${escapeHTML(r.titulo)}</div>
           <div class="popup-meta">
             <span><i class="ti ti-map-pin"></i> ${escapeHTML(r.endereco)}</span>
-            <span><i class="ti ti-user"></i> ${escapeHTML(r.autorNome)}</span>
-            <span><i class="ti ti-thumb-up"></i> ${votos} votos</span>
+            <span>${escapeHTML(r.categoria)}</span>
           </div>
           <span class="popup-status" style="background:${statusCor}22; color:${statusCor}">
             ${escapeHTML(STATUS_LABEL[r.status] || r.status)}
@@ -157,6 +150,12 @@ async function iniciarSeletorCidades() {
       select.appendChild(new Option(cidade.nome, cidade.id));
     });
     select.disabled = false;
+    if (cidadesDisponiveis.length === 1) {
+      select.value = cidadesDisponiveis[0].id;
+      select.closest('.mapa-filtro').hidden = true;
+      await carregarCidade(select.value);
+      return;
+    }
 
     let salva = null;
     try {

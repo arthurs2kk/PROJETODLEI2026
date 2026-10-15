@@ -79,3 +79,26 @@
   .graf-acoes button { flex: 1; justify-content: center; }
   .graf-canvas-wrap { height: 380px; padding: 16px; }
 }
+
+.graf-controles { margin-top: 20px; align-items: flex-end; }
+.graf-controles > .admin-campo { flex: 1; min-width: 220px; }
+.graf-controles > .admin-campo { max-width: 100%; }
+.graf-controles .filtro-select { width: 100%; min-width: 0; }
+.graf-canvas-wrap canvas { max-width: 100%; }
+.graf-aviso-box { flex-wrap: wrap; }
+.graf-aviso-box span { flex: 1; min-width: 180px; }
+.graf-tabela-dados { margin-top: 18px; padding: 16px; background: var(--branco); border: 1px solid var(--borda); border-radius: var(--radius-lg); color: var(--cinza-5); }
+.graf-tabela-dados summary { cursor: pointer; padding: 10px 0; font-size: 14px; font-weight: 600; }
+.graf-tabela-scroll { overflow-x: auto; }
+#graf-tabela { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; }
+#graf-tabela caption { text-align: left; padding: 12px 0; font-weight: 700; }
+#graf-tabela :is(th, td) { padding: 12px; border-bottom: 1px solid var(--borda); }
+#graf-tabela thead { background: var(--cinza-1); }
+@media (max-width: 640px) {
+  .graf-controles { margin-top: 18px; }
+  .graf-controles > .admin-campo { min-width: 0; flex-basis: 100%; }
+  .graf-acoes { gap: 8px; }
+  .graf-acoes button { flex-basis: 100%; }
+  .graf-canvas-wrap { padding: 12px; }
+  .graf-controles .graf-acoes .btn-outline { min-width: 0; }
+}

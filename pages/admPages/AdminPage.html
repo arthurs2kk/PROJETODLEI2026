@@ -22,6 +22,7 @@
   <link rel="stylesheet" href="../../home.css" />
   <link rel="stylesheet" href="../../css/cssUser/relatos.css" />
   <link rel="stylesheet" href="../../css/cssAdm/AdminPage.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="icon" type="image/png" href="../../Images/flavinconProPovo.png">
   <!-- Vercel Web Analytics -->
   <script>
@@ -29,7 +30,8 @@
   </script>
   <script src="../../js/vercel-analytics.js"></script>
 </head>
-<body>
+<body class="admin-page">
+  <a class="admin-pular" href="#gestao-conteudo">Pular para a gestão de relatos</a>
 
   <!-- Tela de verificação (evita "flash" de conteúdo antes de confirmar admin) -->
   <div id="verificando" class="verificando-overlay">
@@ -57,7 +59,7 @@
         </div>
       </div>
       <div class="nav-links">
-        <a href="AdminPage.html" class="nav-link active">Gestão de relatos</a>
+        <a href="AdminPage.html" class="nav-link active" aria-current="page">Gestão de relatos</a>
         <a href="AdminGraficos.html" class="nav-link">Gráficos</a>
       </div>
       <div class="nav-btns">
@@ -69,7 +71,7 @@
       </div>
       <button class="hamburger" id="hamburger"
         aria-label="Abrir menu"
-        aria-expanded="false"
+        aria-expanded="false" aria-controls="mobile-menu"
         type="button">
   <span></span>
   <span></span>
@@ -80,7 +82,7 @@
     <div class="mobile-menu" id="mobile-menu">
       <span class="admin-user-tag" id="admin-user-tag-mobile" style="justify-content:flex-start; width:fit-content;"><i class="ti ti-user-shield"></i> Carregando...</span>
       <div class="mobile-divider"></div>
-      <a href="AdminPage.html" class="mobile-link"><i class="ti ti-list-details"></i> Gestão de relatos</a>
+      <a href="AdminPage.html" class="mobile-link" aria-current="page"><i class="ti ti-list-details"></i> Gestão de relatos</a>
       <a href="AdminGraficos.html" class="mobile-link"><i class="ti ti-chart-bar"></i> Gráficos</a>
       <a href="#" class="mobile-link" id="theme-toggle-mobile">
         <i class="ti ti-moon"></i> Modo escuro
@@ -93,7 +95,7 @@
     <div class="relatos-header">
       <div class="relatos-header-inner">
         <h1 class="relatos-title"><i class="ti ti-building-community"></i> Gestão de relatos</h1>
-        <p class="relatos-subtitle">Atualize o status, responda e carregue os relatos em lotes</p>
+        <p class="relatos-subtitle">Acompanhe as demandas, explore o mapa e organize as prioridades da prefeitura</p>
         <span class="painel-escopo-badge" id="painel-escopo-badge">
           <i class="ti ti-loader-2" style="animation:spin 0.8s linear infinite"></i> Carregando escopo...
         </span>
@@ -104,7 +106,7 @@
     <div class="admin-resumo">
       <div class="resumo-card">
         <span class="resumo-num" id="resumo-total">0</span>
-        <span class="resumo-label">Relatos carregados</span>
+        <span class="resumo-label">Relatos consultados</span>
       </div>
       <div class="resumo-card resumo-aberto">
         <span class="resumo-num" id="resumo-aberto">0</span>
@@ -128,22 +130,37 @@
       </div>
     </div>
 
+    <p class="admin-resumo-escopo" id="admin-resumo-escopo">Os indicadores consideram os relatos consultados, antes dos filtros. Prazo de acompanhamento: 10 dias.</p>
+    <main id="gestao-conteudo" tabindex="-1">
+    <div class="admin-abas" role="tablist" aria-label="Visualização da gestão">
+      <button type="button" id="aba-relatos" role="tab" aria-controls="painel-lista" aria-selected="true" tabindex="0" data-aba="relatos"><i class="ti ti-list-details" aria-hidden="true"></i> Todos os relatos</button>
+      <button type="button" id="aba-mapa" role="tab" aria-controls="painel-mapa" aria-selected="false" tabindex="-1" data-aba="mapa"><i class="ti ti-map-2" aria-hidden="true"></i> Mapa de gestão</button>
+      <button type="button" id="aba-prioridades" role="tab" aria-controls="painel-lista" aria-selected="false" tabindex="-1" data-aba="prioridades"><i class="ti ti-star" aria-hidden="true"></i> Prioridades <span id="prioridades-contagem">0</span></button>
+    </div>
+    <p class="admin-aviso" id="prioridades-aviso" role="status" hidden></p>
+    <p class="admin-aviso" id="admin-dados-aviso" role="status" hidden></p>
+
     <!-- CONTROLES -->
-    <div class="relatos-controls">
-      <div class="busca-wrap">
-        <i class="ti ti-search busca-icon"></i>
-        <input type="text" id="busca-input" class="busca-input" placeholder="Buscar por título ou endereço..." />
-      </div>
+    <section class="relatos-controls" aria-labelledby="filtros-titulo">
+      <div class="admin-filtros-cabecalho"><h2 id="filtros-titulo">Buscar e filtrar</h2><button type="button" class="btn-gestao" id="btn-limpar-filtros" hidden><i class="ti ti-filter-off" aria-hidden="true"></i> Limpar filtros</button></div>
+      <label class="admin-campo admin-campo-busca" for="busca-input">Busca
+        <span class="busca-wrap"><i class="ti ti-search busca-icon" aria-hidden="true"></i>
+        <input type="search" id="busca-input" class="busca-input" placeholder="Título ou endereço do relato" />
+        </span>
+      </label>
 
       <!-- Só aparece pro superadmin — o admin de cidade já vê só a própria cidade -->
-      <select class="filtro-select" id="filtro-cidade" style="display:none;">
+      <label class="admin-campo" id="campo-cidade" for="filtro-cidade" hidden>Cidade
+      <select class="filtro-select" id="filtro-cidade">
         <option value="">Todas as cidades</option>
-      </select>
+      </select></label>
 
+      <label class="admin-campo" for="filtro-bairro">Bairro
       <select class="filtro-select" id="filtro-bairro">
         <option value="">Todos os bairros</option>
-      </select>
+      </select></label>
 
+      <label class="admin-campo" for="filtro-categoria">Categoria
       <select class="filtro-select" id="filtro-categoria">
         <option value="todos">Todas as categorias</option>
         <option value="Buraco / Via danificada">Buraco / Via danificada</option>
@@ -152,23 +169,63 @@
         <option value="Água / Esgoto">Água / Esgoto</option>
         <option value="Áreas verdes">Áreas verdes</option>
         <option value="Outros">Outros</option>
-      </select>
+      </select></label>
 
+      <label class="admin-campo" for="filtro-status">Situação
       <select class="filtro-select" id="filtro-status">
         <option value="todos">Todos os status</option>
         <option value="aberto">Aberto</option>
         <option value="andamento">Em andamento</option>
         <option value="resolvido">Resolvido</option>
         <option value="atrasados">⚠️ Atrasados</option>
-      </select>
+      </select></label>
 
+      <label class="admin-campo" for="filtro-periodo">Período de criação
+      <select class="filtro-select" id="filtro-periodo">
+        <option value="">Todo o período</option>
+        <option value="7">Últimos 7 dias</option>
+        <option value="30">Últimos 30 dias</option>
+        <option value="90">Últimos 90 dias</option>
+      </select></label>
+    </section>
+    <div class="admin-resultados-barra">
+      <div><p id="admin-resultados" role="status" aria-live="polite" aria-atomic="true">Carregando relatos…</p><p id="admin-resultados-ajuda" class="admin-ajuda"></p></div>
+      <button type="button" class="btn-gestao" id="btn-consultar-todos" hidden>Consultar todos os relatos</button>
+      <label class="admin-campo" for="ordenacao" id="campo-ordenacao">Ordenar por
+        <select class="filtro-select" id="ordenacao"><option value="recentes">Mais recentes</option><option value="antigos">Mais antigos</option><option value="apoios">Mais apoios</option></select>
+      </label>
       <button type="button" class="btn-outline" id="btn-atualizar-relatos">
         <i class="ti ti-refresh"></i> Atualizar
       </button>
     </div>
 
     <!-- LISTA DE GESTÃO -->
-    <div class="relatos-wrapper">
+    <section class="admin-mapa-painel" id="painel-mapa" role="tabpanel" aria-labelledby="aba-mapa" hidden>
+      <div class="admin-mapa-toolbar">
+        <div><h2>Mapa de gestão</h2><p>Selecione um marcador para ver a demanda, priorizar ou abrir sua gestão.</p></div>
+        <label for="admin-mapa-tipo">Visualização
+          <select id="admin-mapa-tipo" class="filtro-select">
+            <option value="categoria">Por categoria</option>
+            <option value="status">Por situação</option>
+            <option value="apoio">Por apoio da população</option>
+            <option value="concentracao">Concentração de relatos</option>
+          </select>
+        </label>
+        <button type="button" class="btn-outline" id="admin-mapa-enquadrar">Enquadrar relatos</button>
+      </div>
+      <p class="admin-ajuda" id="admin-mapa-ajuda">Arraste para explorar. Use + e − para ampliar ou reduzir. Os filtros acima também se aplicam ao mapa.</p>
+      <div class="admin-mapa-wrap"><div id="admin-mapa" role="region" aria-label="Mapa das demandas do município" aria-describedby="admin-mapa-ajuda"></div><p class="admin-mapa-vazio" id="admin-mapa-vazio" role="status" hidden>Nenhum relato com localização neste filtro. Ajuste ou limpe os filtros acima.</p></div>
+      <div id="admin-mapa-legenda" class="admin-mapa-legenda"></div>
+      <p id="admin-mapa-info" class="admin-lote-info" aria-live="polite"></p>
+      <details class="admin-mapa-alternativa"><summary>Explorar os relatos do mapa em lista</summary><p class="admin-ajuda">Acesse as mesmas demandas pelo teclado, inclusive aquelas sem localização.</p><ul id="admin-mapa-lista"></ul></details>
+    </section>
+
+    <div class="relatos-wrapper" id="painel-lista" role="tabpanel" aria-labelledby="aba-relatos">
+      <div class="prioridades-intro" id="prioridades-intro" hidden>
+        <h2>Prioridades da prefeitura</h2>
+        <p>Uma lista compartilhada pela equipe. Use as setas para mudar a ordem. A seleção é interna e não altera o status nem os apoios públicos.</p>
+        <p id="prioridades-ordem-ajuda" role="status"></p>
+      </div>
       <div id="admin-lista"></div>
       <div class="relatos-loader" id="relatos-loader-admin" role="status" aria-live="polite">
         <div class="relatos-loader-orbita" aria-hidden="true">
@@ -189,18 +246,20 @@
         </button>
       </div>
     </div>
+    </main>
   </div>
 
   <!-- LIGHTBOX: visualização ampliada da foto do relato -->
-  <div class="modal-overlay lightbox-overlay" id="lightbox-overlay">
+  <div class="modal-overlay lightbox-overlay" id="lightbox-overlay" role="dialog" aria-modal="true" aria-label="Foto do relato ampliada" hidden>
     <button type="button" class="lightbox-close" id="lightbox-close" aria-label="Fechar"><i class="ti ti-x"></i></button>
     <img src="" alt="Foto do relato ampliada" class="lightbox-img" id="lightbox-img" />
   </div>
 
-  <div class="toast" id="toast"></div>
+  <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
    <script src="../../js/theme.js"></script>
    <script src="../../js/pagesJS/menu.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script type="module" src="../../js/admJS/AdminPage.js"></script>
 </body>
 </html>

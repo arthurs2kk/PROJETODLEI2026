@@ -565,38 +565,46 @@ export async function buscarRelatosPagina(cursor = null, tamanho = TAMANHO_PAGIN
     ? 'recentes'
     : `${campoOrdenacao}:${valorFiltro}`;
   const chaveCache = !cursor
-    ? `relatos:resumo:pagina-inicial:${tamanho}:${encodeURIComponent(identificadorFiltro)}`
+    ? `relatos:resumo:pagina-inicial:v2:${tamanho}:${encodeURIComponent(identificadorFiltro)}`
     : null;
   if (usarCache && chaveCache) {
     const cache = lerCache(chaveCache);
     if (cache !== undefined) return cache;
   }
 
-  let consulta;
-  if (valorFiltro === null) {
-    consulta = cursor
-      ? query(ref(db, "relatosResumo"), orderByChild("dataCriacao"), endAt(cursor.dataCriacao, cursor.id), limitToLast(tamanho + 2))
-      : query(ref(db, "relatosResumo"), orderByChild("dataCriacao"), limitToLast(tamanho + 1));
-  } else {
-    consulta = cursor
+  const consultaFiltrada = valor => cursor
       ? query(
           ref(db, "relatosResumo"),
           orderByChild(campoOrdenacao),
-          startAt(valorFiltro),
-          endAt(valorFiltro, cursor.id),
+          startAt(valor),
+          endAt(valor, cursor.id),
           limitToLast(tamanho + 2)
         )
       : query(
           ref(db, "relatosResumo"),
           orderByChild(campoOrdenacao),
-          equalTo(valorFiltro),
+          equalTo(valor),
           limitToLast(tamanho + 1)
         );
-  }
 
-  const snapshot = await get(consulta);
-  const dados = snapshot.val();
-  if (!dados) {
+  let consultas;
+  if (valorFiltro === null) {
+    consultas = [cursor
+      ? query(ref(db, "relatosResumo"), orderByChild("dataCriacao"), endAt(cursor.dataCriacao, cursor.id), limitToLast(tamanho + 2))
+      : query(ref(db, "relatosResumo"), orderByChild("dataCriacao"), limitToLast(tamanho + 1))];
+  } else {
+    // O RTDB diferencia 2504009 de "2504009". Consulte os dois tipos só
+    // no índice cityId; os índices compostos já são texto nos legados.
+    // Cada ramo tem seu próprio limite e o mesmo cursor de chave. A união
+    // é ordenada e recortada uma vez, sem pular registros entre os tipos.
+    const valores = campoOrdenacao === 'cityId' && /^25[0-9]{5}$/.test(String(valorFiltro))
+      ? [...new Set([String(valorFiltro), Number(valorFiltro)])]
+      : [valorFiltro];
+    consultas = valores.map(consultaFiltrada);
+  }
+  const snapshots = await Promise.all(consultas.map(consulta => get(consulta)));
+  const dados = Object.assign({}, ...snapshots.map(snapshot => snapshot.val() || {}));
+  if (!Object.keys(dados).length) {
     const resultadoVazio = { itens: [], temMais: false };
     if (usarCache && chaveCache) salvarCache(chaveCache, resultadoVazio);
     return resultadoVazio;

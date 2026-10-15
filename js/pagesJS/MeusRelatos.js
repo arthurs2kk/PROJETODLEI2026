@@ -3,6 +3,7 @@ import { auth, onAuthStateChanged } from "../firebase.js";
 import { ouvirRelatosDoUsuario, atualizarRelatoDoUsuario, excluirRelato } from "../db.js";
 import { initNavbar } from "../navbar.js";
 import { escapeHTML } from "../escapeHtml.js";
+import { respostaPrefeituraHTML } from '../respostaPrefeitura.js';
 import { otimizarImagem } from "../cloudinary.js";
 
 const state = { todos: [], busca: '', status: 'todos', relatoEditando: null, carregando: true, erroCarregamento: false };
@@ -112,9 +113,7 @@ function cardHTML(r) {
   const data = new Date(r.dataCriacao).toLocaleDateString('pt-BR');
   const podeEditar = r.status === 'aberto';
 
-  const resposta = r.respostaOficial
-    ? `<div class="resposta-cidadao"><strong><i class="ti ti-building-community"></i> Resposta da prefeitura:</strong><p>${escapeHTML(r.respostaOficial)}</p></div>`
-    : '';
+  const resposta = respostaPrefeituraHTML(r);
 
   const controles = podeEditar
     ? `<div class="meu-relato-controles">

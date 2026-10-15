@@ -5,6 +5,7 @@ import { CIDADES_ATIVAS_RELATOS } from "../abrangencia-relatos.js";
 import { initNavbar } from "../navbar.js";
 import { otimizarImagem } from "../cloudinary.js";
 import { escapeHTML } from "../escapeHtml.js";
+import { respostaPrefeituraHTML } from '../respostaPrefeitura.js';
 
 // ── Navbar (login/cadastro/nome do usuário/sair/perfil) ──
 initNavbar();
@@ -277,9 +278,7 @@ function preencherDetalhe(r) {
   document.getElementById('detalhe-foto').innerHTML = r.fotoUrl
     ? `<img src="${escapeHTML(otimizarImagem(r.fotoUrl, 700))}" alt="Foto do relato" loading="lazy" style="width:100%; border-radius:8px; margin-bottom:12px; max-height:280px; object-fit:cover;">`
     : '';
-  document.getElementById('detalhe-resposta').innerHTML = r.respostaOficial
-  ? `<div class="resposta-cidadao"><strong><i class="ti ti-building-community"></i> Resposta da prefeitura:</strong><p>${escapeHTML(r.respostaOficial)}</p></div>`
-  : '';
+  document.getElementById('detalhe-resposta').innerHTML = respostaPrefeituraHTML(r);
   document.getElementById('detalhe-tags').innerHTML = `
     <span class="badge ${cat.badge}">${cat.label}</span>
     <span class="status ${st.css}">${st.label}</span>`;

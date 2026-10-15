@@ -111,7 +111,16 @@
 }
 
 .admin-btn {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
   background: var(--azul);
+  color: #fff;
+  border: 0;
+  font-family: var(--font);
+  cursor: pointer;
   margin-top: 4px;
   padding: 16px;
   font-size: 17px;
@@ -123,6 +132,14 @@
 
 .admin-btn:hover  { background: var(--azul-hover); transform: translateY(-1px); box-shadow: var(--shadow); }
 .admin-btn:active { transform: translateY(0) scale(.98); }
+.admin-btn:disabled { opacity: .65; cursor: wait; }
+
+/* Mesmo padrão de campo com ícone usado no login do cidadão. */
+.admin-login-page .input-icon-wrap { position: relative; display: flex; align-items: center; }
+.admin-login-page .input-icon { position: absolute; left: 12px; font-size: 17px; color: var(--cinza-4); pointer-events: none; }
+.admin-login-page .form-input.with-icon { width: 100%; min-width: 0; padding-left: 40px; }
+.admin-login-page #admin-senha { padding-right: 50px; }
+.admin-login-page .toggle-senha { position: absolute; right: 4px; background: none; border: 0; color: var(--cinza-5); font-size: 18px; cursor: pointer; }
 
 .admin-footer-note {
   font-size: 12.5px;
@@ -150,6 +167,13 @@
 }
 
 .admin-voltar:hover { color: var(--azul); transform: translateX(-3px); }
+
+.admin-login-page [hidden] { display: none !important; }
+.admin-login-erro { padding: 12px; border-left: 3px solid var(--vermelho); background: var(--verm-bg); color: var(--cinza-5); border-radius: var(--radius-sm); font-size: 13px; line-height: 1.6; }
+.admin-login-page :is(button, a, input):focus-visible { outline: 3px solid var(--azul); outline-offset: 3px; }
+.admin-login-page .toggle-senha { min-width: 44px; min-height: 44px; }
+.admin-login-page .admin-subtitle, .admin-login-page .admin-footer-note, .admin-login-page .admin-voltar { color: var(--cinza-5); }
+html[data-theme="dark"] .admin-login-page .admin-footer-note a { color: #A9C7F7; }
 
 @media (max-width: 480px) {
   .admin-header { padding: 28px 20px 20px; }

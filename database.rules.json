@@ -161,6 +161,20 @@
         ".validate": "newData.hasChildren(['nome','cityId','cidadeNome','ativo'])"
       }
     },
+    "prioridadesMunicipais": {
+      ".read": "auth != null && (root.child('admins').child(auth.uid).val() === true || (root.child('admins').child(auth.uid).child('ativo').val() === true && root.child('admins').child(auth.uid).child('papel').val() === 'superadmin'))",
+      "$cityId": {
+        ".read": "auth != null && (root.child('admins').child(auth.uid).val() === true || (root.child('admins').child(auth.uid).child('ativo').val() === true && (root.child('admins').child(auth.uid).child('papel').val() === 'superadmin' || (root.child('admins').child(auth.uid).child('papel').val() === 'admin' && root.child('admins').child(auth.uid).child('cityId').val() === $cityId))))",
+        "$relatoId": {
+          ".write": "auth != null && (root.child('admins').child(auth.uid).val() === true || (root.child('admins').child(auth.uid).child('ativo').val() === true && (root.child('admins').child(auth.uid).child('papel').val() === 'superadmin' || (root.child('admins').child(auth.uid).child('papel').val() === 'admin' && root.child('admins').child(auth.uid).child('cityId').val() === $cityId))))",
+          ".validate": "$cityId.matches(/^[0-9]{7}$/) && root.child('relatos').child($relatoId).exists() && root.child('relatos').child($relatoId).child('cityId').val() + '' === $cityId && newData.hasChildren(['ordem','adicionadoPor','adicionadoEm'])",
+          "ordem": { ".validate": "newData.isNumber() && newData.val() >= -1000000000000000 && newData.val() <= 1000000000000000" },
+          "adicionadoPor": { ".validate": "newData.isString() && (data.exists() ? newData.val() === data.val() : newData.val() === auth.uid)" },
+          "adicionadoEm": { ".validate": "newData.isNumber() && (data.exists() ? newData.val() === data.val() : (newData.val() > now - 120000 && newData.val() <= now))" },
+          "$other": { ".validate": false }
+        }
+      }
+    },
     "metadados": {
       ".read": true,
       ".write": false
