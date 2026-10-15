@@ -5,7 +5,8 @@ import { initNavbar } from "../navbar.js";
 import { escapeHTML } from "../escapeHtml.js";
 import { otimizarImagem } from "../cloudinary.js";
 
-const state = { todos: [], busca: '', status: 'todos', relatoEditando: null, carregando: true };
+const state = { todos: [], busca: '', status: 'todos', relatoEditando: null, carregando: true, erroCarregamento: false };
+let pararDeOuvirRelatos = null;
 
 // ── Navbar (login/cadastro/nome do usuário/sair/perfil) ──
 initNavbar();
@@ -14,13 +15,25 @@ initNavbar();
 
 // ── Exige login para acessar esta página ──
 onAuthStateChanged(auth, (user) => {
+  pararDeOuvirRelatos?.();
+  pararDeOuvirRelatos = null;
   if (!user) {
     window.location.href = 'login.html';
     return;
   }
-  ouvirRelatosDoUsuario(user.uid, (relatos) => {
+  state.todos = [];
+  state.carregando = true;
+  state.erroCarregamento = false;
+  render();
+  pararDeOuvirRelatos = ouvirRelatosDoUsuario(user.uid, (relatos) => {
     state.todos = relatos;
     state.carregando = false;
+    state.erroCarregamento = false;
+    render();
+  }, (erro) => {
+    console.warn('Não foi possível carregar seus relatos:', erro);
+    state.carregando = false;
+    state.erroCarregamento = true;
     render();
   });
 });
@@ -63,8 +76,14 @@ function render() {
   const empty = document.getElementById('lista-empty');
   const loader = document.getElementById('relatos-loader-meus');
   if (loader) loader.hidden = !state.carregando;
-  empty.style.display = !state.carregando && state.todos.length === 0 ? 'block' : 'none';
-  container.style.display = !state.carregando && state.todos.length > 0 ? 'flex' : 'none';
+  empty.style.display = !state.carregando && lista.length === 0 ? 'block' : 'none';
+  container.style.display = !state.carregando && lista.length > 0 ? 'flex' : 'none';
+  document.getElementById('lista-empty-texto').textContent = state.erroCarregamento
+    ? 'Não foi possível carregar seus relatos. Recarregue a página para tentar novamente.'
+    : state.todos.length > 0
+      ? 'Nenhum relato encontrado com esses filtros.'
+      : 'Você ainda não enviou nenhum relato.';
+  document.getElementById('lista-empty-relatar').hidden = state.erroCarregamento || state.todos.length > 0;
 
   container.innerHTML = lista.map(cardHTML).join('');
 

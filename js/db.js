@@ -393,7 +393,7 @@ async function garantirContatosPrivados(uid, relatos) {
 }
 
 // ── Ouvir, em tempo real, apenas os relatos criados pelo próprio usuário ──
-export function ouvirRelatosDoUsuario(uid, callback) {
+export function ouvirRelatosDoUsuario(uid, callback, onErro) {
   const consulta = query(ref(db, "relatos"), orderByChild("autorId"), equalTo(uid));
   return onValue(consulta, (snapshot) => {
     const dados = snapshot.val();
@@ -403,7 +403,7 @@ export function ouvirRelatosDoUsuario(uid, callback) {
     lista.sort((a, b) => b.dataCriacao - a.dataCriacao);
     callback(lista);
     void garantirContatosPrivados(uid, lista);
-  });
+  }, onErro);
 }
 
 // ── Cidadão edita seu próprio relato (só título, categoria e descrição) ──

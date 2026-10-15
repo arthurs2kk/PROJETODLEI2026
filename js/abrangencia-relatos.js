@@ -4,7 +4,7 @@ export const RESTRINGIR_RELATOS_A_CAMPINA_GRANDE = true;
 
 // null mantém todos os municípios da Paraíba ativos ao desfazer a restrição.
 export const CIDADES_ATIVAS_RELATOS = RESTRINGIR_RELATOS_A_CAMPINA_GRANDE
-  ? [{ id: '2504009', nome: 'Campina Grande' }]
+  ? [{ id: '2504009', nome: 'Campina Grande', centroMapa: [-7.216, -35.888], zoomMapa: 13 }]
   : null;
 
 export const AREA_RELATOS = CIDADES_ATIVAS_RELATOS?.[0].nome || 'Paraíba';

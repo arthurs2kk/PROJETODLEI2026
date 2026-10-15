@@ -11,7 +11,7 @@ function aplicarTema(tema) {
     botao.setAttribute('aria-label', escuro ? 'Ativar modo claro' : 'Ativar modo escuro');
   });
 
-  document.querySelectorAll('#theme-toggle-mobile').forEach((botao) => {
+  document.querySelectorAll('#theme-toggle-mobile, #theme-toggle-desktop').forEach((botao) => {
     botao.innerHTML = escuro
       ? '<i class="ti ti-sun"></i> Modo claro'
       : '<i class="ti ti-moon"></i> Modo escuro';
@@ -30,7 +30,7 @@ const inicial = salvo || (
 aplicarTema(inicial);
 
 document.addEventListener('click', (event) => {
-  const botao = event.target.closest('#theme-toggle, #theme-toggle-mobile');
+  const botao = event.target.closest('#theme-toggle, #theme-toggle-mobile, #theme-toggle-desktop');
   if (!botao) return;
 
   event.preventDefault();

@@ -30,6 +30,8 @@
 
   --font: 'Noto Sans', Arial, sans-serif;
   --radius: 10px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
   --radius-lg: 16px;
 
   --shadow:    0 2px 10px rgba(12,50,111,0.07);
@@ -42,6 +44,7 @@
 }
 
 html { scroll-behavior: smooth; }
+[hidden] { display: none !important; }
 
 /* ── Movimento ── */
 @keyframes fadeInUp {

@@ -54,6 +54,8 @@ async function preencherSeletorCidades() {
     select.value = state.cidade;
   } catch (e) {
     console.warn('Não foi possível carregar a lista de cidades:', e);
+    select.replaceChildren(new Option('Cidades indisponíveis', ''));
+    select.disabled = true;
   }
 }
 

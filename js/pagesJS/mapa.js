@@ -1,7 +1,7 @@
 // ── Pro Povo — mapa.js ──
 import { buscarRelatosMapa } from "../db.js";
 import { obterMunicipiosPB } from "../cidades.js";
-import { CIDADES_ATIVAS_RELATOS } from "../abrangencia-relatos.js";
+import { AREA_RELATOS, CIDADES_ATIVAS_RELATOS } from "../abrangencia-relatos.js";
 import { initNavbar } from "../navbar.js";
 import { escapeHTML } from "../escapeHtml.js";
 
@@ -28,13 +28,18 @@ const BOUNDS_PB = [
   [-6.02, -34.79], // nordeste
 ];
 const CENTRO_PB = [-7.12, -36.72];
+const cidadeInicial = CIDADES_ATIVAS_RELATOS?.length === 1 ? CIDADES_ATIVAS_RELATOS[0] : null;
+const tituloMapa = cidadeInicial ? `Mapa de ${AREA_RELATOS}` : 'Mapa da Paraíba';
+document.title = `${tituloMapa} — Pro Povo`;
+document.getElementById('mapa-titulo').textContent = tituloMapa;
+document.getElementById('mapa-subtitulo').textContent = `Selecione uma cidade ativa para consultar os relatos em ${AREA_RELATOS}.`;
 
 // ── Inicializar o mapa restrito à Paraíba ──
 const mapa = L.map('mapa-container', {
   maxBounds: BOUNDS_PB,
   maxBoundsViscosity: 0.8,
   minZoom: 7
-}).setView(CENTRO_PB, 8);
+}).setView(cidadeInicial?.centroMapa || CENTRO_PB, cidadeInicial?.zoomMapa || 8);
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   attribution: '&copy; OpenStreetMap contributors',
@@ -60,6 +65,15 @@ function limparMarcadores() {
   marcadores = [];
 }
 
+function guardarCidade(cityId) {
+  try {
+    if (cityId) localStorage.setItem(CHAVE_CIDADE_MAPA, cityId);
+    else localStorage.removeItem(CHAVE_CIDADE_MAPA);
+  } catch (erro) {
+    console.warn('Não foi possível salvar a preferência de cidade:', erro);
+  }
+}
+
 // ── Carregar somente os relatos da cidade selecionada ──
 async function carregarCidade(cityId) {
   const numeroSolicitacao = ++solicitacaoAtual;
@@ -70,12 +84,12 @@ async function carregarCidade(cityId) {
   document.getElementById('mapa-aviso-cidade').hidden = cidadeValida;
   if (!cidadeValida) {
     document.getElementById('mapa-cidade').value = '';
-    localStorage.removeItem(CHAVE_CIDADE_MAPA);
+    guardarCidade('');
     contagem.textContent = 'Selecione uma cidade para carregar o mapa.';
     return;
   }
 
-  localStorage.setItem(CHAVE_CIDADE_MAPA, cityId);
+  guardarCidade(cityId);
   contagem.textContent = 'Carregando relatos desta cidade...';
 
   try {
@@ -117,7 +131,8 @@ async function carregarCidade(cityId) {
       const grupo = L.featureGroup(marcadores);
       mapa.fitBounds(grupo.getBounds().pad(0.12), { maxZoom: 15 });
     } else {
-      mapa.setView(CENTRO_PB, 8);
+      const cidade = cidadesDisponiveis.find(item => item.id === cityId);
+      mapa.setView(cidade?.centroMapa || CENTRO_PB, cidade?.zoomMapa || 8);
     }
 
     const atingiuLimite = relatos.length >= LIMITE_MARCADORES;
@@ -143,7 +158,12 @@ async function iniciarSeletorCidades() {
     });
     select.disabled = false;
 
-    const salva = localStorage.getItem(CHAVE_CIDADE_MAPA);
+    let salva = null;
+    try {
+      salva = localStorage.getItem(CHAVE_CIDADE_MAPA);
+    } catch (erro) {
+      console.warn('Não foi possível ler a preferência de cidade:', erro);
+    }
     if (cidadesDisponiveis.some(cidade => cidade.id === salva)) {
       select.value = salva;
       carregarCidade(salva);
