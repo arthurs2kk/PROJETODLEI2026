@@ -47,37 +47,89 @@ const BADGE_BY_CATEGORY = {
 initNavbar();
 
 // ── Guarda o usuário logado para uso no restante da página (ex: enviar relato) ──
+let resolverAutenticacao;
+const autenticacaoPronta = new Promise(resolve => { resolverAutenticacao = resolve; });
 onAuthStateChanged(auth, (user) => {
   const usuarioMudou = state.usuario?.uid !== user?.uid;
   if (usuarioMudou) state.voted = {};
   state.usuario = user;
+  resolverAutenticacao();
   if (usuarioMudou && state.relatosDoBanco.length > 0) renderCards();
 });
 
 // ── Modal ──
-async function openModal() {
-  if (!state.usuario) {
-    showToast('⚠️ Você precisa estar logado para relatar. Redirecionando para login...');
-    setTimeout(() => window.location.href = 'pages/userPages/login.html', 1000);
-    return;
+const modalRelato = document.getElementById('modal-overlay');
+const botoesRelatar = [...document.querySelectorAll('#btn-relatar, #btn-relatar-side')];
+let aberturaRelato = null;
+let botaoOrigemRelato = null;
+let overflowAntesRelato = '';
+
+async function openModal(event) {
+  if (aberturaRelato || modalRelato.classList.contains('open')) return;
+  const abertura = {};
+  aberturaRelato = abertura;
+  const origem = event?.currentTarget || document.activeElement;
+  const icones = botoesRelatar.map(btn => btn.querySelector('i')?.className);
+  botoesRelatar.forEach(btn => {
+    btn.disabled = true;
+    btn.setAttribute('aria-busy', 'true');
+    const icone = btn.querySelector('i');
+    if (icone) icone.className = 'ti ti-loader-2';
+  });
+
+  let timeout;
+  try {
+    const usuario = await Promise.race([
+      (async () => {
+        await autenticacaoPronta;
+        const atual = auth.currentUser;
+        // Quem já confirmou o e-mail pode abrir sem esperar outra consulta.
+        if (atual && !atual.emailVerified) await atual.reload();
+        return atual;
+      })(),
+      new Promise((_, reject) => {
+        timeout = setTimeout(() => reject(new Error('Tempo de autenticação excedido')), 8000);
+      })
+    ]);
+    if (aberturaRelato !== abertura) return;
+    if (!usuario) {
+      showToast('⚠️ Você precisa estar logado para relatar.');
+      window.location.href = 'pages/userPages/login.html';
+      return;
+    }
+    // A sessão pode ter mudado durante a consulta.
+    if (auth.currentUser !== usuario) return;
+    if (!usuario.emailVerified) {
+      showToast('⚠️ Confirme seu e-mail antes de relatar. Abra "Meu perfil" pra reenviar a confirmação, se precisar.');
+      return;
+    }
+    botaoOrigemRelato = origem;
+    overflowAntesRelato = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    modalRelato.classList.add('open');
+    // Foca o diálogo sem rolar a página nem abrir o teclado do celular.
+    modalRelato.querySelector('.modal').focus({ preventScroll: true });
+  } catch (erro) {
+    if (aberturaRelato === abertura) {
+      showToast('⚠️ Não foi possível verificar sua sessão. Confira a conexão e tente novamente.');
+    }
+  } finally {
+    clearTimeout(timeout);
+    if (aberturaRelato === abertura) aberturaRelato = null;
+    botoesRelatar.forEach((btn, i) => {
+      btn.disabled = false;
+      btn.removeAttribute('aria-busy');
+      const icone = btn.querySelector('i');
+      if (icone) icone.className = icones[i];
+    });
   }
-
-  // Recarrega o usuário antes de checar — assim, se ele confirmou o e-mail em
-  // outra aba/dispositivo nessa mesma sessão, o status já chega atualizado.
-  try { await state.usuario.reload(); } catch (e) { /* segue com o valor já carregado */ }
-
-  if (!auth.currentUser?.emailVerified) {
-    showToast('⚠️ Confirme seu e-mail antes de relatar. Abra "Meu perfil" pra reenviar a confirmação, se precisar.');
-    return;
-  }
-
-  document.getElementById('modal-overlay').classList.add('open');
-  document.body.style.overflow = 'hidden';
 }
 
 function closeModal() {
-  document.getElementById('modal-overlay').classList.remove('open');
-  document.body.style.overflow = '';
+  if (!modalRelato.classList.contains('open')) return;
+  modalRelato.classList.remove('open');
+  document.body.style.overflow = overflowAntesRelato;
+  botaoOrigemRelato?.focus({ preventScroll: true });
 }
 
 document.getElementById('btn-relatar')?.addEventListener('click', openModal);
@@ -86,6 +138,9 @@ document.getElementById('modal-close')?.addEventListener('click', closeModal);
 document.getElementById('btn-cancelar')?.addEventListener('click', closeModal);
 document.getElementById('modal-overlay')?.addEventListener('click', (e) => {
   if (e.target.id === 'modal-overlay') closeModal();
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeModal();
 });
 
 const uploadArea = document.getElementById('upload-area');
@@ -440,10 +495,8 @@ let detalheSolicitacao = 0;
 
 async function abrirDetalhe(resumo) {
   const solicitacao = ++detalheSolicitacao;
-  document.getElementById('detalhe-titulo').textContent = resumo.titulo;
-  document.getElementById('detalhe-desc').textContent = 'Carregando detalhes...';
-  document.getElementById('detalhe-foto').innerHTML = '';
-  document.getElementById('detalhe-resposta').innerHTML = '';
+  const inicial = detalhesRelatos.get(resumo.id) || resumo;
+  preencherDetalhe({ ...inicial, descricao: inicial.descricao || 'Carregando detalhes...' });
   document.getElementById('modal-detalhe-overlay').classList.add('open');
 
   try {
@@ -480,12 +533,20 @@ function preencherDetalhe(r) {
     <span><i class="ti ti-clock"></i> ${tempoRelativo(r.dataCriacao)}</span>`;
 }
 
-document.getElementById('detalhe-close')?.addEventListener('click', () => {
+function fecharDetalhe() {
+  ++detalheSolicitacao;
   document.getElementById('modal-detalhe-overlay').classList.remove('open');
+}
+
+document.getElementById('modal-detalhe-overlay')?.addEventListener('click', (e) => {
+  if (e.target === e.currentTarget) fecharDetalhe();
 });
-document.getElementById('detalhe-fechar-btn')?.addEventListener('click', () => {
-  document.getElementById('modal-detalhe-overlay').classList.remove('open');
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') fecharDetalhe();
 });
+
+document.getElementById('detalhe-close')?.addEventListener('click', fecharDetalhe);
+document.getElementById('detalhe-fechar-btn')?.addEventListener('click', fecharDetalhe);
 
 // ── HTML de cada card ──
 function cardHTML(r) {

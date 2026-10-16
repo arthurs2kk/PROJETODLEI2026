@@ -41,9 +41,12 @@
   --ease: cubic-bezier(.22,1,.36,1);
   --transition:      0.25s var(--ease);
   --transition-fast: 0.15s ease;
+  --popup-enter: 240ms;
+  --popup-exit: 160ms;
+  --popup-ease: cubic-bezier(.16, 1, .3, 1);
 }
 
-html { scroll-behavior: smooth; }
+html { scroll-behavior: smooth; scrollbar-gutter: stable; }
 [hidden] { display: none !important; }
 
 /* ── Movimento ── */
@@ -986,6 +989,39 @@ body {
 }
 
 /* ── Modal ── */
+#btn-relatar[aria-busy="true"],
+#btn-relatar-side[aria-busy="true"] {
+  cursor: progress;
+  transform: none;
+}
+
+#btn-relatar[aria-busy="true"] i,
+#btn-relatar-side[aria-busy="true"] i {
+  animation: spin .8s linear infinite;
+}
+
+#modal-overlay .modal {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 32px);
+  max-height: calc(100dvh - 32px);
+}
+
+#modal-overlay .modal-header,
+#modal-overlay .modal-footer {
+  flex-shrink: 0;
+}
+
+#modal-overlay .modal-body {
+  min-height: 0;
+  overscroll-behavior-y: contain;
+  scrollbar-gutter: stable;
+}
+
+@media (max-width: 640px) {
+  #modal-overlay .form-input { font-size: 16px; }
+}
+
 .modal-overlay {
   display: flex;
   position: fixed; inset: 0;
@@ -997,13 +1033,15 @@ body {
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
-  transition: opacity var(--transition), visibility var(--transition), background var(--transition);
+  transition: opacity var(--popup-exit) ease-out,
+    visibility 0s linear var(--popup-exit);
 }
 
 .modal-overlay.open {
   opacity: 1;
   visibility: visible;
   pointer-events: auto;
+  transition: opacity 180ms ease-out, visibility 0s;
 }
 
 .modal {
@@ -1013,14 +1051,29 @@ body {
   max-width: 520px;
   box-shadow: var(--shadow-lg);
   border-top: 5px solid var(--azul);
-  transform: translateY(18px) scale(.97);
+  transform: translateY(16px) scale(.96);
   opacity: 0;
-  transition: transform var(--transition), opacity var(--transition), background-color .22s var(--ease), border-color .22s var(--ease);
+  transition: transform var(--popup-exit) ease-in, opacity var(--popup-exit) ease-in,
+    background-color .22s var(--ease), border-color .22s var(--ease);
 }
 
 .modal-overlay.open .modal {
   transform: translateY(0) scale(1);
   opacity: 1;
+  transition: transform var(--popup-enter) var(--popup-ease), opacity 180ms ease-out,
+    background-color .22s var(--ease), border-color .22s var(--ease);
+}
+
+/* Anima o conteúdo sem interferir na posição calculada pelo Leaflet. */
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip-container {
+  transform-origin: center bottom;
+  animation: popupMapaIn 200ms var(--popup-ease) both;
+}
+
+@keyframes popupMapaIn {
+  from { opacity: 0; transform: translateY(6px) scale(.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 .modal-header {

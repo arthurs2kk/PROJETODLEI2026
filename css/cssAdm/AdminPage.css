@@ -353,13 +353,14 @@ html[data-theme="dark"] .resposta-existente strong {
   box-shadow: var(--shadow-lg);
   transform: scale(.97);
   opacity: 0;
-  transition: transform var(--transition), opacity var(--transition);
+  transition: transform var(--popup-exit) ease-in, opacity var(--popup-exit) ease-in;
 }
 
 .lightbox-overlay.open .lightbox-img {
 
   transform: scale(1);
   opacity: 1;
+  transition: transform var(--popup-enter) var(--popup-ease), opacity 180ms ease-out;
 }
 
 .lightbox-close {

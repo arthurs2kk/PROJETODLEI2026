@@ -62,7 +62,10 @@ function garantirModal() {
 
 function abrirPerfil() {
   garantirModal();
-  document.getElementById('perfil-overlay').classList.add('open');
+  const overlay = document.getElementById('perfil-overlay');
+  // Aplica o estado inicial mesmo quando o modal acabou de ser inserido.
+  overlay.getBoundingClientRect();
+  overlay.classList.add('open');
   document.body.style.overflow = 'hidden';
 }
 

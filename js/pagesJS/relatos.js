@@ -246,10 +246,8 @@ let detalheSolicitacao = 0;
 
 async function abrirDetalhe(resumo) {
   const solicitacao = ++detalheSolicitacao;
-  document.getElementById('detalhe-titulo').textContent = resumo.titulo;
-  document.getElementById('detalhe-desc').textContent = 'Carregando detalhes...';
-  document.getElementById('detalhe-foto').innerHTML = '';
-  document.getElementById('detalhe-resposta').innerHTML = '';
+  const inicial = detalhesRelatos.get(resumo.id) || resumo;
+  preencherDetalhe({ ...inicial, descricao: inicial.descricao || 'Carregando detalhes...' });
   document.getElementById('modal-detalhe-overlay').classList.add('open');
 
   try {
@@ -291,8 +289,15 @@ function preencherDetalhe(r) {
 document.getElementById('detalhe-close')?.addEventListener('click', fecharDetalhe);
 document.getElementById('detalhe-fechar-btn')?.addEventListener('click', fecharDetalhe);
 function fecharDetalhe() {
+  ++detalheSolicitacao;
   document.getElementById('modal-detalhe-overlay').classList.remove('open');
 }
+document.getElementById('modal-detalhe-overlay')?.addEventListener('click', (e) => {
+  if (e.target === e.currentTarget) fecharDetalhe();
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') fecharDetalhe();
+});
 
 // ── Spinner (usado no botão "Carregar mais") ──
 const s = document.createElement('style');

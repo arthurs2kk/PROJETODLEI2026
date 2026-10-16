@@ -654,27 +654,35 @@ const lightboxOverlay = document.getElementById('lightbox-overlay');
 const lightboxImg = document.getElementById('lightbox-img');
 let focoAntesLightbox;
 let overflowAntesLightbox;
+let lightboxSequencia = 0;
 
 function abrirLightbox(url) {
   if (!url || !lightboxOverlay || !lightboxImg) return;
+  ++lightboxSequencia;
   lightboxImg.src = url;
   focoAntesLightbox = document.activeElement;
   overflowAntesLightbox = document.body.style.overflow;
   lightboxOverlay.hidden = false;
   document.getElementById('painel-conteudo').inert = true;
   document.body.style.overflow = 'hidden';
+  // O atributo hidden remove o estado inicial do layout.
+  lightboxOverlay.getBoundingClientRect();
   lightboxOverlay.classList.add('open');
   document.getElementById('lightbox-close').focus();
 }
 
-function fecharLightbox() {
-  if (!lightboxOverlay || !lightboxImg || lightboxOverlay.hidden) return;
+async function fecharLightbox() {
+  if (!lightboxOverlay || !lightboxImg || !lightboxOverlay.classList.contains('open')) return;
+  const sequencia = ++lightboxSequencia;
   lightboxOverlay.classList.remove('open');
-  lightboxOverlay.hidden = true;
   document.getElementById('painel-conteudo').inert = false;
   document.body.style.overflow = overflowAntesLightbox;
-  lightboxImg.removeAttribute('src');
   if (focoAntesLightbox?.isConnected) focoAntesLightbox.focus({ preventScroll: true });
+  // Preserva a foto durante a saída; uma reabertura cancela a limpeza.
+  await Promise.allSettled(lightboxOverlay.getAnimations({ subtree: true }).map(animation => animation.finished));
+  if (sequencia !== lightboxSequencia) return;
+  lightboxOverlay.hidden = true;
+  lightboxImg.removeAttribute('src');
 }
 
 document.getElementById('lightbox-close')?.addEventListener('click', fecharLightbox);
@@ -683,7 +691,7 @@ lightboxOverlay?.addEventListener('click', (e) => {
 });
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') fecharLightbox();
-  if (e.key === 'Tab' && !lightboxOverlay.hidden) { e.preventDefault(); document.getElementById('lightbox-close').focus(); }
+  if (e.key === 'Tab' && lightboxOverlay.classList.contains('open')) { e.preventDefault(); document.getElementById('lightbox-close').focus(); }
 });
 
 let toastTimer;
