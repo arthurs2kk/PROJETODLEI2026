@@ -1,16 +1,56 @@
 // ── Pro Povo — login.js ──
-import { auth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, provider, signOut, onAuthStateChanged, updateProfile, sendPasswordResetEmail, sendEmailVerification } from "../firebase.js";
+import { auth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, provider, signOut, onAuthStateChanged, updateProfile, sendPasswordResetEmail, sendEmailVerification, setPersistence, browserLocalPersistence, browserSessionPersistence } from "../firebase.js";
 import { salvarUsuario, buscarUsuario } from "../db.js";
 import { carregarCidadesPB } from "../cidades.js";
 import { segundosRestantes, registrarEnvio } from "../cooldown.js";
 
-// ── Se já estiver logado, vai direto pro index ──
-// (exceto durante o login com Google, onde pode faltar completar o
-// cadastro com a cidade antes de liberar o acesso — ver entrarComGoogle)
-let googleFlowEmAndamento = false;
+// Um único fluxo controla autenticação, conclusão do perfil e redirecionamento.
+let fluxoEmAndamento = false;
+const botoesAuth = ['btn-login', 'btn-cadastrar', 'btn-google-login', 'btn-google-cadastro', 'tab-entrar', 'tab-cadastro'];
+const textosAuth = new Map(botoesAuth.map(id => [id, document.getElementById(id)?.innerHTML]));
 
-onAuthStateChanged(auth, (user) => {
-  if (user && !googleFlowEmAndamento) window.location.href = "../../index.html";
+function iniciarFluxo(btnId) {
+  if (fluxoEmAndamento) return false;
+  fluxoEmAndamento = true;
+  botoesAuth.forEach(id => { document.getElementById(id).disabled = true; });
+  if (btnId) setBtnLoading(btnId, true);
+  return true;
+}
+
+function liberarFluxo() {
+  fluxoEmAndamento = false;
+  botoesAuth.forEach(id => setBtnLoading(id, false, textosAuth.get(id)));
+}
+
+function redirecionar(user, atraso = 0) {
+  const navegar = () => {
+    if (auth.currentUser?.uid === user.uid) window.location.href = '../../index.html';
+    else liberarFluxo();
+  };
+  if (atraso) setTimeout(navegar, atraso);
+  else navegar();
+}
+
+async function concluirEntrada(user) {
+  const perfil = await buscarUsuario(user.uid);
+  if (auth.currentUser?.uid !== user.uid) { liberarFluxo(); return; }
+  if (!perfil) abrirModalGoogle(user);
+  else redirecionar(user);
+}
+
+function persistenciaEscolhida() {
+  return document.getElementById('lembrar').checked
+    ? browserLocalPersistence : browserSessionPersistence;
+}
+
+onAuthStateChanged(auth, async (user) => {
+  if (!user || !iniciarFluxo()) return;
+  try {
+    await concluirEntrada(user);
+  } catch (e) {
+    showToast('❌ Não foi possível carregar seu cadastro. Tente entrar novamente.');
+    liberarFluxo();
+  }
 });
 
 // ── Carregar cidades da Paraíba no select de cadastro ──
@@ -127,25 +167,28 @@ document.getElementById('link-esqueci-senha')?.addEventListener('click', async (
 });
 
 // ── LOGIN com e-mail/senha ──
-document.getElementById('btn-login')?.addEventListener('click', async () => {
+document.getElementById('form-entrar')?.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  if (fluxoEmAndamento) return;
   const email = document.getElementById('login-email').value.trim();
   const senha = document.getElementById('login-senha').value;
 
   if (!email || !senha) { showToast('⚠️ Preencha e-mail e senha.'); return; }
 
-  setBtnLoading('btn-login', true);
+  if (!iniciarFluxo('btn-login')) return;
   try {
-    await signInWithEmailAndPassword(auth, email, senha);
-    showToast('✅ Login realizado! Redirecionando...');
-    setTimeout(() => window.location.href = '../../index.html', 1000);
+    await setPersistence(auth, persistenciaEscolhida());
+    const cred = await signInWithEmailAndPassword(auth, email, senha);
+    await concluirEntrada(cred.user);
   } catch (e) {
     showToast('❌ ' + traduzirErro(e.code));
-    setBtnLoading('btn-login', false, '<i class="ti ti-login"></i> Entrar');
+    liberarFluxo();
   }
 });
 
 // ── CADASTRO com e-mail/senha ──
 document.getElementById('btn-cadastrar')?.addEventListener('click', async () => {
+  if (fluxoEmAndamento) return;
   const nome   = document.getElementById('cad-nome').value.trim();
   const email  = document.getElementById('cad-email').value.trim();
   const cidade = document.getElementById('cad-cidade').value.trim();
@@ -156,50 +199,56 @@ document.getElementById('btn-cadastrar')?.addEventListener('click', async () => 
   if (senha.length < 8) { showToast('⚠️ A senha deve ter pelo menos 8 caracteres.'); return; }
   if (!termos) { showToast('⚠️ Aceite os termos de uso para continuar.'); return; }
 
-  setBtnLoading('btn-cadastrar', true);
+  if (!iniciarFluxo('btn-cadastrar')) return;
+  let usuarioCriado = null;
   try {
     const cred = await createUserWithEmailAndPassword(auth, email, senha);
+    usuarioCriado = cred.user;
     await updateProfile(cred.user, { displayName: nome });
     await salvarUsuario(cred.user.uid, { nome, email, cidade });
 
     // Envia o e-mail de confirmação, mas não trava o cadastro se isso falhar
     // por algum motivo — a conta já foi criada com sucesso de qualquer forma.
     // O usuário sempre pode reenviar depois pela tela de "Meu perfil".
+    let confirmacaoEnviada = false;
     try {
       await sendEmailVerification(cred.user);
       registrarEnvio(`verificacao:${email.toLowerCase()}`);
+      confirmacaoEnviada = true;
     } catch (erroVerificacao) {
       console.warn('Não foi possível enviar o e-mail de confirmação agora:', erroVerificacao);
     }
 
-    showToast('✅ Conta criada! Enviamos um e-mail de confirmação — não esqueça de checar a caixa de spam/lixo eletrônico.');
-    setTimeout(() => window.location.href = '../../index.html', 3000);
+    showToast(confirmacaoEnviada
+      ? '✅ Conta criada! Enviamos um e-mail de confirmação — confira também a caixa de spam.'
+      : '✅ Conta criada! Não foi possível enviar a confirmação agora. Reenvie em “Meu perfil”.');
+    redirecionar(cred.user, 3000);
   } catch (e) {
-    showToast('❌ ' + traduzirErro(e.code));
-    setBtnLoading('btn-cadastrar', false, '<i class="ti ti-user-plus"></i> Criar minha conta');
+    if (usuarioCriado && auth.currentUser?.uid === usuarioCriado.uid) {
+      // A conta já existe. Permite completar o perfil sem tentar recriá-la.
+      abrirModalGoogle(usuarioCriado);
+      showToast('⚠️ Sua conta foi criada, mas falta concluir o cadastro. Selecione a cidade para tentar novamente.');
+    } else {
+      showToast('❌ ' + traduzirErro(e.code));
+      liberarFluxo();
+    }
   }
 });
 
 // ── Login/cadastro com Google ──
 // Só usado na tela de login de cidadãos: o painel administrativo (AdmLogin.html)
 // continua exclusivamente com e-mail/senha, sem nenhuma ligação com este fluxo.
-async function entrarComGoogle() {
-  googleFlowEmAndamento = true;
+async function entrarComGoogle(event) {
+  if (!iniciarFluxo(event?.currentTarget?.id)) return;
+  const persistencia = event?.currentTarget?.id === 'btn-google-cadastro'
+    ? browserLocalPersistence : persistenciaEscolhida();
   try {
+    // Abre o popup no próprio clique, sem aguardar operações de armazenamento.
     const cred = await signInWithPopup(auth, provider);
-    const perfilExistente = await buscarUsuario(cred.user.uid);
-
-    if (perfilExistente) {
-      showToast('✅ Login realizado com Google!');
-      setTimeout(() => window.location.href = '../../index.html', 800);
-      return;
-    }
-
-    // Primeira vez com Google — falta a cidade pra completar o cadastro
-    // (nome/e-mail vêm prontos, dataCadastro é preenchido em salvarUsuario)
-    abrirModalGoogle(cred.user);
+    await setPersistence(auth, persistencia);
+    await concluirEntrada(cred.user);
   } catch (e) {
-    googleFlowEmAndamento = false;
+    liberarFluxo();
     if (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') return;
     console.error(e);
     showToast('❌ ' + traduzirErro(e.code));
@@ -211,16 +260,26 @@ document.getElementById('btn-google-cadastro')?.addEventListener('click', entrar
 
 // ── Modal: pedir a cidade pra quem entrou pela primeira vez com Google ──
 function abrirModalGoogle(user) {
+  let salvando = false;
+  let saindo = false;
+  const continuar = document.getElementById('google-continuar');
+  const cancelar = document.getElementById('google-cancelar');
+  continuar.disabled = false;
+  cancelar.disabled = false;
+  continuar.innerHTML = '<i class="ti ti-arrow-right"></i> Continuar';
   carregarCidadesPB(document.getElementById('google-cidade'));
   document.getElementById('modal-google-overlay').classList.add('open');
   document.body.style.overflow = 'hidden';
 
   document.getElementById('google-continuar').onclick = async () => {
+    if (salvando || saindo || auth.currentUser?.uid !== user.uid) return;
     const cidade = document.getElementById('google-cidade').value;
     if (!cidade) { showToast('⚠️ Selecione sua cidade para continuar.'); return; }
 
     const btn = document.getElementById('google-continuar');
     const textoOriginal = btn.innerHTML;
+    salvando = true;
+    cancelar.disabled = true;
     btn.disabled = true;
     btn.innerHTML = '<i class="ti ti-loader-2" style="animation:spin 0.8s linear infinite"></i> Salvando...';
 
@@ -230,21 +289,43 @@ function abrirModalGoogle(user) {
         email: user.email,
         cidade
       });
+      if (!user.emailVerified) {
+        try {
+          await sendEmailVerification(user);
+          registrarEnvio(`verificacao:${user.email.toLowerCase()}`);
+        } catch (e) {
+          console.warn('Não foi possível enviar a confirmação. Ela pode ser reenviada pelo perfil.', e);
+        }
+      }
       showToast('✅ Cadastro completo! Redirecionando...');
-      setTimeout(() => window.location.href = '../../index.html', 800);
+      redirecionar(user);
     } catch (e) {
       console.error(e);
       showToast('❌ Não foi possível concluir o cadastro. Tente novamente.');
       btn.disabled = false;
       btn.innerHTML = textoOriginal;
+      salvando = false;
+      cancelar.disabled = false;
     }
   };
 
   document.getElementById('google-cancelar').onclick = async () => {
-    await signOut(auth);
-    googleFlowEmAndamento = false;
-    document.getElementById('modal-google-overlay').classList.remove('open');
-    document.body.style.overflow = '';
+    if (salvando || saindo) return;
+    saindo = true;
+    continuar.disabled = true;
+    cancelar.disabled = true;
+    try {
+      await signOut(auth);
+      document.getElementById('modal-google-overlay').classList.remove('open');
+      document.body.style.overflow = '';
+      liberarFluxo();
+    } catch (e) {
+      showToast('❌ Não foi possível sair. Tente novamente.');
+    } finally {
+      saindo = false;
+      continuar.disabled = false;
+      cancelar.disabled = false;
+    }
   };
 }
 

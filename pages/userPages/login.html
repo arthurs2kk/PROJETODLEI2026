@@ -129,14 +129,14 @@
         </div>
 
         <!-- FORM LOGIN -->
-        <div class="tab-content active" id="form-entrar">
+        <form class="tab-content active" id="form-entrar" novalidate>
           <p class="form-intro">Acesse sua conta para relatar e acompanhar problemas na sua cidade.</p>
 
           <div class="form-group">
             <label class="form-label">E-mail <span class="required">*</span></label>
             <div class="input-icon-wrap">
               <i class="ti ti-mail input-icon"></i>
-              <input type="email" class="form-input with-icon" id="login-email" placeholder="seu@email.com" />
+              <input type="email" class="form-input with-icon" id="login-email" autocomplete="username" placeholder="seu@email.com" />
             </div>
           </div>
 
@@ -144,7 +144,7 @@
             <label class="form-label">Senha <span class="required">*</span></label>
             <div class="input-icon-wrap">
               <i class="ti ti-lock input-icon"></i>
-              <input type="password" class="form-input with-icon" id="login-senha" placeholder="Sua senha" />
+              <input type="password" class="form-input with-icon" id="login-senha" autocomplete="current-password" placeholder="Sua senha" />
               <button class="toggle-senha" id="toggle-senha" type="button" aria-label="Mostrar senha">
                 <i class="ti ti-eye"></i>
               </button>
@@ -159,7 +159,7 @@
             <a href="#" class="forgot-link" id="link-esqueci-senha">Esqueci minha senha</a>
           </div>
 
-          <button class="btn-login" id="btn-login">
+          <button class="btn-login" id="btn-login" type="submit">
             <i class="ti ti-login"></i> Entrar
           </button>
 
@@ -168,7 +168,7 @@
           <button class="btn-social" id="btn-google-login" type="button">
             <i class="ti ti-brand-google"></i> Entrar com Google
           </button>
-        </div>
+        </form>
 
         <!-- FORM CADASTRO -->
         <div class="tab-content" id="form-cadastro">
@@ -255,7 +255,7 @@
         </div>
       </div>
       <div class="modal-body">
-        <p class="form-intro">Pra concluir seu cadastro com o Google, conta pra gente qual é a sua cidade na Paraíba.</p>
+        <p class="form-intro">Para concluir seu cadastro, selecione sua cidade na Paraíba.</p>
         <div class="form-group">
           <label class="form-label">Cidade (Paraíba) <span class="required">*</span></label>
           <select class="form-input" id="google-cidade">
