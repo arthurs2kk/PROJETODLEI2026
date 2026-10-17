@@ -742,14 +742,72 @@ body {
 }
 
 .sort-select {
+  
   font-size: 14px;
   font-family: var(--font);
   color: var(--cinza-5);
-  border: 1px solid var(--borda);
+  font-weight: 600;
+  min-width: 220px;
+}
+
+/* ── Seletores e ordenadores ──
+   Mantém o mesmo acabamento na página inicial, filtros, formulários, mapa e gestão. */
+:root select:is(.sort-select, .filtro-select, .mapa-select, .gestao-select, .form-input) {
+  appearance: none;
+  -webkit-appearance: none;
+  min-height: 42px;
+  padding-inline-end: 42px;
+  border-color: var(--borda);
   border-radius: var(--radius);
-  padding: 7px 10px;
-  background: var(--branco);
+  color: var(--cinza-5);
+  background-color: var(--branco);
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--azul) 50%),
+    linear-gradient(135deg, var(--azul) 50%, transparent 50%),
+    linear-gradient(to right, var(--borda), var(--borda));
+  background-position:
+    calc(100% - 18px) 50%,
+    calc(100% - 13px) 50%,
+    calc(100% - 36px) 50%;
+  background-size: 5px 5px, 5px 5px, 1px 22px;
+  background-repeat: no-repeat;
+  box-shadow: 0 1px 2px rgba(12, 50, 111, .05);
   cursor: pointer;
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    background-color var(--transition-fast);
+}
+
+:root select:is(.sort-select, .filtro-select, .mapa-select, .gestao-select, .form-input):hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--azul) 58%, var(--borda));
+  box-shadow: 0 3px 10px rgba(12, 50, 111, .10);
+}
+
+:root select:is(.sort-select, .filtro-select, .mapa-select, .gestao-select, .form-input):focus {
+  border-color: var(--azul);
+  box-shadow: 0 0 0 4px rgba(19, 81, 180, .12);
+  outline: 2px solid color-mix(in srgb, var(--azul) 72%, transparent);
+  outline-offset: 2px;
+}
+
+:root select:is(.sort-select, .filtro-select, .mapa-select, .gestao-select, .form-input):disabled {
+  color: var(--cinza-4);
+  background-color: var(--cinza-2);
+  cursor: not-allowed;
+  opacity: .72;
+}
+
+:root select:is(.sort-select, .filtro-select, .mapa-select, .gestao-select, .form-input) option {
+  color: var(--cinza-5);
+  background: var(--branco);
+}
+
+@media (max-width: 640px) {
+  .sort-select {
+    width: 100%;
+    min-width: 0;
+  }
 }
 
 /* ── Cards ── */
