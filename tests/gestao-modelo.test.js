@@ -42,15 +42,16 @@ test('busca tolera acentos, caixa e espaços sem ampliar o escopo dos demais fil
   assert.deepEqual(Array.from(filtrarRelatos(relatos, { busca: 'sao joao' }), r => r.id), ['local']);
 });
 
-test('concentração conta cada ocorrência uma vez e descarta coordenadas inválidas sem ponderar votos', async () => {
-  const { agruparConcentracao } = await modelo();
-  const celulas = agruparConcentracao([
+test('mapa de calor preserva coordenadas e conta cada ocorrência uma vez sem ponderar votos', async () => {
+  const { pontosMapaCalor } = await modelo();
+  const pontos = pontosMapaCalor([
     { ...base, votos: 500 }, { ...base, votos: 0 }, { ...base, lat: 200 },
     { ...base, lng: undefined }, { ...base, lat: '-7.23' }, { ...base, lat: -7.4 }
   ]);
-  assert.equal(celulas.length, 2);
-  assert.equal(celulas.reduce((soma, c) => soma + c.quantidade, 0), 3);
-  assert.equal(Math.max(...celulas.map(c => c.quantidade)), 2);
+  assert.deepEqual(JSON.parse(JSON.stringify(pontos)), [
+    [base.lat, base.lng, 1], [base.lat, base.lng, 1], [-7.4, base.lng, 1]
+  ]);
+  assert.equal(pontosMapaCalor([]).length, 0);
 });
 
 async function moduloPrioridades() {

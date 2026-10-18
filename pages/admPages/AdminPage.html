@@ -208,12 +208,12 @@
             <option value="categoria">Por categoria</option>
             <option value="status">Por situação</option>
             <option value="apoio">Por apoio da população</option>
-            <option value="concentracao">Concentração de relatos</option>
+            <option value="calor">Mapa de calor</option>
           </select>
         </label>
         <button type="button" class="btn-outline" id="admin-mapa-enquadrar">Enquadrar relatos</button>
       </div>
-      <p class="admin-ajuda" id="admin-mapa-ajuda">Arraste para explorar. Use + e − para ampliar ou reduzir. Os filtros acima também se aplicam ao mapa.</p>
+      <p class="admin-ajuda" id="admin-mapa-ajuda">Clique e arraste para explorar. Use a roda do mouse ou os botões + e − para ampliar ou reduzir. Os filtros acima também se aplicam ao mapa.</p>
       <div class="admin-mapa-wrap"><div id="admin-mapa" role="region" aria-label="Mapa das demandas do município" aria-describedby="admin-mapa-ajuda"></div><p class="admin-mapa-vazio" id="admin-mapa-vazio" role="status" hidden>Nenhum relato com localização neste filtro. Ajuste ou limpe os filtros acima.</p></div>
       <div id="admin-mapa-legenda" class="admin-mapa-legenda"></div>
       <p id="admin-mapa-info" class="admin-lote-info" aria-live="polite"></p>
@@ -260,6 +260,7 @@
    <script src="../../js/pagesJS/menu.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
   <script type="module" src="../../js/admJS/AdminPage.js"></script>
 </body>
 </html>

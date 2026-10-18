@@ -38,6 +38,8 @@
 .admin-mapa-legenda { display: flex; gap: 12px; flex-wrap: wrap; margin: 14px 0; color: var(--cinza-5); font-size: 12px; }
 .admin-mapa-legenda span { display: inline-flex; align-items: center; gap: 6px; }
 .admin-mapa-legenda i { display: inline-block; width: 11px; height: 11px; border-radius: 50%; }
+.admin-mapa-legenda .admin-mapa-calor-escala { flex-wrap: wrap; gap: 8px; }
+.admin-mapa-legenda .admin-mapa-calor-gradiente { width: 130px; height: 12px; border-radius: 6px; }
 .admin-mapa-popup { min-width: 200px; color: #252525; line-height: 1.5; }
 .admin-mapa-popup strong { font-size: 14px; }
 .admin-mapa-popup p { margin: 8px 0; }

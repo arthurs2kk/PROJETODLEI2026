@@ -396,7 +396,7 @@ async function tentarNotificarAutor(relato, enviar) {
 // ── Render principal ──
 async function verNoMapa(r) {
   localizarPendente = r.id;
-  if (document.getElementById('admin-mapa-tipo').value === 'concentracao') document.getElementById('admin-mapa-tipo').value = 'categoria';
+  if (document.getElementById('admin-mapa-tipo').value === 'calor') document.getElementById('admin-mapa-tipo').value = 'categoria';
   await selecionarAba('mapa');
 }
 

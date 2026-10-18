@@ -1,13 +1,16 @@
 import { escapeHTML } from '../escapeHtml.js';
-import { CORES_CATEGORIA, CORES_STATUS, STATUS_LABEL, coordenadasValidas, agruparConcentracao, chavePrioridade } from './gestaoModelo.js';
+import { CORES_CATEGORIA, CORES_STATUS, STATUS_LABEL, coordenadasValidas, pontosMapaCalor, chavePrioridade } from './gestaoModelo.js';
+
+const GRADIENTE_CALOR = { 0.2: '#2563eb', 0.4: '#06b6d4', 0.6: '#22c55e', 0.8: '#facc15', 1: '#dc2626' };
 
 export function criarMapaGestao(aoPriorizar, podePriorizar, aoAbrirRelato) {
-  const mapa = L.map('admin-mapa', { preferCanvas: true, scrollWheelZoom: false, zoomControl: false }).setView([-7.23, -35.88], 12);
+  const mapa = L.map('admin-mapa', { preferCanvas: true, dragging: true, scrollWheelZoom: true, zoomControl: false }).setView([-7.23, -35.88], 12);
   L.control.zoom({ zoomInTitle: 'Ampliar mapa', zoomOutTitle: 'Reduzir mapa' }).addTo(mapa);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; OpenStreetMap contributors', maxZoom: 19
   }).addTo(mapa);
   const camada = L.featureGroup().addTo(mapa);
+  let camadaCalor;
   let ajustar = true;
   let ultimaSelecao = '';
   let ultimaAssinatura = '';
@@ -33,6 +36,11 @@ export function criarMapaGestao(aoPriorizar, podePriorizar, aoAbrirRelato) {
       document.getElementById('admin-mapa-info').scrollIntoView({ block: 'nearest' });
       return;
     }
+    if (ultimoTipo === 'calor') {
+      const seletor = document.getElementById('admin-mapa-tipo');
+      seletor.value = 'categoria';
+      seletor.dispatchEvent(new Event('change'));
+    }
     document.getElementById('admin-mapa').scrollIntoView({ block: 'center' });
     mapa.setView([relato.lat, relato.lng], 17);
     marcadores.get(id)?.openPopup();
@@ -45,9 +53,12 @@ export function criarMapaGestao(aoPriorizar, podePriorizar, aoAbrirRelato) {
       relatosAtuais = relatos;
       const assinatura = JSON.stringify([tipo, relatos, prioridades, podePriorizar()]);
       if (assinatura === ultimaAssinatura && !ajustar && selecao === ultimaSelecao) return;
-      ultimaAssinatura = assinatura;
       const popupAberto = [...marcadores].find(([, marker]) => marker.isPopupOpen())?.[0];
       camada.clearLayers();
+      if (camadaCalor) {
+        mapa.removeLayer(camadaCalor);
+        camadaCalor = null;
+      }
       marcadores.clear();
       const localizados = relatos.filter(coordenadasValidas);
       const legenda = document.getElementById('admin-mapa-legenda');
@@ -60,19 +71,22 @@ export function criarMapaGestao(aoPriorizar, podePriorizar, aoAbrirRelato) {
         legenda.append(item);
       };
 
-      if (tipo === 'concentracao') {
-        const celulas = agruparConcentracao(localizados);
-        const maximo = Math.max(1, ...celulas.map(c => c.quantidade));
-        celulas.forEach(c => {
-          const intensidade = c.quantidade / maximo;
-          L.circle([c.lat, c.lng], {
-            radius: 170, color: '#b54708', weight: 1,
-            fillColor: intensidade > 0.66 ? '#cc2900' : intensidade > 0.33 ? '#e89b12' : '#ffd86b',
-            fillOpacity: 0.6
-          }).bindPopup(`${c.quantidade} relato(s) nesta célula de aproximadamente 300 m.`).addTo(camada);
-        });
-        adicionarLegenda('#ffd86b', 'Menor concentração');
-        adicionarLegenda('#cc2900', 'Maior concentração no filtro atual');
+      if (tipo === 'calor') {
+        if (localizados.length) {
+          camadaCalor = L.heatLayer(pontosMapaCalor(localizados), {
+            radius: 28, blur: 22, minOpacity: 0.25, max: 5, maxZoom: 16,
+            gradient: GRADIENTE_CALOR
+          }).addTo(mapa);
+        }
+        const escala = document.createElement('span');
+        escala.className = 'admin-mapa-calor-escala';
+        const faixa = document.createElement('i');
+        faixa.className = 'admin-mapa-calor-gradiente';
+        faixa.setAttribute('aria-hidden', 'true');
+        const cores = Object.entries(GRADIENTE_CALOR).sort(([a], [b]) => Number(a) - Number(b)).map(([, cor]) => cor);
+        faixa.style.background = `linear-gradient(to right, ${cores.join(', ')})`;
+        escala.append(document.createTextNode('Menos relatos'), faixa, document.createTextNode('Mais relatos próximos'));
+        legenda.append(escala);
       } else {
         localizados.forEach(r => {
           const priorizado = !!prioridades[chavePrioridade(r)];
@@ -113,7 +127,7 @@ export function criarMapaGestao(aoPriorizar, podePriorizar, aoAbrirRelato) {
         adicionarLegenda('#332600', 'Borda escura = prioridade interna');
       }
       const semLocalizacao = relatos.length - localizados.length;
-      document.getElementById('admin-mapa-info').textContent = `${localizados.length} de ${relatos.length} relato(s) do filtro no mapa.${semLocalizacao ? ` ${semLocalizacao} sem localização válida: consulte na lista abaixo.` : ''}${tipo === 'concentracao' ? ' A concentração conta relatos, sem ponderar apoios. Use outra visualização para selecionar marcadores individuais.' : ''}`;
+      document.getElementById('admin-mapa-info').textContent = `${localizados.length} de ${relatos.length} relato(s) do filtro no mapa.${semLocalizacao ? ` ${semLocalizacao} sem localização válida: consulte na lista abaixo.` : ''}${tipo === 'calor' ? ' Cores quentes indicam mais relatos próximos, sem ponderar apoios. A intensidade varia com o zoom. Use Localizar na lista abaixo para ver um relato individual.' : ''}`;
       document.getElementById('admin-mapa-vazio').hidden = localizados.length > 0;
       document.getElementById('admin-mapa-enquadrar').disabled = !localizados.length;
       const lista = document.getElementById('admin-mapa-lista');
@@ -142,6 +156,7 @@ export function criarMapaGestao(aoPriorizar, podePriorizar, aoAbrirRelato) {
       ultimaSelecao = selecao;
       if (popupAberto && tipo === ultimoTipo) marcadores.get(popupAberto)?.openPopup();
       ultimoTipo = tipo;
+      ultimaAssinatura = assinatura;
     },
     enquadrar() { ajustar = true; },
     localizar

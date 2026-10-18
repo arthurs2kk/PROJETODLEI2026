@@ -36,16 +36,7 @@ export function coordenadasValidas(r) {
   return Number.isFinite(r.lat) && Number.isFinite(r.lng) && Math.abs(r.lat) <= 90 && Math.abs(r.lng) <= 180;
 }
 
-// Células fixas de aproximadamente 300 m na Paraíba; cada relato conta uma vez.
-export function agruparConcentracao(relatos) {
-  const celulas = new Map();
-  for (const r of relatos.filter(coordenadasValidas)) {
-    const y = Math.floor(r.lat / 0.0027);
-    const x = Math.floor(r.lng / 0.0027);
-    const chave = `${y}/${x}`;
-    const celula = celulas.get(chave) || { lat: (y + 0.5) * 0.0027, lng: (x + 0.5) * 0.0027, quantidade: 0 };
-    celula.quantidade++;
-    celulas.set(chave, celula);
-  }
-  return [...celulas.values()];
+// Preserva a localização real e atribui o mesmo peso a cada relato, sem usar apoios.
+export function pontosMapaCalor(relatos) {
+  return relatos.filter(coordenadasValidas).map(r => [r.lat, r.lng, 1]);
 }
