@@ -66,7 +66,13 @@ function executar(escolhaInicial = null) {
     URL,
   };
   vm.runInNewContext(source, context, { filename: "vercel-analytics.js" });
-  return { elementos, scripts, escolha: () => escolha, recarregamentos: () => recarregamentos };
+  return {
+    elementos,
+    scripts,
+    analytics: context.window.proPovoAnalytics,
+    escolha: () => escolha,
+    recarregamentos: () => recarregamentos
+  };
 }
 
 test("analytics não carrega antes da escolha e permanece desligado com somente essenciais", () => {
@@ -85,6 +91,14 @@ test("analytics carrega apenas depois de permissão explícita", () => {
   assert.equal(pagina.escolha(), "permitido");
   assert.equal(pagina.scripts.length, 1);
   assert.equal(pagina.scripts[0].src, "/_vercel/insights/script.js");
+});
+
+test("aceite expresso do cadastro autoriza analytics pela mesma rotina", () => {
+  const pagina = executar("essencial");
+  pagina.analytics.autorizar();
+  assert.equal(pagina.escolha(), "permitido");
+  assert.equal(pagina.scripts.length, 1);
+  assert.equal(pagina.analytics.escolhaAtual(), "permitido");
 });
 
 test("revogar uma permissão anterior recarrega a página para interromper a coleta", () => {

@@ -275,14 +275,16 @@ body {
 /* btn-outline fora da navbar */
 .sidebar .btn-outline,
 .empty-state .btn-outline,
-.modal-footer .btn-outline {
+.modal .btn-outline,
+.privacidade-banner .btn-outline {
   border-color: var(--borda);
   color: var(--cinza-5);
 }
 
 .sidebar .btn-outline:hover,
 .empty-state .btn-outline:hover,
-.modal-footer .btn-outline:hover {
+.modal .btn-outline:hover,
+.privacidade-banner .btn-outline:hover {
   background: var(--cinza-2);
 }
 
@@ -1058,19 +1060,19 @@ body {
   animation: spin .8s linear infinite;
 }
 
-#modal-overlay .modal {
+.modal-overlay .modal {
   display: flex;
   flex-direction: column;
   max-height: calc(100vh - 32px);
   max-height: calc(100dvh - 32px);
 }
 
-#modal-overlay .modal-header,
-#modal-overlay .modal-footer {
+.modal-overlay .modal-header,
+.modal-overlay .modal-footer {
   flex-shrink: 0;
 }
 
-#modal-overlay .modal-body {
+.modal-overlay .modal-body {
   min-height: 0;
   overscroll-behavior-y: contain;
   scrollbar-gutter: stable;

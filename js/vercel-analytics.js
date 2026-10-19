@@ -49,6 +49,14 @@
     if (valor === 'essencial' && anterior === 'permitido') location.reload();
   }
 
+  // O cadastro usa esta mesma rotina depois que o usuário aceita, de forma
+  // expressa, que o aceite dos documentos também autoriza as estatísticas.
+  window.proPovoAnalytics = Object.freeze({
+    autorizar: () => escolher('permitido'),
+    revogar: () => escolher('essencial'),
+    escolhaAtual: lerEscolha
+  });
+
   function mostrarBanner() {
     removerBanner();
     const banner = document.createElement('section');

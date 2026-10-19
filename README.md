@@ -69,7 +69,7 @@ Because Realtime Database has no browser-side aggregate query such as `COUNT()`,
 
 Vercel Web Analytics
 
-All HTML pages load `js/vercel-analytics.js`, which asks the visitor to choose before injecting the official `/_vercel/insights/script.js`. Choosing **Somente essenciais** keeps Analytics disabled; choosing **Permitir estatísticas** loads it and stores that preference locally. The fixed **Privacidade** button reopens the choice. This project does not use Next.js or a bundler, so `@vercel/analytics/next` and an npm analytics dependency are unnecessary.
+All HTML pages load `js/vercel-analytics.js`, which asks the visitor to choose before injecting the official `/_vercel/insights/script.js`. Choosing **Somente essenciais** keeps Analytics disabled; choosing **Permitir estatísticas**, or expressly authorizing statistics in the account-creation checkbox, loads it and stores that preference locally. The fixed **Privacidade** button reopens the choice and allows revocation. This project does not use Next.js or a bundler, so `@vercel/analytics/next` and an npm analytics dependency are unnecessary.
 
 To activate collection:
 

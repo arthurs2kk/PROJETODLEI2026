@@ -187,6 +187,10 @@ document.getElementById('form-entrar')?.addEventListener('submit', async (event)
 });
 
 // ── CADASTRO com e-mail/senha ──
+function autorizarEstatisticasDoCadastro() {
+  window.proPovoAnalytics?.autorizar?.();
+}
+
 document.getElementById('btn-cadastrar')?.addEventListener('click', async () => {
   if (fluxoEmAndamento) return;
   const nome   = document.getElementById('cad-nome').value.trim();
@@ -206,6 +210,7 @@ document.getElementById('btn-cadastrar')?.addEventListener('click', async () => 
     usuarioCriado = cred.user;
     await updateProfile(cred.user, { displayName: nome });
     await salvarUsuario(cred.user.uid, { nome, email, cidade });
+    autorizarEstatisticasDoCadastro();
 
     // Envia o e-mail de confirmação, mas não trava o cadastro se isso falhar
     // por algum motivo — a conta já foi criada com sucesso de qualquer forma.
@@ -294,6 +299,7 @@ function abrirModalGoogle(user) {
         email: user.email,
         cidade
       });
+      autorizarEstatisticasDoCadastro();
       if (!user.emailVerified) {
         try {
           await sendEmailVerification(user);

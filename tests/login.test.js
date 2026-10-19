@@ -86,7 +86,12 @@ async function pagina(overrides = {}) {
   };
   const context = vm.createContext({
     document, console: { error() {}, warn() {} },
-    window: { location: { set href(value) { redirects.push(value); } } },
+    window: {
+      location: { set href(value) { redirects.push(value); } },
+      proPovoAnalytics: {
+        autorizar() { calls.push({ name: 'analytics', args: [] }); }
+      }
+    },
     setTimeout(callback, ms) { timers.push({ callback, ms }); return timers.length; },
     clearTimeout() {}
   });
@@ -199,6 +204,7 @@ test('Google: primeiro acesso aguarda cidade antes de redirecionar', async () =>
   const saved = p.calls.find(c => c.name === 'salvar');
   assert.equal(saved.args[0], user.uid);
   assert.equal(saved.args[1].cidade, 'Campina Grande');
+  assert.equal(p.count('analytics'), 1, 'O aceite do cadastro não autorizou as estatísticas');
   p.runTimers();
   assert.ok(p.redirects.includes('../../index.html'));
 });
@@ -212,6 +218,7 @@ test('Google: falha ao salvar a cidade mantém o modal e permite tentar novament
   assert.equal(p.get('google-continuar').disabled, false);
   assert.equal(p.get('modal-google-overlay').classList.contains('open'), true);
   assert.equal(p.redirects.length, 0);
+  assert.equal(p.count('analytics'), 0, 'As estatísticas foram autorizadas antes de concluir o cadastro');
   assert.match(p.toast(), /Não foi possível concluir/);
 });
 
@@ -298,6 +305,7 @@ test('cadastro por senha: aguarda salvar o perfil antes de redirecionar', async 
   wait.resolve();
   await registering;
   assert.equal(earlyRedirects.length, 0, 'O observador de autenticação redirecionou antes de salvar o perfil');
+  assert.equal(p.count('analytics'), 1, 'O aceite do cadastro não autorizou as estatísticas');
 });
 
 test('recuperação: e-mail vazio não envia mensagem', async () => {
