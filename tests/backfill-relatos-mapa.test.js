@@ -52,8 +52,9 @@ function bancoFalso(dados, { concorrencia, frio = false } = {}) {
 test("projeção copia só campos públicos do mapa e preserva o cityId numérico legado", () => {
   const mapa = criarRelatoMapa(relato, agora);
   assert.deepEqual(Object.keys(mapa).sort(), [
-    "titulo", "categoria", "endereco", "cityId", "status", "votos", "autorNome", "dataCriacao", "lat", "lng",
+    "titulo", "categoria", "endereco", "cityId", "status", "votos", "dataCriacao", "lat", "lng",
   ].sort());
+  assert.equal(mapa.autorNome, undefined);
   assert.equal(mapa.titulo, relato.titulo);
   const plano = prepararMigracao({ legado: { ...relato, cityId: 2504009 } }, {}, agora);
   assert.equal(plano.pendentes[0].cityId, "2504009");

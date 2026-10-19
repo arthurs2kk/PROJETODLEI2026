@@ -33,7 +33,15 @@ const relatoBase = {
 function marcador(relato) {
   return Object.fromEntries([
     "titulo", "categoria", "endereco", "cityId", "status", "votos",
-    "autorNome", "dataCriacao", "lat", "lng"
+    "dataCriacao", "lat", "lng"
+  ].filter(campo => relato[campo] != null).map(campo => [campo, relato[campo]]));
+}
+
+function detalhePublico(relato) {
+  return Object.fromEntries([
+    "titulo", "categoria", "descricao", "endereco", "lat", "lng", "cidade",
+    "cityId", "bairro", "fotoUrl", "status", "votos",
+    "dataCriacao", "dataEdicao", "dataResolucao", "respostaOficial", "dataResposta"
   ].filter(campo => relato[campo] != null).map(campo => [campo, relato[campo]]));
 }
 
@@ -51,6 +59,7 @@ function dadosIniciais(relato = relatoBase) {
   return {
     relatos: { [RELATO_ID]: { ...copiar(relato), ...filtros } },
     relatosResumo: { [RELATO_ID]: resumo },
+    relatosPublicos: { [RELATO_ID]: detalhePublico(relato) },
     relatosMapa: { [relato.cityId]: { [RELATO_ID]: marcador(relato) } }
   };
 }
@@ -304,7 +313,7 @@ test('falha na consulta de legados não publica nem guarda uma listagem parcial 
   assert.equal(ambiente.cache.size, 0);
 });
 
-test("criação grava relato, resumo, marcador, contato e cooldown em único update", async () => {
+test("criação grava relato, detalhes, resumo, marcador, contato e cooldown em único update", async () => {
   const relatoCG = { ...relatoBase, cityId: '2504009', cidade: 'Campina Grande', lat: -7.216, lng: -35.888 };
   const ambiente = await carregarDb({ usuarios: { cidadao: {
     nome: relatoBase.autorNome, email: "cidadao@example.com", cidade: "João Pessoa", dataCadastro: 1
@@ -314,7 +323,8 @@ test("criação grava relato, resumo, marcador, contato e cooldown em único upd
   assert.equal(ambiente.escritas[0].caminho, "");
   const payload = ambiente.escritas[0].alteracoes;
   assert.deepEqual(Object.keys(payload).sort(), [
-    `relatos/${RELATO_ID}`, `relatosResumo/${RELATO_ID}`, `relatosMapa/2504009/${RELATO_ID}`,
+    `relatos/${RELATO_ID}`, `relatosResumo/${RELATO_ID}`, `relatosPublicos/${RELATO_ID}`,
+    `relatosMapa/2504009/${RELATO_ID}`,
     `contatosRelatos/${RELATO_ID}`, "limitesEnvio/cidadao"
   ].sort());
   assert.deepEqual(payload[`relatosMapa/2504009/${RELATO_ID}`], {
@@ -332,10 +342,10 @@ test("criação fora de Campina Grande é recusada antes de upload e escrita", a
   assert.equal(ambiente.leituras.length, 0);
 });
 
-test("edição preserva relato completo e votos concorrentes nas três estruturas", async () => {
+test("edição preserva relato completo e votos concorrentes nas projeções", async () => {
   const ambiente = await carregarDb(dadosIniciais(), {
     antesAtualizar({ gravar }) {
-      for (const raiz of [`relatos/${RELATO_ID}`, `relatosResumo/${RELATO_ID}`, `relatosMapa/${CITY_ID}/${RELATO_ID}`]) {
+      for (const raiz of [`relatos/${RELATO_ID}`, `relatosResumo/${RELATO_ID}`, `relatosPublicos/${RELATO_ID}`, `relatosMapa/${CITY_ID}/${RELATO_ID}`]) {
         gravar(`${raiz}/votos`, 9);
       }
     }
@@ -364,7 +374,7 @@ test("edição preserva relato completo e votos concorrentes nas três estrutura
 test("status sincroniza projeções e preserva campos e votos atualizados em concorrência", async () => {
   const ambiente = await carregarDb(dadosIniciais(), {
     antesAtualizar({ gravar }) {
-      for (const raiz of [`relatos/${RELATO_ID}`, `relatosResumo/${RELATO_ID}`, `relatosMapa/${CITY_ID}/${RELATO_ID}`]) {
+      for (const raiz of [`relatos/${RELATO_ID}`, `relatosResumo/${RELATO_ID}`, `relatosPublicos/${RELATO_ID}`, `relatosMapa/${CITY_ID}/${RELATO_ID}`]) {
         gravar(`${raiz}/votos`, 7);
       }
     }
@@ -406,7 +416,7 @@ test("edição de legado mantém cityId numérico e coordenadas ausentes", async
   assert.equal(mapa.titulo, "Título revisado");
 });
 
-test("voto e remoção do voto atualizam os três totais atomicamente sem ler relato completo", async () => {
+test("voto e remoção atualizam todos os totais atomicamente sem leitura privada", async () => {
   const ambiente = await carregarDb(dadosIniciais({ ...relatoBase, cityId: 2504009 }));
   assert.equal(await ambiente.db.votar(RELATO_ID, "cidadao"), true);
   assert.equal(ambiente.dados.relatosMapa["2504009"][RELATO_ID].votos, 1);
@@ -417,10 +427,12 @@ test("voto e remoção do voto atualizam os três totais atomicamente sem ler re
     [`votos/${RELATO_ID}/cidadao`]: true,
     [`relatos/${RELATO_ID}/votos`]: 1,
     [`relatosResumo/${RELATO_ID}/votos`]: 1,
+    [`relatosPublicos/${RELATO_ID}/votos`]: 1,
     [`relatosMapa/2504009/${RELATO_ID}/votos`]: 1
   });
   assert.equal(ambiente.dados.relatos[RELATO_ID].votos, 0);
   assert.equal(ambiente.dados.relatosResumo[RELATO_ID].votos, 0);
+  assert.equal(ambiente.dados.relatosPublicos[RELATO_ID].votos, 0);
   assert.equal(ambiente.dados.relatosMapa["2504009"][RELATO_ID].votos, 0);
   assert.equal(ambiente.dados.votos[RELATO_ID].cidadao, undefined);
   assert.ok(ambiente.leituras.every(item => item.caminho !== `relatos/${RELATO_ID}`));
@@ -431,7 +443,7 @@ test("voto repete total obsoleto e sincroniza mapa com novo total", async () => 
   const ambiente = await carregarDb(dadosIniciais(), {
     antesAtualizar({ gravar, tentativa }) {
       if (tentativa !== 1) return;
-      for (const raiz of [`relatos/${RELATO_ID}`, `relatosResumo/${RELATO_ID}`, `relatosMapa/${CITY_ID}/${RELATO_ID}`]) {
+      for (const raiz of [`relatos/${RELATO_ID}`, `relatosResumo/${RELATO_ID}`, `relatosPublicos/${RELATO_ID}`, `relatosMapa/${CITY_ID}/${RELATO_ID}`]) {
         gravar(`${raiz}/votos`, 1);
       }
       throw Object.assign(new Error("concorrência"), { code: "PERMISSION_DENIED" });
@@ -441,6 +453,7 @@ test("voto repete total obsoleto e sincroniza mapa com novo total", async () => 
   assert.equal(ambiente.escritas.length, 2);
   assert.equal(ambiente.dados.relatosMapa[CITY_ID][RELATO_ID].votos, 2);
   assert.equal(ambiente.dados.relatosResumo[RELATO_ID].votos, 2);
+  assert.equal(ambiente.dados.relatosPublicos[RELATO_ID].votos, 2);
   assert.equal(ambiente.dados.relatos[RELATO_ID].votos, 2);
   assert.equal(ambiente.leituras.filter(item => item.caminho.endsWith("/cityId")).length, 1);
   assert.equal(ambiente.invalidacoes, 1);

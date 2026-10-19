@@ -52,12 +52,12 @@ test("preserva o detalhe de uma recusa desconhecida para o console", async () =>
   assert.equal(erro.cloudinaryMessage, "Unknown Cloudinary validation");
 });
 
-test("gera public_id isolado pelo usuário e pelo relato", async () => {
+test("gera public_id do relato sem expor o UID do usuário", async () => {
   const { publicIdImagem } = await carregarModuloCloudinary();
 
   assert.equal(
-    publicIdImagem("usuario_123", "-OabcDEF01234567890x"),
-    "pro_povo/usuario_123/-OabcDEF01234567890x"
+    publicIdImagem("-OabcDEF01234567890x"),
+    "pro_povo/relatos/-OabcDEF01234567890x"
   );
-  assert.throws(() => publicIdImagem("../outro", "-OabcDEF01234567890x"));
+  assert.throws(() => publicIdImagem("../outro"));
 });

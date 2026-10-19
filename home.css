@@ -1289,6 +1289,43 @@ body {
 .link-reenviar:disabled { color: var(--cinza-3); cursor: default; text-decoration: none; }
 
 /* ── Toast ── */
+.perfil-privacidade { padding-top: 16px; border-top: 1px solid var(--borda); }
+.perfil-privacidade h3 { margin-bottom: 6px; font-size: 16px; color: var(--cinza-5); }
+.perfil-privacidade p { margin-bottom: 12px; font-size: 13px; line-height: 1.5; color: var(--cinza-4); }
+.perfil-privacidade-acoes { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.btn-danger {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 9px 16px; border: 1px solid #b42318; border-radius: var(--radius);
+  background: var(--branco); color: #b42318; font: 600 14px var(--font); cursor: pointer;
+}
+.btn-danger:hover { background: #fff1f0; }
+.btn-danger:disabled { opacity: .6; cursor: wait; }
+
+.privacidade-banner {
+  position: fixed; z-index: 1000; right: 18px; bottom: 18px; left: 18px;
+  display: flex; align-items: center; justify-content: space-between; gap: 22px;
+  max-width: 980px; margin: 0 auto; padding: 18px 20px;
+  border: 1px solid var(--borda); border-radius: 12px;
+  background: var(--branco); color: var(--cinza-5); box-shadow: 0 12px 40px rgba(0, 0, 0, .22);
+}
+.privacidade-banner strong { display: block; margin-bottom: 4px; }
+.privacidade-banner p { margin: 0; font-size: 13px; line-height: 1.45; }
+.privacidade-banner a { color: var(--azul); font-weight: 600; }
+.privacidade-banner-acoes { display: flex; flex: 0 0 auto; gap: 8px; }
+
+.privacidade-preferencias {
+  position: fixed; z-index: 190; right: 12px; bottom: 12px; padding: 7px 11px;
+  border: 1px solid var(--borda); border-radius: 99px; background: var(--branco);
+  color: var(--cinza-5); box-shadow: var(--sombra-sm); font: 600 12px var(--font); cursor: pointer;
+}
+
+@media (max-width: 700px) {
+  .privacidade-banner { align-items: stretch; flex-direction: column; gap: 14px; }
+  .privacidade-banner-acoes { flex-direction: column; }
+  .privacidade-banner-acoes button { width: 100%; }
+}
+
 .toast {
   position: fixed;
   bottom: 28px; left: 50%;
@@ -1336,6 +1373,7 @@ body {
 }
 
 .site-footer a:hover { color: var(--azul-hover); }
+.footer-legal-links { margin-top: 10px; }
 
 /* ── Responsivo ── */
 @media (max-width: 860px) {

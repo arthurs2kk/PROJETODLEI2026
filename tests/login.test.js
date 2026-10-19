@@ -193,6 +193,9 @@ test('Google: primeiro acesso aguarda cidade antes de redirecionar', async () =>
   assert.equal(p.count('salvar'), 0);
   p.get('google-cidade').value = 'Campina Grande';
   await p.click('google-continuar');
+  assert.equal(p.count('salvar'), 0, 'O cadastro prosseguiu sem aceitar os documentos');
+  p.get('google-aceito-termos').checked = true;
+  await p.click('google-continuar');
   const saved = p.calls.find(c => c.name === 'salvar');
   assert.equal(saved.args[0], user.uid);
   assert.equal(saved.args[1].cidade, 'Campina Grande');
@@ -204,6 +207,7 @@ test('Google: falha ao salvar a cidade mantém o modal e permite tentar novament
   const p = await pagina({ buscar: async () => null, salvar: async () => { throw erro('PERMISSION_DENIED'); } });
   await p.click('btn-google-login');
   p.get('google-cidade').value = 'Campina Grande';
+  p.get('google-aceito-termos').checked = true;
   await p.click('google-continuar');
   assert.equal(p.get('google-continuar').disabled, false);
   assert.equal(p.get('modal-google-overlay').classList.contains('open'), true);
@@ -276,6 +280,7 @@ test('Google: não permite cancelar e sair durante a gravação do cadastro', as
   const p = await pagina({ buscar: async () => null, salvar: () => wait.promise });
   await p.click('btn-google-login');
   p.get('google-cidade').value = 'Campina Grande';
+  p.get('google-aceito-termos').checked = true;
   const saving = p.click('google-continuar');
   await p.click('google-cancelar');
   wait.resolve();
@@ -384,6 +389,7 @@ test('cadastro por senha: falha no perfil permite concluir sem criar outra conta
   assert.equal(p.get('modal-google-overlay').classList.contains('open'), true);
   assert.equal(p.redirects.length, 0);
   p.get('google-cidade').value = 'Campina Grande';
+  p.get('google-aceito-termos').checked = true;
   await p.click('google-continuar');
   assert.equal(p.count('criar'), 1);
   assert.equal(p.count('salvar'), 2);

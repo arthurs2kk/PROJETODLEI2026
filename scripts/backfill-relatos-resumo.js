@@ -1,6 +1,6 @@
 "use strict";
 
-const { cert, getApps, initializeApp } = require("firebase-admin/app");
+const { cert, deleteApp, getApps, initializeApp } = require("firebase-admin/app");
 const { getDatabase } = require("firebase-admin/database");
 
 const PROJECT_ID_PADRAO = "pro--povo";
@@ -30,7 +30,7 @@ function obterApp() {
 function criarResumo(relato) {
   const camposObrigatorios = [
     "titulo", "categoria", "descricao", "endereco", "cityId", "status",
-    "votos", "autorNome", "dataCriacao",
+    "votos", "dataCriacao",
   ];
   if (camposObrigatorios.some(campo => relato[campo] === undefined || relato[campo] === null)) return null;
 
@@ -43,7 +43,6 @@ function criarResumo(relato) {
     cityId: relato.cityId,
     status: relato.status,
     votos: relato.votos,
-    autorNome: relato.autorNome,
     dataCriacao: relato.dataCriacao,
     filtroCidadeCategoria: `${relato.cityId}|${relato.categoria}`,
     filtroCidadeStatus: `${relato.cityId}|${relato.status}`,
@@ -106,4 +105,7 @@ async function executar() {
 executar().catch(erro => {
   console.error("Não foi possível preparar os resumos públicos:", erro.message);
   process.exitCode = 1;
+}).finally(async () => {
+  const app = getApps().find(item => item.name === "backfill-relatos-resumo");
+  if (app) await deleteApp(app);
 });

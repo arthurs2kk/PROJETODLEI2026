@@ -63,19 +63,19 @@ Main Features
 
 Report loading without Cloud Functions
 
-The static frontend never reads the complete public report collection to build the home, public report list, city selector, or map. Home and the public list query `relatosResumo`, which excludes the full description, official response, coordinates, author ID and internal image metadata; the complete `relatos/{id}` record is fetched only when a visitor opens the details modal. The home reuses its limited 20-report feed for visible counters, the public list loads 25 reports at a time with indexed server-side city/category/status filters, the management panel loads 25 at a time, city selectors use the official IBGE municipality list, and the map queries `relatosMapa/{cityId}` ordered by `dataCriacao` with a 500-record cap. This map projection contains only the title, category, address, city ID, status, vote count, author name, creation timestamp and available coordinates. Administrative charts intentionally traverse the authorized scope in bounded batches because they require complete aggregates.
+The static frontend never reads the complete report collection to build public screens. Home and the public list query `relatosResumo`; the details modal reads `relatosPublicos/{id}`. Public projections exclude the author's UID, name and internal image metadata. The private `relatos/{id}` record is readable only by its author and by administrators within their authorized scope. The home reuses its limited 20-report feed for visible counters, the public list loads 25 reports at a time with indexed server-side city/category/status filters, the management panel loads 25 at a time, city selectors use the official IBGE municipality list, and the map queries `relatosMapa/{cityId}` ordered by `dataCriacao` with a 500-record cap. This map projection contains only the title, category, address, city ID, status, vote count, creation timestamp and available coordinates. Administrative charts intentionally traverse the authorized scope in bounded batches because they require complete aggregates.
 
 Because Realtime Database has no browser-side aggregate query such as `COUNT()`, the numbers shown on the home describe the currently loaded batch rather than a global total. Exact global counters would require a trusted backend or a separate manually maintained data source.
 
 Vercel Web Analytics
 
-All HTML pages load `js/vercel-analytics.js`, which injects the official `/_vercel/insights/script.js` integration outside localhost. This project does not use Next.js or a bundler, so `@vercel/analytics/next` and an npm analytics dependency are unnecessary.
+All HTML pages load `js/vercel-analytics.js`, which asks the visitor to choose before injecting the official `/_vercel/insights/script.js`. Choosing **Somente essenciais** keeps Analytics disabled; choosing **Permitir estatísticas** loads it and stores that preference locally. The fixed **Privacidade** button reopens the choice. This project does not use Next.js or a bundler, so `@vercel/analytics/next` and an npm analytics dependency are unnecessary.
 
 To activate collection:
 
 1. Open the project in Vercel, go to **Analytics**, and click **Enable** if it is not already enabled.
 2. Deploy the updated site to Vercel.
-3. Visit the deployed site and navigate between pages, then check the Analytics dashboard. Browser Network tools should show the insights script and requests to `/_vercel/insights/view`.
+3. Visit the deployed site, choose **Permitir estatísticas**, navigate between pages, and then check the Analytics dashboard. Browser Network tools should only show the insights script and requests to `/_vercel/insights/view` after that choice.
 
 The analytics endpoint is provided by Vercel after activation and deployment; it is not served by a local static server. Include the shared `vercel-analytics.js` helper in any new HTML pages.
 
@@ -120,7 +120,7 @@ Cloudinary image lifecycle
 
 Image uploads currently use the original direct browser flow with the
 `ProPovo` unsigned upload preset. The browser sends the file straight to
-Cloudinary with a report-specific `public_id`, then stores the returned HTTPS URL
+Cloudinary with a report-specific `public_id` that does not contain the user UID, then stores the returned HTTPS URL
 and `fotoPublicId` in Realtime Database. The API secret is never exposed to the
 browser.
 
@@ -174,6 +174,26 @@ records used by home and the public report list:
 The first command is a dry run. The second writes `relatosResumo` in batches of
 200 without removing or changing the complete records in `relatos`.
 
+Before deploying the rules that make complete reports private, prepare the public
+detail records for existing reports:
+
+`npm run migrate:relatos-publicos`
+
+`npm run migrate:relatos-publicos -- --apply`
+
+The first command only reports the number of pending records. Run the second only
+after a Realtime Database backup. It copies displayed fields to `relatosPublicos`
+without copying `autorId`, `autorNome` or `fotoPublicId`.
+
+Old Cloudinary paths contain the author's UID. Inspect and then migrate them with:
+
+`npm run migrate:fotos-sem-uid`
+
+`npm run migrate:fotos-sem-uid -- --apply`
+
+The apply command also requires `CLOUDINARY_API_KEY` and
+`CLOUDINARY_API_SECRET`. It renames the image assets and updates their stored URLs.
+
 Map index migration
 
 For the map rollout, inspect the new projection without changing production data:
@@ -217,7 +237,7 @@ use this rollout sequence without rerunning their migrations:
    map updates; old clients cannot make writes that leave the index stale.
 6. Verify creating, editing, voting, changing status and deleting a report, then
    restore normal writes. Verify the selected city's map loads from
-   `relatosMapa/{cityId}` and fetching details still uses `relatos/{id}`.
+   `relatosMapa/{cityId}` and fetching details uses `relatosPublicos/{id}`.
 
 `--apply` is idempotent and handles at most 200 pending projections per batch.
 Each batch uses a transaction at the database root so its comparison of the
@@ -231,6 +251,28 @@ overwriting a fresh vote/edit or recreating an already deleted report. A fresh
 dry run is required after such conflicts. The dry-run path never performs root
 reads or transactions.
 
+Presentation demo data
+
+The demo seed prepares 120 fictional reports spread across Campina Grande. Run
+the command without `--apply` first to validate the options without changing the
+database:
+
+`npm run seed:demo`
+
+To write the reports, pass a Firebase service-account file kept outside this
+repository:
+
+`npm run seed:demo -- --apply --credentials "C:\path\serviceAccount.json"`
+
+Every generated ID starts with `teste-mapa-calor-`, and every description ends
+with a discreet fictional-scenario notice. To remove only the 120 demo reports
+and all their public projections, votes and municipal priorities, run:
+
+`npm run seed:demo -- --remove --apply --credentials "C:\path\serviceAccount.json"`
+
+If a different amount was created with `--count`, repeat the same value when
+removing it. The seed never modifies reports whose IDs do not use its prefix.
+
 Deployment order:
 
 1. In Cloudinary, keep `ProPovo` set to **Unsigned** and restrict its
@@ -241,8 +283,8 @@ Deployment order:
    and then the map-index migration described above. Review every dry run before
    applying. For an existing installation adding only the map index, follow the
    map rollout sequence instead.
-4. Deploy the Realtime Database rules that bind each image to its user and report
-   and keep every public summary and map index synchronized:
+4. Deploy the Realtime Database rules that keep complete reports private and
+   require every public detail, summary and map index to stay synchronized:
    `npx firebase-tools deploy --only database --project pro--povo` (run
    `npx firebase-tools login` first if necessary).
 5. Configure the EmailJS service, template and three public identifiers described
@@ -432,8 +474,12 @@ Municipality's official response (if any)
 
 relatosResumo - Lightweight public listing records
 Title, category, a description preview of at most 240 characters, address and optional photo URL
-City/filter keys, status, votes, public author name and creation date
+City/filter keys, status, votes and creation date
 Kept synchronized atomically with report creation, editing, voting, status changes and deletion
+
+relatosPublicos - Public detail records
+Displayed report fields, coordinates, status, votes and official response
+Never contains `autorId`, `autorNome`, `fotoPublicId`, email or other private identifiers
 
 usuarios - Citizen accounts
 Name, email, city of residence

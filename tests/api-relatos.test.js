@@ -12,10 +12,10 @@ const {
   validarRelatoId
 } = require('../api/relatos.js')._internals;
 
-test('gera um public_id isolado por usuário e relato', () => {
+test('gera public_id do relato sem expor o UID do usuário', () => {
   assert.equal(
-    publicIdEsperado('usuario_123', '-OabcDEF01234567890x'),
-    'pro_povo/usuario_123/-OabcDEF01234567890x'
+    publicIdEsperado('-OabcDEF01234567890x'),
+    'pro_povo/relatos/-OabcDEF01234567890x'
   );
 });
 
@@ -116,6 +116,7 @@ test('API exclui relato, resumo, marcador, prioridade, votos e contato em um ún
     assert.deepEqual(api.atualizacoes, [{
       'relatos/-OabcDEF01234567890x': null,
       'relatosResumo/-OabcDEF01234567890x': null,
+      'relatosPublicos/-OabcDEF01234567890x': null,
       [`relatosMapa/${cityId}/-OabcDEF01234567890x`]: null,
         [`prioridadesMunicipais/${cityId}/-OabcDEF01234567890x`]: null,
       'votos/-OabcDEF01234567890x': null,

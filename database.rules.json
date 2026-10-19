@@ -4,59 +4,219 @@
     ".write": false,
     "relatos": {
       ".read": "auth != null && ((query.orderByChild === 'autorId' && query.equalTo === auth.uid) || root.child('admins').child(auth.uid).val() === true || (root.child('admins').child(auth.uid).child('ativo').val() === true && (root.child('admins').child(auth.uid).child('papel').val() === 'superadmin' || (root.child('admins').child(auth.uid).child('papel').val() === 'admin' && query.orderByChild === 'cityId' && root.child('admins').child(auth.uid).child('cityId').isString() && (query.equalTo === root.child('admins').child(auth.uid).child('cityId').val() || (query.startAt === root.child('admins').child(auth.uid).child('cityId').val() && query.endAt === root.child('admins').child(auth.uid).child('cityId').val()))))))",
-      ".indexOn": ["autorId", "status", "dataCriacao", "cityId", "categoria", "votos", "fotoUrl", "filtroCidadeCategoria", "filtroCidadeStatus", "filtroCategoriaStatus", "filtroCidadeCategoriaStatus"],
+      ".indexOn": [
+        "autorId",
+        "status",
+        "dataCriacao",
+        "cityId",
+        "categoria",
+        "votos",
+        "fotoUrl",
+        "filtroCidadeCategoria",
+        "filtroCidadeStatus",
+        "filtroCategoriaStatus",
+        "filtroCidadeCategoriaStatus"
+      ],
       "$relatoId": {
-        ".read": true,
-        ".write": "auth != null && ((!data.exists() && auth.token.email_verified === true && newData.hasChild('cityId') && newData.child('autorId').val() === auth.uid && newData.child('autorNome').val() === root.child('usuarios').child(auth.uid).child('nome').val() && newData.child('status').val() === 'aberto' && newData.child('votos').val() === 0 && !newData.hasChild('respostaOficial') && !newData.hasChild('dataResposta') && !newData.hasChild('dataResolucao') && !newData.hasChild('dataEdicao') && newData.child('dataCriacao').val() > now - 120000 && newData.child('dataCriacao').val() <= now + 120000 && newData.parent().parent().child('limitesEnvio').child(auth.uid).val() === newData.child('dataCriacao').val() && (!root.child('limitesEnvio').child(auth.uid).exists() || newData.child('dataCriacao').val() - root.child('limitesEnvio').child(auth.uid).val() >= 300000)) || (data.exists() && data.child('autorId').val() === auth.uid && data.child('status').val() === 'aberto' && ((!newData.exists() && !newData.parent().parent().child('votos').child($relatoId).exists()) || (newData.child('autorId').val() === data.child('autorId').val() && newData.child('autorNome').val() === data.child('autorNome').val() && newData.child('status').val() === data.child('status').val() && newData.child('votos').val() === data.child('votos').val() && newData.child('dataCriacao').val() === data.child('dataCriacao').val() && newData.child('respostaOficial').val() === data.child('respostaOficial').val() && newData.child('dataResolucao').val() === data.child('dataResolucao').val() && newData.child('dataResposta').val() === data.child('dataResposta').val() && newData.child('fotoUrl').val() === data.child('fotoUrl').val() && newData.child('endereco').val() === data.child('endereco').val() && newData.child('lat').val() === data.child('lat').val() && newData.child('lng').val() === data.child('lng').val() && newData.child('cidade').val() === data.child('cidade').val() && newData.child('cityId').val() === data.child('cityId').val() && newData.child('bairro').val() === data.child('bairro').val() && newData.hasChild('dataEdicao')))) || (data.exists() && (root.child('admins').child(auth.uid).val() === true || (root.child('admins').child(auth.uid).child('ativo').val() === true && (root.child('admins').child(auth.uid).child('papel').val() === 'superadmin' || (root.child('admins').child(auth.uid).child('papel').val() === 'admin' && root.child('admins').child(auth.uid).child('cityId').val() === data.child('cityId').val())))) && ((!newData.exists() && !newData.parent().parent().child('votos').child($relatoId).exists()) || (newData.child('titulo').val() === data.child('titulo').val() && newData.child('categoria').val() === data.child('categoria').val() && newData.child('descricao').val() === data.child('descricao').val() && newData.child('endereco').val() === data.child('endereco').val() && newData.child('lat').val() === data.child('lat').val() && newData.child('lng').val() === data.child('lng').val() && newData.child('cidade').val() === data.child('cidade').val() && newData.child('cityId').val() === data.child('cityId').val() && newData.child('bairro').val() === data.child('bairro').val() && newData.child('fotoUrl').val() === data.child('fotoUrl').val() && newData.child('autorId').val() === data.child('autorId').val() && newData.child('autorNome').val() === data.child('autorNome').val() && newData.child('dataCriacao').val() === data.child('dataCriacao').val() && newData.child('dataEdicao').val() === data.child('dataEdicao').val() && newData.child('votos').val() === data.child('votos').val()))) || (data.exists() && newData.exists() && auth.token.email_verified === true && newData.child('titulo').val() === data.child('titulo').val() && newData.child('categoria').val() === data.child('categoria').val() && newData.child('descricao').val() === data.child('descricao').val() && newData.child('endereco').val() === data.child('endereco').val() && newData.child('lat').val() === data.child('lat').val() && newData.child('lng').val() === data.child('lng').val() && newData.child('cidade').val() === data.child('cidade').val() && newData.child('cityId').val() === data.child('cityId').val() && newData.child('bairro').val() === data.child('bairro').val() && newData.child('fotoUrl').val() === data.child('fotoUrl').val() && newData.child('status').val() === data.child('status').val() && newData.child('autorId').val() === data.child('autorId').val() && newData.child('autorNome').val() === data.child('autorNome').val() && newData.child('dataCriacao').val() === data.child('dataCriacao').val() && newData.child('dataEdicao').val() === data.child('dataEdicao').val() && newData.child('dataResolucao').val() === data.child('dataResolucao').val() && newData.child('respostaOficial').val() === data.child('respostaOficial').val() && newData.child('dataResposta').val() === data.child('dataResposta').val() && ((!root.child('votos').child($relatoId).child(auth.uid).exists() && newData.parent().parent().child('votos').child($relatoId).child(auth.uid).val() === true && newData.child('votos').val() === data.child('votos').val() + 1) || (root.child('votos').child($relatoId).child(auth.uid).val() === true && !newData.parent().parent().child('votos').child($relatoId).child(auth.uid).exists() && newData.child('votos').val() === data.child('votos').val() - 1 && newData.child('votos').val() >= 0)))) && ((!newData.exists() && !newData.parent().parent().child('relatosResumo').child($relatoId).exists()) || (newData.exists() && newData.parent().parent().child('relatosResumo').child($relatoId).exists() && newData.parent().parent().child('relatosResumo').child($relatoId).child('titulo').val() === newData.child('titulo').val() && newData.parent().parent().child('relatosResumo').child($relatoId).child('categoria').val() === newData.child('categoria').val() && newData.parent().parent().child('relatosResumo').child($relatoId).child('endereco').val() === newData.child('endereco').val() && newData.parent().parent().child('relatosResumo').child($relatoId).child('cityId').val() === newData.child('cityId').val() && newData.parent().parent().child('relatosResumo').child($relatoId).child('status').val() === newData.child('status').val() && newData.parent().parent().child('relatosResumo').child($relatoId).child('votos').val() === newData.child('votos').val() && newData.parent().parent().child('relatosResumo').child($relatoId).child('autorNome').val() === newData.child('autorNome').val() && newData.parent().parent().child('relatosResumo').child($relatoId).child('dataCriacao').val() === newData.child('dataCriacao').val() && (newData.child('descricao').val().length > 240 || newData.parent().parent().child('relatosResumo').child($relatoId).child('descricaoResumo').val() === newData.child('descricao').val()))) && ((!newData.exists() && !newData.parent().parent().child('relatosMapa').child(data.child('cityId').val() + '').child($relatoId).exists()) || (newData.exists() && newData.parent().parent().child('relatosMapa').child(newData.child('cityId').val() + '').child($relatoId).exists() && newData.parent().parent().child('relatosMapa').child(newData.child('cityId').val() + '').child($relatoId).child('titulo').val() === newData.child('titulo').val() && newData.parent().parent().child('relatosMapa').child(newData.child('cityId').val() + '').child($relatoId).child('categoria').val() === newData.child('categoria').val() && newData.parent().parent().child('relatosMapa').child(newData.child('cityId').val() + '').child($relatoId).child('endereco').val() === newData.child('endereco').val() && newData.parent().parent().child('relatosMapa').child(newData.child('cityId').val() + '').child($relatoId).child('cityId').val() === newData.child('cityId').val() && newData.parent().parent().child('relatosMapa').child(newData.child('cityId').val() + '').child($relatoId).child('status').val() === newData.child('status').val() && newData.parent().parent().child('relatosMapa').child(newData.child('cityId').val() + '').child($relatoId).child('votos').val() === newData.child('votos').val() && newData.parent().parent().child('relatosMapa').child(newData.child('cityId').val() + '').child($relatoId).child('autorNome').val() === newData.child('autorNome').val() && newData.parent().parent().child('relatosMapa').child(newData.child('cityId').val() + '').child($relatoId).child('dataCriacao').val() === newData.child('dataCriacao').val() && newData.parent().parent().child('relatosMapa').child(newData.child('cityId').val() + '').child($relatoId).child('lat').val() === newData.child('lat').val() && newData.parent().parent().child('relatosMapa').child(newData.child('cityId').val() + '').child($relatoId).child('lng').val() === newData.child('lng').val()))",
-        ".validate": "(data.exists() || (newData.child('cityId').val() === '2504009' && newData.child('cidade').val() === 'Campina Grande')) && (data.exists() || newData.hasChildren(['titulo','categoria','descricao','endereco','lat','lng','cidade','cityId','status','votos','autorId','autorNome','dataCriacao'])) && (data.exists() || newData.hasChildren(['filtroCidadeCategoria','filtroCidadeStatus','filtroCategoriaStatus','filtroCidadeCategoriaStatus'])) && ((!data.hasChild('filtroCidadeCategoria') && !newData.hasChild('filtroCidadeCategoria')) || newData.child('filtroCidadeCategoria').val() === newData.child('cityId').val() + '|' + newData.child('categoria').val()) && ((!data.hasChild('filtroCidadeStatus') && !newData.hasChild('filtroCidadeStatus')) || newData.child('filtroCidadeStatus').val() === newData.child('cityId').val() + '|' + newData.child('status').val()) && ((!data.hasChild('filtroCategoriaStatus') && !newData.hasChild('filtroCategoriaStatus')) || newData.child('filtroCategoriaStatus').val() === newData.child('categoria').val() + '|' + newData.child('status').val()) && ((!data.hasChild('filtroCidadeCategoriaStatus') && !newData.hasChild('filtroCidadeCategoriaStatus')) || newData.child('filtroCidadeCategoriaStatus').val() === newData.child('cityId').val() + '|' + newData.child('categoria').val() + '|' + newData.child('status').val()) && (newData.child('status').val() === 'resolvido' ? (newData.child('dataResolucao').isNumber() || (data.child('status').val() === 'resolvido' && !data.hasChild('dataResolucao'))) : !newData.hasChild('dataResolucao')) && (newData.hasChild('respostaOficial') ? newData.child('dataResposta').isNumber() : !newData.hasChild('dataResposta')) && (data.exists() || ((!newData.hasChild('fotoUrl') && !newData.hasChild('fotoPublicId')) || (newData.hasChild('fotoUrl') && newData.child('fotoPublicId').val() === 'pro_povo/' + auth.uid + '/' + $relatoId))) && (!data.exists() || newData.child('fotoPublicId').val() === data.child('fotoPublicId').val())",
-        "titulo": { ".validate": "newData.isString() && newData.val().length >= 5 && newData.val().length <= 100" },
-        "categoria": { ".validate": "newData.isString() && (newData.val() === 'Buraco / Via danificada' || newData.val() === 'Iluminação pública' || newData.val() === 'Lixo / Entulho' || newData.val() === 'Água / Esgoto' || newData.val() === 'Áreas verdes' || newData.val() === 'Outros')" },
-        "descricao": { ".validate": "newData.isString() && newData.val().length >= 10 && newData.val().length <= 2000" },
-        "endereco": { ".validate": "newData.isString() && newData.val().length >= 3 && newData.val().length <= 300" },
-        "lat": { ".validate": "newData.isNumber() && newData.val() >= -8.31 && newData.val() <= -6.02" },
-        "lng": { ".validate": "newData.isNumber() && newData.val() >= -38.85 && newData.val() <= -34.79" },
-        "cidade": { ".validate": "newData.isString() && newData.val().length >= 2 && newData.val().length <= 100" },
-        "cityId": { ".validate": "(data.exists() && newData.val() === data.val()) || (newData.isString() && newData.val().matches(/^25[0-9]{5}$/))" },
-        "bairro": { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 120" },
-        "fotoUrl": { ".validate": "newData.isString() && newData.val().length <= 1000 && newData.val().matches(/^https:\\/\\/res\\.cloudinary\\.com\\/dk8uky6m\\/image\\/upload\\/.+$/)" },
-        "fotoPublicId": { ".validate": "newData.isString() && newData.val().length <= 300 && newData.val().matches(/^pro_povo\\/[A-Za-z0-9_-]+\\/[A-Za-z0-9_-]+$/) && ((!data.parent().exists() && newData.val() === 'pro_povo/' + auth.uid + '/' + $relatoId) || (data.parent().exists() && newData.val() === data.val()))" },
-        "status": { ".validate": "newData.isString() && (newData.val() === 'aberto' || newData.val() === 'andamento' || newData.val() === 'resolvido')" },
-        "filtroCidadeCategoria": { ".validate": "newData.isString() && newData.val() === newData.parent().child('cityId').val() + '|' + newData.parent().child('categoria').val()" },
-        "filtroCidadeStatus": { ".validate": "newData.isString() && newData.val() === newData.parent().child('cityId').val() + '|' + newData.parent().child('status').val()" },
-        "filtroCategoriaStatus": { ".validate": "newData.isString() && newData.val() === newData.parent().child('categoria').val() + '|' + newData.parent().child('status').val()" },
-        "filtroCidadeCategoriaStatus": { ".validate": "newData.isString() && newData.val() === newData.parent().child('cityId').val() + '|' + newData.parent().child('categoria').val() + '|' + newData.parent().child('status').val()" },
-        "votos": { ".validate": "newData.isNumber() && newData.val() >= 0" },
-        "autorId": { ".validate": "newData.isString() && newData.val().length > 0" },
-        "autorNome": { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 100" },
-        "dataCriacao": { ".validate": "newData.isNumber() && newData.val() <= now + 120000" },
-        "dataEdicao": { ".validate": "newData.isNumber() && (newData.val() === data.val() || (newData.val() > now - 120000 && newData.val() <= now + 120000))" },
-        "dataResolucao": { ".validate": "newData.isNumber() && (newData.val() === data.val() || (newData.val() > now - 120000 && newData.val() <= now + 120000))" },
-        "respostaOficial": { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 2000" },
-        "dataResposta": { ".validate": "newData.isNumber() && (newData.val() === data.val() || (newData.val() > now - 120000 && newData.val() <= now + 120000))" },
-        "$other": { ".validate": false }
+        ".read": "auth != null && (data.child('autorId').val() === auth.uid || root.child('admins').child(auth.uid).val() === true || (root.child('admins').child(auth.uid).child('ativo').val() === true && (root.child('admins').child(auth.uid).child('papel').val() === 'superadmin' || (root.child('admins').child(auth.uid).child('papel').val() === 'admin' && root.child('admins').child(auth.uid).child('cityId').val() === data.child('cityId').val()))))",
+        ".write": "auth != null && ((!data.exists() && auth.token.email_verified === true && newData.hasChild('cityId') && newData.child('autorId').val() === auth.uid && newData.child('autorNome').val() === root.child('usuarios').child(auth.uid).child('nome').val() && newData.child('status').val() === 'aberto' && newData.child('votos').val() === 0 && !newData.hasChild('respostaOficial') && !newData.hasChild('dataResposta') && !newData.hasChild('dataResolucao') && !newData.hasChild('dataEdicao') && newData.child('dataCriacao').val() > now - 120000 && newData.child('dataCriacao').val() <= now + 120000 && newData.parent().parent().child('limitesEnvio').child(auth.uid).val() === newData.child('dataCriacao').val() && (!root.child('limitesEnvio').child(auth.uid).exists() || newData.child('dataCriacao').val() - root.child('limitesEnvio').child(auth.uid).val() >= 300000)) || (data.exists() && data.child('autorId').val() === auth.uid && data.child('status').val() === 'aberto' && ((!newData.exists() && !newData.parent().parent().child('votos').child($relatoId).exists()) || (newData.child('autorId').val() === data.child('autorId').val() && newData.child('autorNome').val() === data.child('autorNome').val() && newData.child('status').val() === data.child('status').val() && newData.child('votos').val() === data.child('votos').val() && newData.child('dataCriacao').val() === data.child('dataCriacao').val() && newData.child('respostaOficial').val() === data.child('respostaOficial').val() && newData.child('dataResolucao').val() === data.child('dataResolucao').val() && newData.child('dataResposta').val() === data.child('dataResposta').val() && newData.child('fotoUrl').val() === data.child('fotoUrl').val() && newData.child('endereco').val() === data.child('endereco').val() && newData.child('lat').val() === data.child('lat').val() && newData.child('lng').val() === data.child('lng').val() && newData.child('cidade').val() === data.child('cidade').val() && newData.child('cityId').val() === data.child('cityId').val() && newData.child('bairro').val() === data.child('bairro').val() && newData.hasChild('dataEdicao')))) || (data.exists() && (root.child('admins').child(auth.uid).val() === true || (root.child('admins').child(auth.uid).child('ativo').val() === true && (root.child('admins').child(auth.uid).child('papel').val() === 'superadmin' || (root.child('admins').child(auth.uid).child('papel').val() === 'admin' && root.child('admins').child(auth.uid).child('cityId').val() === data.child('cityId').val())))) && ((!newData.exists() && !newData.parent().parent().child('votos').child($relatoId).exists()) || (newData.child('titulo').val() === data.child('titulo').val() && newData.child('categoria').val() === data.child('categoria').val() && newData.child('descricao').val() === data.child('descricao').val() && newData.child('endereco').val() === data.child('endereco').val() && newData.child('lat').val() === data.child('lat').val() && newData.child('lng').val() === data.child('lng').val() && newData.child('cidade').val() === data.child('cidade').val() && newData.child('cityId').val() === data.child('cityId').val() && newData.child('bairro').val() === data.child('bairro').val() && newData.child('fotoUrl').val() === data.child('fotoUrl').val() && newData.child('autorId').val() === data.child('autorId').val() && newData.child('autorNome').val() === data.child('autorNome').val() && newData.child('dataCriacao').val() === data.child('dataCriacao').val() && newData.child('dataEdicao').val() === data.child('dataEdicao').val() && newData.child('votos').val() === data.child('votos').val()))) || (data.exists() && newData.exists() && auth.token.email_verified === true && newData.child('titulo').val() === data.child('titulo').val() && newData.child('categoria').val() === data.child('categoria').val() && newData.child('descricao').val() === data.child('descricao').val() && newData.child('endereco').val() === data.child('endereco').val() && newData.child('lat').val() === data.child('lat').val() && newData.child('lng').val() === data.child('lng').val() && newData.child('cidade').val() === data.child('cidade').val() && newData.child('cityId').val() === data.child('cityId').val() && newData.child('bairro').val() === data.child('bairro').val() && newData.child('fotoUrl').val() === data.child('fotoUrl').val() && newData.child('status').val() === data.child('status').val() && newData.child('autorId').val() === data.child('autorId').val() && newData.child('autorNome').val() === data.child('autorNome').val() && newData.child('dataCriacao').val() === data.child('dataCriacao').val() && newData.child('dataEdicao').val() === data.child('dataEdicao').val() && newData.child('dataResolucao').val() === data.child('dataResolucao').val() && newData.child('respostaOficial').val() === data.child('respostaOficial').val() && newData.child('dataResposta').val() === data.child('dataResposta').val() && ((!root.child('votos').child($relatoId).child(auth.uid).exists() && newData.parent().parent().child('votos').child($relatoId).child(auth.uid).val() === true && newData.child('votos').val() === data.child('votos').val() + 1) || (root.child('votos').child($relatoId).child(auth.uid).val() === true && !newData.parent().parent().child('votos').child($relatoId).child(auth.uid).exists() && newData.child('votos').val() === data.child('votos').val() - 1 && newData.child('votos').val() >= 0)))) && ((!newData.exists() && !newData.parent().parent().child('relatosResumo').child($relatoId).exists()) || (newData.exists() && newData.parent().parent().child('relatosResumo').child($relatoId).exists() && newData.parent().parent().child('relatosResumo').child($relatoId).child('titulo').val() === newData.child('titulo').val() && newData.parent().parent().child('relatosResumo').child($relatoId).child('categoria').val() === newData.child('categoria').val() && newData.parent().parent().child('relatosResumo').child($relatoId).child('endereco').val() === newData.child('endereco').val() && newData.parent().parent().child('relatosResumo').child($relatoId).child('cityId').val() === newData.child('cityId').val() && newData.parent().parent().child('relatosResumo').child($relatoId).child('status').val() === newData.child('status').val() && newData.parent().parent().child('relatosResumo').child($relatoId).child('votos').val() === newData.child('votos').val() && newData.parent().parent().child('relatosResumo').child($relatoId).child('dataCriacao').val() === newData.child('dataCriacao').val() && (newData.child('descricao').val().length > 240 || newData.parent().parent().child('relatosResumo').child($relatoId).child('descricaoResumo').val() === newData.child('descricao').val()))) && ((!newData.exists() && !newData.parent().parent().child('relatosMapa').child(data.child('cityId').val() + '').child($relatoId).exists()) || (newData.exists() && newData.parent().parent().child('relatosMapa').child(newData.child('cityId').val() + '').child($relatoId).exists() && newData.parent().parent().child('relatosMapa').child(newData.child('cityId').val() + '').child($relatoId).child('titulo').val() === newData.child('titulo').val() && newData.parent().parent().child('relatosMapa').child(newData.child('cityId').val() + '').child($relatoId).child('categoria').val() === newData.child('categoria').val() && newData.parent().parent().child('relatosMapa').child(newData.child('cityId').val() + '').child($relatoId).child('endereco').val() === newData.child('endereco').val() && newData.parent().parent().child('relatosMapa').child(newData.child('cityId').val() + '').child($relatoId).child('cityId').val() === newData.child('cityId').val() && newData.parent().parent().child('relatosMapa').child(newData.child('cityId').val() + '').child($relatoId).child('status').val() === newData.child('status').val() && newData.parent().parent().child('relatosMapa').child(newData.child('cityId').val() + '').child($relatoId).child('votos').val() === newData.child('votos').val() && newData.parent().parent().child('relatosMapa').child(newData.child('cityId').val() + '').child($relatoId).child('dataCriacao').val() === newData.child('dataCriacao').val() && newData.parent().parent().child('relatosMapa').child(newData.child('cityId').val() + '').child($relatoId).child('lat').val() === newData.child('lat').val() && newData.parent().parent().child('relatosMapa').child(newData.child('cityId').val() + '').child($relatoId).child('lng').val() === newData.child('lng').val())) && ((!newData.exists() && !newData.parent().parent().child('relatosPublicos').child($relatoId).exists()) || (newData.exists() && newData.parent().parent().child('relatosPublicos').child($relatoId).exists() && newData.parent().parent().child('relatosPublicos').child($relatoId).child('titulo').val() === newData.child('titulo').val() && newData.parent().parent().child('relatosPublicos').child($relatoId).child('categoria').val() === newData.child('categoria').val() && newData.parent().parent().child('relatosPublicos').child($relatoId).child('descricao').val() === newData.child('descricao').val() && newData.parent().parent().child('relatosPublicos').child($relatoId).child('endereco').val() === newData.child('endereco').val() && newData.parent().parent().child('relatosPublicos').child($relatoId).child('lat').val() === newData.child('lat').val() && newData.parent().parent().child('relatosPublicos').child($relatoId).child('lng').val() === newData.child('lng').val() && newData.parent().parent().child('relatosPublicos').child($relatoId).child('cidade').val() === newData.child('cidade').val() && newData.parent().parent().child('relatosPublicos').child($relatoId).child('cityId').val() === newData.child('cityId').val() && newData.parent().parent().child('relatosPublicos').child($relatoId).child('bairro').val() === newData.child('bairro').val() && newData.parent().parent().child('relatosPublicos').child($relatoId).child('fotoUrl').val() === newData.child('fotoUrl').val() && newData.parent().parent().child('relatosPublicos').child($relatoId).child('status').val() === newData.child('status').val() && newData.parent().parent().child('relatosPublicos').child($relatoId).child('votos').val() === newData.child('votos').val() && newData.parent().parent().child('relatosPublicos').child($relatoId).child('dataCriacao').val() === newData.child('dataCriacao').val() && newData.parent().parent().child('relatosPublicos').child($relatoId).child('dataEdicao').val() === newData.child('dataEdicao').val() && newData.parent().parent().child('relatosPublicos').child($relatoId).child('dataResolucao').val() === newData.child('dataResolucao').val() && newData.parent().parent().child('relatosPublicos').child($relatoId).child('respostaOficial').val() === newData.child('respostaOficial').val() && newData.parent().parent().child('relatosPublicos').child($relatoId).child('dataResposta').val() === newData.child('dataResposta').val()))",
+        ".validate": "(data.exists() || (newData.child('cityId').val() === '2504009' && newData.child('cidade').val() === 'Campina Grande')) && (data.exists() || newData.hasChildren(['titulo','categoria','descricao','endereco','lat','lng','cidade','cityId','status','votos','autorId','autorNome','dataCriacao'])) && (data.exists() || newData.hasChildren(['filtroCidadeCategoria','filtroCidadeStatus','filtroCategoriaStatus','filtroCidadeCategoriaStatus'])) && ((!data.hasChild('filtroCidadeCategoria') && !newData.hasChild('filtroCidadeCategoria')) || newData.child('filtroCidadeCategoria').val() === newData.child('cityId').val() + '|' + newData.child('categoria').val()) && ((!data.hasChild('filtroCidadeStatus') && !newData.hasChild('filtroCidadeStatus')) || newData.child('filtroCidadeStatus').val() === newData.child('cityId').val() + '|' + newData.child('status').val()) && ((!data.hasChild('filtroCategoriaStatus') && !newData.hasChild('filtroCategoriaStatus')) || newData.child('filtroCategoriaStatus').val() === newData.child('categoria').val() + '|' + newData.child('status').val()) && ((!data.hasChild('filtroCidadeCategoriaStatus') && !newData.hasChild('filtroCidadeCategoriaStatus')) || newData.child('filtroCidadeCategoriaStatus').val() === newData.child('cityId').val() + '|' + newData.child('categoria').val() + '|' + newData.child('status').val()) && (newData.child('status').val() === 'resolvido' ? (newData.child('dataResolucao').isNumber() || (data.child('status').val() === 'resolvido' && !data.hasChild('dataResolucao'))) : !newData.hasChild('dataResolucao')) && (newData.hasChild('respostaOficial') ? newData.child('dataResposta').isNumber() : !newData.hasChild('dataResposta')) && (data.exists() || ((!newData.hasChild('fotoUrl') && !newData.hasChild('fotoPublicId')) || (newData.hasChild('fotoUrl') && newData.child('fotoPublicId').val() === 'pro_povo/relatos/' + $relatoId))) && (!data.exists() || newData.child('fotoPublicId').val() === data.child('fotoPublicId').val())",
+        "titulo": {
+          ".validate": "newData.isString() && newData.val().length >= 5 && newData.val().length <= 100"
+        },
+        "categoria": {
+          ".validate": "newData.isString() && (newData.val() === 'Buraco / Via danificada' || newData.val() === 'Iluminação pública' || newData.val() === 'Lixo / Entulho' || newData.val() === 'Água / Esgoto' || newData.val() === 'Áreas verdes' || newData.val() === 'Outros')"
+        },
+        "descricao": {
+          ".validate": "newData.isString() && newData.val().length >= 10 && newData.val().length <= 2000"
+        },
+        "endereco": {
+          ".validate": "newData.isString() && newData.val().length >= 3 && newData.val().length <= 300"
+        },
+        "lat": {
+          ".validate": "newData.isNumber() && newData.val() >= -8.31 && newData.val() <= -6.02"
+        },
+        "lng": {
+          ".validate": "newData.isNumber() && newData.val() >= -38.85 && newData.val() <= -34.79"
+        },
+        "cidade": {
+          ".validate": "newData.isString() && newData.val().length >= 2 && newData.val().length <= 100"
+        },
+        "cityId": {
+          ".validate": "(data.exists() && newData.val() === data.val()) || (newData.isString() && newData.val().matches(/^25[0-9]{5}$/))"
+        },
+        "bairro": {
+          ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 120"
+        },
+        "fotoUrl": {
+          ".validate": "newData.isString() && newData.val().length <= 1000 && newData.val().matches(/^https:\\/\\/res\\.cloudinary\\.com\\/dk8uky6m\\/image\\/upload\\/.+$/)"
+        },
+        "fotoPublicId": {
+          ".validate": "newData.isString() && newData.val().length <= 300 && ((!data.parent().exists() && newData.val() === 'pro_povo/relatos/' + $relatoId) || (data.parent().exists() && newData.val() === data.val()))"
+        },
+        "status": {
+          ".validate": "newData.isString() && (newData.val() === 'aberto' || newData.val() === 'andamento' || newData.val() === 'resolvido')"
+        },
+        "filtroCidadeCategoria": {
+          ".validate": "newData.isString() && newData.val() === newData.parent().child('cityId').val() + '|' + newData.parent().child('categoria').val()"
+        },
+        "filtroCidadeStatus": {
+          ".validate": "newData.isString() && newData.val() === newData.parent().child('cityId').val() + '|' + newData.parent().child('status').val()"
+        },
+        "filtroCategoriaStatus": {
+          ".validate": "newData.isString() && newData.val() === newData.parent().child('categoria').val() + '|' + newData.parent().child('status').val()"
+        },
+        "filtroCidadeCategoriaStatus": {
+          ".validate": "newData.isString() && newData.val() === newData.parent().child('cityId').val() + '|' + newData.parent().child('categoria').val() + '|' + newData.parent().child('status').val()"
+        },
+        "votos": {
+          ".validate": "newData.isNumber() && newData.val() >= 0"
+        },
+        "autorId": {
+          ".validate": "newData.isString() && newData.val().length > 0"
+        },
+        "autorNome": {
+          ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 100"
+        },
+        "dataCriacao": {
+          ".validate": "newData.isNumber() && newData.val() <= now + 120000"
+        },
+        "dataEdicao": {
+          ".validate": "newData.isNumber() && (newData.val() === data.val() || (newData.val() > now - 120000 && newData.val() <= now + 120000))"
+        },
+        "dataResolucao": {
+          ".validate": "newData.isNumber() && (newData.val() === data.val() || (newData.val() > now - 120000 && newData.val() <= now + 120000))"
+        },
+        "respostaOficial": {
+          ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 2000"
+        },
+        "dataResposta": {
+          ".validate": "newData.isNumber() && (newData.val() === data.val() || (newData.val() > now - 120000 && newData.val() <= now + 120000))"
+        },
+        "$other": {
+          ".validate": false
+        }
       }
     },
     "relatosResumo": {
       ".read": true,
-      ".indexOn": ["status", "dataCriacao", "cityId", "categoria", "votos", "filtroCidadeCategoria", "filtroCidadeStatus", "filtroCategoriaStatus", "filtroCidadeCategoriaStatus"],
+      ".indexOn": [
+        "status",
+        "dataCriacao",
+        "cityId",
+        "categoria",
+        "votos",
+        "filtroCidadeCategoria",
+        "filtroCidadeStatus",
+        "filtroCategoriaStatus",
+        "filtroCidadeCategoriaStatus"
+      ],
       "$relatoId": {
         ".write": "auth != null && ((!data.exists() && newData.exists() && newData.parent().parent().child('relatos').child($relatoId).child('autorId').val() === auth.uid && newData.parent().parent().child('relatos').child($relatoId).child('status').val() === 'aberto') || (data.exists() && newData.exists() && ((newData.parent().parent().child('relatos').child($relatoId).child('autorId').val() === auth.uid && newData.parent().parent().child('relatos').child($relatoId).child('status').val() === 'aberto') || ((root.child('admins').child(auth.uid).val() === true || (root.child('admins').child(auth.uid).child('ativo').val() === true && (root.child('admins').child(auth.uid).child('papel').val() === 'superadmin' || (root.child('admins').child(auth.uid).child('papel').val() === 'admin' && root.child('admins').child(auth.uid).child('cityId').val() === root.child('relatos').child($relatoId).child('cityId').val()))) || auth.token.email_verified === true) && newData.child('descricaoResumo').val() === data.child('descricaoResumo').val()))) || (data.exists() && !newData.exists() && !newData.parent().parent().child('relatos').child($relatoId).exists() && (root.child('relatos').child($relatoId).child('autorId').val() === auth.uid || root.child('admins').child(auth.uid).val() === true || (root.child('admins').child(auth.uid).child('ativo').val() === true && (root.child('admins').child(auth.uid).child('papel').val() === 'superadmin' || (root.child('admins').child(auth.uid).child('papel').val() === 'admin' && root.child('admins').child(auth.uid).child('cityId').val() === root.child('relatos').child($relatoId).child('cityId').val()))))))",
-        ".validate": "newData.hasChildren(['titulo','categoria','descricaoResumo','endereco','cityId','status','votos','autorNome','dataCriacao','filtroCidadeCategoria','filtroCidadeStatus','filtroCategoriaStatus','filtroCidadeCategoriaStatus']) && (newData.parent().parent().child('relatos').child($relatoId).hasChild('fotoUrl') ? newData.child('fotoUrl').val() === newData.parent().parent().child('relatos').child($relatoId).child('fotoUrl').val() : !newData.hasChild('fotoUrl'))",
-        "titulo": { ".validate": "newData.val() === newData.parent().parent().parent().child('relatos').child($relatoId).child('titulo').val()" },
-        "categoria": { ".validate": "newData.val() === newData.parent().parent().parent().child('relatos').child($relatoId).child('categoria').val()" },
-        "descricaoResumo": { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 240" },
-        "endereco": { ".validate": "newData.val() === newData.parent().parent().parent().child('relatos').child($relatoId).child('endereco').val()" },
-        "cityId": { ".validate": "newData.val() === newData.parent().parent().parent().child('relatos').child($relatoId).child('cityId').val()" },
-        "status": { ".validate": "newData.val() === newData.parent().parent().parent().child('relatos').child($relatoId).child('status').val()" },
-        "votos": { ".validate": "newData.val() === newData.parent().parent().parent().child('relatos').child($relatoId).child('votos').val()" },
-        "autorNome": { ".validate": "newData.val() === newData.parent().parent().parent().child('relatos').child($relatoId).child('autorNome').val()" },
-        "dataCriacao": { ".validate": "newData.val() === newData.parent().parent().parent().child('relatos').child($relatoId).child('dataCriacao').val()" },
-        "fotoUrl": { ".validate": "newData.val() === newData.parent().parent().parent().child('relatos').child($relatoId).child('fotoUrl').val()" },
-        "filtroCidadeCategoria": { ".validate": "newData.val() === newData.parent().child('cityId').val() + '|' + newData.parent().child('categoria').val()" },
-        "filtroCidadeStatus": { ".validate": "newData.val() === newData.parent().child('cityId').val() + '|' + newData.parent().child('status').val()" },
-        "filtroCategoriaStatus": { ".validate": "newData.val() === newData.parent().child('categoria').val() + '|' + newData.parent().child('status').val()" },
-        "filtroCidadeCategoriaStatus": { ".validate": "newData.val() === newData.parent().child('cityId').val() + '|' + newData.parent().child('categoria').val() + '|' + newData.parent().child('status').val()" },
-        "$other": { ".validate": false }
+        ".validate": "newData.hasChildren(['titulo','categoria','descricaoResumo','endereco','cityId','status','votos','dataCriacao','filtroCidadeCategoria','filtroCidadeStatus','filtroCategoriaStatus','filtroCidadeCategoriaStatus']) && (newData.parent().parent().child('relatos').child($relatoId).hasChild('fotoUrl') ? newData.child('fotoUrl').val() === newData.parent().parent().child('relatos').child($relatoId).child('fotoUrl').val() : !newData.hasChild('fotoUrl'))",
+        "titulo": {
+          ".validate": "newData.val() === newData.parent().parent().parent().child('relatos').child($relatoId).child('titulo').val()"
+        },
+        "categoria": {
+          ".validate": "newData.val() === newData.parent().parent().parent().child('relatos').child($relatoId).child('categoria').val()"
+        },
+        "descricaoResumo": {
+          ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 240"
+        },
+        "endereco": {
+          ".validate": "newData.val() === newData.parent().parent().parent().child('relatos').child($relatoId).child('endereco').val()"
+        },
+        "cityId": {
+          ".validate": "newData.val() === newData.parent().parent().parent().child('relatos').child($relatoId).child('cityId').val()"
+        },
+        "status": {
+          ".validate": "newData.val() === newData.parent().parent().parent().child('relatos').child($relatoId).child('status').val()"
+        },
+        "votos": {
+          ".validate": "newData.val() === newData.parent().parent().parent().child('relatos').child($relatoId).child('votos').val()"
+        },
+        "dataCriacao": {
+          ".validate": "newData.val() === newData.parent().parent().parent().child('relatos').child($relatoId).child('dataCriacao').val()"
+        },
+        "fotoUrl": {
+          ".validate": "newData.val() === newData.parent().parent().parent().child('relatos').child($relatoId).child('fotoUrl').val()"
+        },
+        "filtroCidadeCategoria": {
+          ".validate": "newData.val() === newData.parent().child('cityId').val() + '|' + newData.parent().child('categoria').val()"
+        },
+        "filtroCidadeStatus": {
+          ".validate": "newData.val() === newData.parent().child('cityId').val() + '|' + newData.parent().child('status').val()"
+        },
+        "filtroCategoriaStatus": {
+          ".validate": "newData.val() === newData.parent().child('categoria').val() + '|' + newData.parent().child('status').val()"
+        },
+        "filtroCidadeCategoriaStatus": {
+          ".validate": "newData.val() === newData.parent().child('cityId').val() + '|' + newData.parent().child('categoria').val() + '|' + newData.parent().child('status').val()"
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
+    },
+    "relatosPublicos": {
+      ".read": true,
+      "$relatoId": {
+        ".write": "auth != null && ((newData.exists() && newData.parent().parent().child('relatos').child($relatoId).exists()) || (!newData.exists() && !newData.parent().parent().child('relatos').child($relatoId).exists()))",
+        ".validate": "newData.hasChildren(['titulo','categoria','descricao','endereco','cityId','status','votos','dataCriacao']) && (newData.hasChild('lat') === newData.parent().parent().child('relatos').child($relatoId).hasChild('lat')) && (newData.hasChild('lng') === newData.parent().parent().child('relatos').child($relatoId).hasChild('lng')) && (newData.hasChild('cidade') === newData.parent().parent().child('relatos').child($relatoId).hasChild('cidade')) && (newData.hasChild('bairro') === newData.parent().parent().child('relatos').child($relatoId).hasChild('bairro')) && (newData.hasChild('fotoUrl') === newData.parent().parent().child('relatos').child($relatoId).hasChild('fotoUrl')) && (newData.hasChild('dataEdicao') === newData.parent().parent().child('relatos').child($relatoId).hasChild('dataEdicao')) && (newData.hasChild('dataResolucao') === newData.parent().parent().child('relatos').child($relatoId).hasChild('dataResolucao')) && (newData.hasChild('respostaOficial') === newData.parent().parent().child('relatos').child($relatoId).hasChild('respostaOficial')) && (newData.hasChild('dataResposta') === newData.parent().parent().child('relatos').child($relatoId).hasChild('dataResposta'))",
+        "titulo": {
+          ".validate": "newData.val() === newData.parent().parent().parent().child('relatos').child($relatoId).child('titulo').val()"
+        },
+        "categoria": {
+          ".validate": "newData.val() === newData.parent().parent().parent().child('relatos').child($relatoId).child('categoria').val()"
+        },
+        "descricao": {
+          ".validate": "newData.val() === newData.parent().parent().parent().child('relatos').child($relatoId).child('descricao').val()"
+        },
+        "endereco": {
+          ".validate": "newData.val() === newData.parent().parent().parent().child('relatos').child($relatoId).child('endereco').val()"
+        },
+        "lat": {
+          ".validate": "newData.val() === newData.parent().parent().parent().child('relatos').child($relatoId).child('lat').val()"
+        },
+        "lng": {
+          ".validate": "newData.val() === newData.parent().parent().parent().child('relatos').child($relatoId).child('lng').val()"
+        },
+        "cidade": {
+          ".validate": "newData.val() === newData.parent().parent().parent().child('relatos').child($relatoId).child('cidade').val()"
+        },
+        "cityId": {
+          ".validate": "newData.val() === newData.parent().parent().parent().child('relatos').child($relatoId).child('cityId').val()"
+        },
+        "bairro": {
+          ".validate": "newData.val() === newData.parent().parent().parent().child('relatos').child($relatoId).child('bairro').val()"
+        },
+        "fotoUrl": {
+          ".validate": "newData.val() === newData.parent().parent().parent().child('relatos').child($relatoId).child('fotoUrl').val()"
+        },
+        "status": {
+          ".validate": "newData.val() === newData.parent().parent().parent().child('relatos').child($relatoId).child('status').val()"
+        },
+        "votos": {
+          ".validate": "newData.val() === newData.parent().parent().parent().child('relatos').child($relatoId).child('votos').val()"
+        },
+        "dataCriacao": {
+          ".validate": "newData.val() === newData.parent().parent().parent().child('relatos').child($relatoId).child('dataCriacao').val()"
+        },
+        "dataEdicao": {
+          ".validate": "newData.val() === newData.parent().parent().parent().child('relatos').child($relatoId).child('dataEdicao').val()"
+        },
+        "dataResolucao": {
+          ".validate": "newData.val() === newData.parent().parent().parent().child('relatos').child($relatoId).child('dataResolucao').val()"
+        },
+        "respostaOficial": {
+          ".validate": "newData.val() === newData.parent().parent().parent().child('relatos').child($relatoId).child('respostaOficial').val()"
+        },
+        "dataResposta": {
+          ".validate": "newData.val() === newData.parent().parent().parent().child('relatos').child($relatoId).child('dataResposta').val()"
+        },
+        "$other": {
+          ".validate": false
+        }
       }
     },
     "relatosMapa": {
@@ -67,7 +227,7 @@
         ],
         "$relatoId": {
           ".write": "auth != null && ((!newData.exists() && data.exists() && root.child('relatos').child($relatoId).exists() && !newData.parent().parent().parent().child('relatos').child($relatoId).exists()) || (newData.exists() && newData.parent().parent().parent().child('relatos').child($relatoId).exists() && (!root.child('relatos').child($relatoId).exists() || newData.parent().parent().parent().child('relatos').child($relatoId).child('titulo').val() !== root.child('relatos').child($relatoId).child('titulo').val() || newData.parent().parent().parent().child('relatos').child($relatoId).child('categoria').val() !== root.child('relatos').child($relatoId).child('categoria').val() || newData.parent().parent().parent().child('relatos').child($relatoId).child('descricao').val() !== root.child('relatos').child($relatoId).child('descricao').val() || newData.parent().parent().parent().child('relatos').child($relatoId).child('status').val() !== root.child('relatos').child($relatoId).child('status').val() || newData.parent().parent().parent().child('relatos').child($relatoId).child('votos').val() !== root.child('relatos').child($relatoId).child('votos').val() || newData.parent().parent().parent().child('relatos').child($relatoId).child('dataEdicao').val() !== root.child('relatos').child($relatoId).child('dataEdicao').val() || newData.parent().parent().parent().child('relatos').child($relatoId).child('dataResolucao').val() !== root.child('relatos').child($relatoId).child('dataResolucao').val() || newData.parent().parent().parent().child('relatos').child($relatoId).child('respostaOficial').val() !== root.child('relatos').child($relatoId).child('respostaOficial').val() || newData.parent().parent().parent().child('relatos').child($relatoId).child('dataResposta').val() !== root.child('relatos').child($relatoId).child('dataResposta').val())))",
-          ".validate": "newData.hasChildren(['titulo','categoria','endereco','cityId','status','votos','autorNome','dataCriacao']) && $cityId === newData.parent().parent().parent().child('relatos').child($relatoId).child('cityId').val() + '' && newData.child('titulo').val() === newData.parent().parent().parent().child('relatos').child($relatoId).child('titulo').val() && newData.child('categoria').val() === newData.parent().parent().parent().child('relatos').child($relatoId).child('categoria').val() && newData.child('endereco').val() === newData.parent().parent().parent().child('relatos').child($relatoId).child('endereco').val() && newData.child('cityId').val() === newData.parent().parent().parent().child('relatos').child($relatoId).child('cityId').val() && newData.child('status').val() === newData.parent().parent().parent().child('relatos').child($relatoId).child('status').val() && newData.child('votos').val() === newData.parent().parent().parent().child('relatos').child($relatoId).child('votos').val() && newData.child('autorNome').val() === newData.parent().parent().parent().child('relatos').child($relatoId).child('autorNome').val() && newData.child('dataCriacao').val() === newData.parent().parent().parent().child('relatos').child($relatoId).child('dataCriacao').val() && newData.child('lat').val() === newData.parent().parent().parent().child('relatos').child($relatoId).child('lat').val() && newData.child('lng').val() === newData.parent().parent().parent().child('relatos').child($relatoId).child('lng').val()",
+          ".validate": "newData.hasChildren(['titulo','categoria','endereco','cityId','status','votos','dataCriacao']) && $cityId === newData.parent().parent().parent().child('relatos').child($relatoId).child('cityId').val() + '' && newData.child('titulo').val() === newData.parent().parent().parent().child('relatos').child($relatoId).child('titulo').val() && newData.child('categoria').val() === newData.parent().parent().parent().child('relatos').child($relatoId).child('categoria').val() && newData.child('endereco').val() === newData.parent().parent().parent().child('relatos').child($relatoId).child('endereco').val() && newData.child('cityId').val() === newData.parent().parent().parent().child('relatos').child($relatoId).child('cityId').val() && newData.child('status').val() === newData.parent().parent().parent().child('relatos').child($relatoId).child('status').val() && newData.child('votos').val() === newData.parent().parent().parent().child('relatos').child($relatoId).child('votos').val() && newData.child('dataCriacao').val() === newData.parent().parent().parent().child('relatos').child($relatoId).child('dataCriacao').val() && newData.child('lat').val() === newData.parent().parent().parent().child('relatos').child($relatoId).child('lat').val() && newData.child('lng').val() === newData.parent().parent().parent().child('relatos').child($relatoId).child('lng').val()",
           "titulo": {
             ".validate": "newData.val() === newData.parent().parent().parent().parent().child('relatos').child($relatoId).child('titulo').val()"
           },
@@ -85,9 +245,6 @@
           },
           "votos": {
             ".validate": "newData.val() === newData.parent().parent().parent().parent().child('relatos').child($relatoId).child('votos').val()"
-          },
-          "autorNome": {
-            ".validate": "newData.val() === newData.parent().parent().parent().parent().child('relatos').child($relatoId).child('autorNome').val()"
           },
           "dataCriacao": {
             ".validate": "newData.val() === newData.parent().parent().parent().parent().child('relatos').child($relatoId).child('dataCriacao').val()"
@@ -109,12 +266,24 @@
         ".read": "auth != null && (root.child('relatos').child($relatoId).child('autorId').val() === auth.uid || root.child('admins').child(auth.uid).val() === true || (root.child('admins').child(auth.uid).child('ativo').val() === true && (root.child('admins').child(auth.uid).child('papel').val() === 'superadmin' || (root.child('admins').child(auth.uid).child('papel').val() === 'admin' && root.child('admins').child(auth.uid).child('cityId').val() === root.child('relatos').child($relatoId).child('cityId').val()))))",
         ".write": "auth != null && !data.exists() && newData.exists() && auth.token.email_verified === true && newData.child('autorId').val() === auth.uid && newData.child('email').val() === auth.token.email && newData.parent().parent().child('relatos').child($relatoId).exists() && newData.child('autorId').val() === newData.parent().parent().child('relatos').child($relatoId).child('autorId').val() && newData.child('nome').val() === newData.parent().parent().child('relatos').child($relatoId).child('autorNome').val() && newData.child('cityId').val() === newData.parent().parent().child('relatos').child($relatoId).child('cityId').val() && newData.child('dataCriacao').val() === newData.parent().parent().child('relatos').child($relatoId).child('dataCriacao').val()",
         ".validate": "newData.hasChildren(['autorId','nome','email','cityId','dataCriacao'])",
-        "autorId": { ".validate": "newData.isString() && newData.val() === auth.uid" },
-        "nome": { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 100" },
-        "email": { ".validate": "newData.isString() && newData.val() === auth.token.email && newData.val().length <= 254" },
-        "cityId": { ".validate": "newData.isString() && newData.val().matches(/^25[0-9]{5}$/)" },
-        "dataCriacao": { ".validate": "newData.isNumber() && newData.val() <= now + 120000" },
-        "$other": { ".validate": false }
+        "autorId": {
+          ".validate": "newData.isString() && newData.val() === auth.uid"
+        },
+        "nome": {
+          ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 100"
+        },
+        "email": {
+          ".validate": "newData.isString() && newData.val() === auth.token.email && newData.val().length <= 254"
+        },
+        "cityId": {
+          ".validate": "newData.isString() && newData.val().matches(/^25[0-9]{5}$/)"
+        },
+        "dataCriacao": {
+          ".validate": "newData.isNumber() && newData.val() <= now + 120000"
+        },
+        "$other": {
+          ".validate": false
+        }
       }
     },
     "limitesEnvio": {
@@ -138,13 +307,34 @@
       "$uid": {
         ".read": "auth != null && (auth.uid === $uid || root.child('admins').child(auth.uid).val() === true || (root.child('admins').child(auth.uid).child('ativo').val() === true && root.child('admins').child(auth.uid).child('papel').val() === 'superadmin'))",
         ".write": "auth != null && auth.uid === $uid",
-        ".validate": "newData.hasChildren(['nome','email','cidade','dataCadastro'])",
-        "nome": { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 100" },
-        "email": { ".validate": "newData.isString() && newData.val() === auth.token.email && newData.val().length <= 254" },
-        "cidade": { ".validate": "newData.isString() && newData.val().length >= 2 && newData.val().length <= 100" },
-        "dataCadastro": { ".validate": "newData.isNumber() && (!data.exists() ? (newData.val() > now - 120000 && newData.val() <= now + 120000) : newData.val() === data.val())" },
-        "dataAtualizacao": { ".validate": "newData.isNumber() && (newData.val() === data.val() || (newData.val() > now - 120000 && newData.val() <= now + 120000))" },
-        "$other": { ".validate": false }
+        ".validate": "newData.hasChildren(['nome','email','cidade','dataCadastro']) && (data.exists() || newData.hasChildren(['versaoPrivacidade','versaoTermos','aceiteTermosEm']))",
+        "nome": {
+          ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 100"
+        },
+        "email": {
+          ".validate": "newData.isString() && newData.val() === auth.token.email && newData.val().length <= 254"
+        },
+        "cidade": {
+          ".validate": "newData.isString() && newData.val().length >= 2 && newData.val().length <= 100"
+        },
+        "dataCadastro": {
+          ".validate": "newData.isNumber() && (!data.exists() ? (newData.val() > now - 120000 && newData.val() <= now + 120000) : newData.val() === data.val())"
+        },
+        "dataAtualizacao": {
+          ".validate": "newData.isNumber() && (newData.val() === data.val() || (newData.val() > now - 120000 && newData.val() <= now + 120000))"
+        },
+        "versaoPrivacidade": {
+          ".validate": "newData.val() === '2026-10-18' && (!data.exists() || newData.val() === data.val())"
+        },
+        "versaoTermos": {
+          ".validate": "newData.val() === '2026-10-18' && (!data.exists() || newData.val() === data.val())"
+        },
+        "aceiteTermosEm": {
+          ".validate": "newData.isNumber() && (!data.exists() ? (newData.val() > now - 120000 && newData.val() <= now + 120000) : newData.val() === data.val())"
+        },
+        "$other": {
+          ".validate": false
+        }
       }
     },
     "admins": {
@@ -168,10 +358,18 @@
         "$relatoId": {
           ".write": "auth != null && (root.child('admins').child(auth.uid).val() === true || (root.child('admins').child(auth.uid).child('ativo').val() === true && (root.child('admins').child(auth.uid).child('papel').val() === 'superadmin' || (root.child('admins').child(auth.uid).child('papel').val() === 'admin' && root.child('admins').child(auth.uid).child('cityId').val() === $cityId))))",
           ".validate": "$cityId.matches(/^[0-9]{7}$/) && root.child('relatos').child($relatoId).exists() && root.child('relatos').child($relatoId).child('cityId').val() + '' === $cityId && newData.hasChildren(['ordem','adicionadoPor','adicionadoEm'])",
-          "ordem": { ".validate": "newData.isNumber() && newData.val() >= -1000000000000000 && newData.val() <= 1000000000000000" },
-          "adicionadoPor": { ".validate": "newData.isString() && (data.exists() ? newData.val() === data.val() : newData.val() === auth.uid)" },
-          "adicionadoEm": { ".validate": "newData.isNumber() && (data.exists() ? newData.val() === data.val() : (newData.val() > now - 120000 && newData.val() <= now))" },
-          "$other": { ".validate": false }
+          "ordem": {
+            ".validate": "newData.isNumber() && newData.val() >= -1000000000000000 && newData.val() <= 1000000000000000"
+          },
+          "adicionadoPor": {
+            ".validate": "newData.isString() && (data.exists() ? newData.val() === data.val() : newData.val() === auth.uid)"
+          },
+          "adicionadoEm": {
+            ".validate": "newData.isNumber() && (data.exists() ? newData.val() === data.val() : (newData.val() > now - 120000 && newData.val() <= now))"
+          },
+          "$other": {
+            ".validate": false
+          }
         }
       }
     },

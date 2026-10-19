@@ -6,14 +6,11 @@ const CLOUD_NAME = "dk8uky6m";
 const API_RELATOS = "/api/relatos";
 export const UPLOAD_PRESET = "ProPovo";
 
-export function publicIdImagem(uid, relatoId) {
-  if (typeof uid !== "string" || !/^[A-Za-z0-9_-]+$/.test(uid)) {
-    throw new Error("Identificador de usuário inválido para a imagem.");
-  }
+export function publicIdImagem(relatoId) {
   if (typeof relatoId !== "string" || !/^[-A-Za-z0-9_]{20}$/.test(relatoId)) {
     throw new Error("Identificador de relato inválido para a imagem.");
   }
-  return `pro_povo/${uid}/${relatoId}`;
+  return `pro_povo/relatos/${relatoId}`;
 }
 
 async function chamarApiRelatos(acao, relatoId, idToken) {
@@ -113,11 +110,11 @@ export function otimizarImagem(url, largura = 600) {
 }
 
 // ── Envia o arquivo de imagem e retorna a URL pública ──
-export async function uploadImagem(file, relatoId, uid) {
+export async function uploadImagem(file, relatoId) {
   if (!file) return null;
 
   const url = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`;
-  const publicId = publicIdImagem(uid, relatoId);
+  const publicId = publicIdImagem(relatoId);
 
   const formData = new FormData();
   formData.append("file", file);

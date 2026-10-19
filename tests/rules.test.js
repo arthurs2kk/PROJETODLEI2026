@@ -41,7 +41,6 @@ function resumoPublico(relato) {
     cityId: relato.cityId,
     status: relato.status,
     votos: relato.votos,
-    autorNome: relato.autorNome,
     dataCriacao: relato.dataCriacao,
     ...filtros,
   };
@@ -49,11 +48,23 @@ function resumoPublico(relato) {
   return resumo;
 }
 
+function detalhePublico(relato) {
+  const detalhe = {};
+  for (const campo of [
+    "titulo", "categoria", "descricao", "endereco", "lat", "lng", "cidade",
+    "cityId", "bairro", "fotoUrl", "status", "votos",
+    "dataCriacao", "dataEdicao", "dataResolucao", "respostaOficial", "dataResposta",
+  ]) {
+    if (relato[campo] !== undefined && relato[campo] !== null) detalhe[campo] = relato[campo];
+  }
+  return detalhe;
+}
+
 function marcadorPublico(relato) {
   const marcador = {};
   for (const campo of [
     "titulo", "categoria", "endereco", "cityId", "status", "votos",
-    "autorNome", "dataCriacao", "lat", "lng",
+    "dataCriacao", "lat", "lng",
   ]) {
     if (relato[campo] !== undefined && relato[campo] !== null) marcador[campo] = relato[campo];
   }
@@ -122,6 +133,12 @@ before(async () => {
         relatoSemVotos: resumoPublico(relatoBase),
         relatoContatoPendente: resumoPublico(relatoBase),
         relatoLegado: resumoPublico(relatoLegado),
+      },
+      relatosPublicos: {
+        relatoA: detalhePublico(relatoBase),
+        relatoSemVotos: detalhePublico(relatoBase),
+        relatoContatoPendente: detalhePublico(relatoBase),
+        relatoLegado: detalhePublico(relatoLegado),
       },
       relatosMapa: {
         "2507507": {
@@ -241,6 +258,10 @@ test("regras bloqueiam adulterações e preservam operações legítimas", async
     email: "novo@example.com",
     email_verified: false,
   }).database();
+  const consentimentoInvalido = ambiente.authenticatedContext("consentimentoInvalido", {
+    email: "invalido@example.com",
+    email_verified: false,
+  }).database();
   const legado = ambiente.authenticatedContext("legado", {
     email: "legado@example.com",
     email_verified: true,
@@ -255,11 +276,20 @@ test("regras bloqueiam adulterações e preservam operações legítimas", async
   }).database();
   const publico = ambiente.unauthenticatedContext().database();
 
+  await assertFails(set(ref(consentimentoInvalido, "usuarios/consentimentoInvalido"), {
+    nome: "Sem aceite",
+    email: "invalido@example.com",
+    cidade: "Campina Grande",
+    dataCadastro: Date.now(),
+  }));
   await assertSucceeds(set(ref(novoCidadao, "usuarios/novoCidadao"), {
     nome: "Novo Cidadão",
     email: "novo@example.com",
     cidade: "Campina Grande",
     dataCadastro: Date.now(),
+    versaoPrivacidade: "2026-10-18",
+    versaoTermos: "2026-10-18",
+    aceiteTermosEm: Date.now(),
   }));
   await assertSucceeds(update(ref(novoCidadao, "usuarios/novoCidadao"), {
     nome: "Nome Atualizado",
@@ -267,6 +297,9 @@ test("regras bloqueiam adulterações e preservam operações legítimas", async
   }));
   await assertFails(update(ref(novoCidadao, "usuarios/novoCidadao"), {
     dataCadastro: Date.now() - 86400000,
+  }));
+  await assertFails(update(ref(novoCidadao, "usuarios/novoCidadao"), {
+    versaoPrivacidade: "versao-forjada",
   }));
 
   // Perfis anteriores à exigência de dataCadastro precisam enviar o campo na
@@ -290,6 +323,7 @@ test("regras bloqueiam adulterações e preservam operações legítimas", async
     await assertFails(update(ref(cidadao), {
       'relatos/foraAbrangencia': fora,
       'relatosResumo/foraAbrangencia': resumoPublico(fora),
+      'relatosPublicos/foraAbrangencia': detalhePublico(fora),
       [`relatosMapa/${cityId}/foraAbrangencia`]: marcadorPublico(fora),
       'limitesEnvio/cidadao': fora.dataCriacao,
     }));
@@ -319,6 +353,7 @@ test("regras bloqueiam adulterações e preservam operações legítimas", async
   await assertSucceeds(update(ref(cidadao), {
     "relatos/relatoCriadoAtomicamente": novoRelato,
     "relatosResumo/relatoCriadoAtomicamente": resumoPublico(novoRelato),
+    "relatosPublicos/relatoCriadoAtomicamente": detalhePublico(novoRelato),
     "relatosMapa/2504009/relatoCriadoAtomicamente": marcadorPublico(novoRelato),
     "contatosRelatos/relatoCriadoAtomicamente": {
       ...contatoBase,
@@ -348,7 +383,7 @@ test("regras bloqueiam adulterações e preservam operações legítimas", async
     ...novoRelato,
     autorId: "fotografo",
     autorNome: "Usuario com Foto",
-    fotoUrl: "https://res.cloudinary.com/dk8uky6m/image/upload/v1785000000/pro_povo/fotografo/relatoComFoto.jpg",
+    fotoUrl: "https://res.cloudinary.com/dk8uky6m/image/upload/v1785000000/pro_povo/relatos/relatoComFoto.jpg",
     dataCriacao: horarioFoto,
   };
   await assertFails(update(ref(fotografo), {
@@ -358,9 +393,10 @@ test("regras bloqueiam adulterações e preservam operações legítimas", async
   await assertSucceeds(update(ref(fotografo), {
     "relatos/relatoComFoto": {
       ...relatoComFoto,
-      fotoPublicId: "pro_povo/fotografo/relatoComFoto",
+      fotoPublicId: "pro_povo/relatos/relatoComFoto",
     },
     "relatosResumo/relatoComFoto": resumoPublico(relatoComFoto),
+    "relatosPublicos/relatoComFoto": detalhePublico(relatoComFoto),
     "relatosMapa/2504009/relatoComFoto": marcadorPublico(relatoComFoto),
     "contatosRelatos/relatoComFoto": {
       autorId: "fotografo",
@@ -387,6 +423,7 @@ test("regras bloqueiam adulterações e preservam operações legítimas", async
   await assertSucceeds(update(ref(relogioIncorreto), {
     "relatos/relatoComHorarioServidor": relatoComHorarioServidor,
     "relatosResumo/relatoComHorarioServidor": resumoPublico(relatoComHorarioServidor),
+    "relatosPublicos/relatoComHorarioServidor": detalhePublico(relatoComHorarioServidor),
     "relatosMapa/2504009/relatoComHorarioServidor": marcadorPublico(relatoComHorarioServidor),
     "contatosRelatos/relatoComHorarioServidor": {
       autorId: "relogioIncorreto",
@@ -408,12 +445,14 @@ test("regras bloqueiam adulterações e preservam operações legítimas", async
     titulo: "Falta iluminação em toda a rua",
     descricao: "A rua continua sem iluminação e precisa de atendimento.",
   };
+  const dataEdicaoRelatoA = Date.now();
   await assertSucceeds(update(ref(cidadao), {
     "relatos/relatoA/titulo": relatoAEditado.titulo,
     "relatos/relatoA/descricao": relatoAEditado.descricao,
     "relatosResumo/relatoA": resumoPublico(relatoAEditado),
+    "relatosPublicos/relatoA": detalhePublico({ ...relatoAEditado, dataEdicao: dataEdicaoRelatoA }),
     "relatosMapa/2507507/relatoA": marcadorPublico(relatoAEditado),
-    "relatos/relatoA/dataEdicao": Date.now(),
+    "relatos/relatoA/dataEdicao": dataEdicaoRelatoA,
   }));
 
   await assertFails(update(ref(invasor, "relatosResumo/relatoA"), {
@@ -433,6 +472,7 @@ test("regras bloqueiam adulterações e preservam operações legítimas", async
     "votos/relatoA/cidadao": true,
     "relatos/relatoA/votos": 1,
     "relatosResumo/relatoA/votos": 1,
+    "relatosPublicos/relatoA/votos": 1,
     "relatosMapa/2507507/relatoA/votos": 1,
   }));
   await assertFails(update(ref(cidadao), {
@@ -444,18 +484,21 @@ test("regras bloqueiam adulterações e preservam operações legítimas", async
     "votos/relatoA/cidadao": null,
     "relatos/relatoA/votos": 0,
     "relatosResumo/relatoA/votos": 0,
+    "relatosPublicos/relatoA/votos": 0,
     "relatosMapa/2507507/relatoA/votos": 0,
   }));
   await assertSucceeds(update(ref(cidadao), {
     "votos/relatoLegado/cidadao": true,
     "relatos/relatoLegado/votos": 3,
     "relatosResumo/relatoLegado/votos": 3,
+    "relatosPublicos/relatoLegado/votos": 3,
     "relatosMapa/2504009/relatoLegado/votos": 3,
   }));
   await assertSucceeds(update(ref(cidadao), {
     "votos/relatoLegado/cidadao": null,
     "relatos/relatoLegado/votos": 2,
     "relatosResumo/relatoLegado/votos": 2,
+    "relatosPublicos/relatoLegado/votos": 2,
     "relatosMapa/2504009/relatoLegado/votos": 2,
   }));
 
@@ -469,6 +512,7 @@ test("regras bloqueiam adulterações e preservam operações legítimas", async
     "relatos/relatoA/filtroCategoriaStatus": relatoAEmAndamento.filtroCategoriaStatus,
     "relatos/relatoA/filtroCidadeCategoriaStatus": relatoAEmAndamento.filtroCidadeCategoriaStatus,
     "relatosResumo/relatoA": resumoPublico(relatoAEmAndamento),
+    "relatosPublicos/relatoA/status": "andamento",
     "relatosMapa/2507507/relatoA": marcadorPublico(relatoAEmAndamento),
   }));
 
@@ -506,6 +550,7 @@ test("regras bloqueiam adulterações e preservam operações legítimas", async
   await assertSucceeds(update(ref(adminJP), {
     "relatos/relatoSemVotos": null,
     "relatosResumo/relatoSemVotos": null,
+    "relatosPublicos/relatoSemVotos": null,
     "relatosMapa/2507507/relatoSemVotos": null,
     "votos/relatoSemVotos": null,
   }));
@@ -514,12 +559,14 @@ test("regras bloqueiam adulterações e preservam operações legítimas", async
     "votos/relatoA/cidadao": true,
     "relatos/relatoA/votos": 1,
     "relatosResumo/relatoA/votos": 1,
+    "relatosPublicos/relatoA/votos": 1,
     "relatosMapa/2507507/relatoA/votos": 1,
   }));
   await assertFails(set(ref(superadmin, "relatos/relatoA"), null));
   await assertSucceeds(update(ref(superadmin), {
     "relatos/relatoA": null,
     "relatosResumo/relatoA": null,
+    "relatosPublicos/relatoA": null,
     "relatosMapa/2507507/relatoA": null,
     "votos/relatoA": null,
   }));
@@ -527,7 +574,7 @@ test("regras bloqueiam adulterações e preservam operações legítimas", async
 
 test("consulta administrativa combina cidade e limite sem trazer outros municípios", async () => {
   await ambiente.withSecurityRulesDisabled(async (contexto) => {
-    const pagina1 = comCamposFiltro({ ...relatoBase, cidade: "João Pessoa", cityId: "2507507" });
+    const pagina1 = comCamposFiltro({ ...relatoBase, cidade: "Joao Pessoa", cityId: "2507507", autorId: "outroAutor", autorNome: "Outro Autor" });
     const pagina2 = comCamposFiltro({ ...relatoBase, cidade: "João Pessoa", cityId: "2507507" });
     const pagina3 = comCamposFiltro({ ...relatoBase, cidade: "Campina Grande", cityId: "2504009" });
     await update(ref(contexto.database()), {
@@ -535,10 +582,13 @@ test("consulta administrativa combina cidade e limite sem trazer outros municíp
       "relatos/pagina-002": pagina2,
       "relatos/pagina-003": pagina3,
       "relatosResumo/pagina-001": resumoPublico(pagina1),
+      "relatosPublicos/pagina-001": detalhePublico(pagina1),
       "relatosMapa/2507507/pagina-001": marcadorPublico(pagina1),
       "relatosResumo/pagina-002": resumoPublico(pagina2),
+      "relatosPublicos/pagina-002": detalhePublico(pagina2),
       "relatosMapa/2507507/pagina-002": marcadorPublico(pagina2),
       "relatosResumo/pagina-003": resumoPublico(pagina3),
+      "relatosPublicos/pagina-003": detalhePublico(pagina3),
       "relatosMapa/2504009/pagina-003": marcadorPublico(pagina3),
     });
   });
@@ -579,11 +629,23 @@ test("leituras públicas usam projeções e detalhes; coleções completas exige
   const adminCG = ambiente.authenticatedContext("adminCG").database();
   const superadmin = ambiente.authenticatedContext("super").database();
 
-  await assertSucceeds(get(ref(publico, "relatosResumo")));
-  await assertSucceeds(get(query(
+  const resumosPublicos = await assertSucceeds(get(ref(publico, "relatosResumo")));
+  assert.ok(Object.values(resumosPublicos.val() || {}).every(item => item.autorNome === undefined));
+  const mapaPublico = await assertSucceeds(get(query(
     ref(publico, "relatosMapa/2507507"), orderByChild("dataCriacao"), limitToLast(2)
   )));
-  await assertSucceeds(get(ref(publico, "relatos/pagina-001")));
+  assert.ok(Object.values(mapaPublico.val() || {}).every(item => item.autorNome === undefined));
+  const detalhe = await assertSucceeds(get(ref(publico, "relatosPublicos/pagina-001")));
+  assert.equal(detalhe.val().autorId, undefined);
+  assert.equal(detalhe.val().autorNome, undefined);
+  assert.equal(detalhe.val().fotoPublicId, undefined);
+  await assertFails(update(ref(cidadao, "relatosPublicos/pagina-002"), { autorId: "vazamento" }));
+  await assertFails(update(ref(cidadao, "relatosPublicos/pagina-002"), { autorNome: "vazamento" }));
+  await assertFails(get(ref(publico, "relatos/pagina-001")));
+  await assertFails(get(ref(cidadao, "relatos/pagina-001")));
+  await assertSucceeds(get(ref(cidadao, "relatos/pagina-002")));
+  await assertSucceeds(get(ref(adminJP, "relatos/pagina-001")));
+  await assertFails(get(ref(adminCG, "relatos/pagina-001")));
   await assertFails(get(ref(publico, "relatos")));
   await assertFails(get(query(ref(publico, "relatos"), orderByChild("cityId"), equalTo("2507507"))));
   await assertFails(get(ref(cidadao, "relatos")));
@@ -650,6 +712,7 @@ test("criação exige fonte, resumo e mapa iguais e rejeita dados privados e coo
   const payload = {
     "relatos/criacaoMapa": relato,
     "relatosResumo/criacaoMapa": resumoPublico(relato),
+    "relatosPublicos/criacaoMapa": detalhePublico(relato),
     [mapaPath]: marcadorPublico(relato),
     "limitesEnvio/criadorMapa": relato.dataCriacao,
   };
@@ -692,6 +755,7 @@ test("edição, votos, status e exclusão exigem todas as projeções na mesma a
   const id = "sincronizacaoMapa";
   const relatoPath = `relatos/${id}`;
   const resumoPath = `relatosResumo/${id}`;
+  const publicoPath = `relatosPublicos/${id}`;
   const mapaPath = `relatosMapa/2507507/${id}`;
   const votoPath = `votos/${id}/cidadao`;
   const cidadao = ambiente.authenticatedContext("cidadao", { email_verified: true }).database();
@@ -702,13 +766,16 @@ test("edição, votos, status e exclusão exigem todas as projeções na mesma a
     await update(ref(contexto.database()), {
       [relatoPath]: relatoBase,
       [resumoPath]: resumoPublico(relatoBase),
+      [publicoPath]: detalhePublico(relatoBase),
       [mapaPath]: marcadorPublico(relatoBase),
     });
   });
   const editado = comCamposFiltro({ ...relatoBase, titulo: "Iluminação precisa de manutenção", categoria: "Outros" });
+  const dataEdicao = serverTimestamp();
   const edicao = {
-    [relatoPath]: { ...editado, dataEdicao: serverTimestamp() },
+    [relatoPath]: { ...editado, dataEdicao },
     [resumoPath]: resumoPublico(editado),
+    [publicoPath]: detalhePublico({ ...editado, dataEdicao }),
     [mapaPath]: marcadorPublico(editado),
   };
   await exigirTodosOsCaminhos(cidadao, edicao, Object.keys(edicao));
@@ -737,6 +804,7 @@ test("edição, votos, status e exclusão exigem todas as projeções na mesma a
     [votoPath]: true,
     [`${relatoPath}/votos`]: 1,
     [`${resumoPath}/votos`]: 1,
+    [`${publicoPath}/votos`]: 1,
     [`${mapaPath}/votos`]: 1,
   };
   await exigirTodosOsCaminhos(cidadao, voto, Object.keys(voto));
@@ -749,17 +817,21 @@ test("edição, votos, status e exclusão exigem todas as projeções na mesma a
     [votoPath]: null,
     [`${relatoPath}/votos`]: 0,
     [`${resumoPath}/votos`]: 0,
+    [`${publicoPath}/votos`]: 0,
     [`${mapaPath}/votos`]: 0,
   };
   await exigirTodosOsCaminhos(cidadao, retirarVoto, Object.keys(retirarVoto));
   await assertSucceeds(update(ref(cidadao), retirarVoto));
 
   const resolvido = comCamposFiltro({ ...editado, status: "resolvido" });
+  const dataResolucao = serverTimestamp();
   const status = {
     [`${relatoPath}/status`]: "resolvido",
-    [`${relatoPath}/dataResolucao`]: serverTimestamp(),
+    [`${relatoPath}/dataResolucao`]: dataResolucao,
     ...Object.fromEntries(Object.entries(camposFiltroRelato(resolvido)).map(([campo, valor]) => [`${relatoPath}/${campo}`, valor])),
     [resumoPath]: resumoPublico(resolvido),
+    [`${publicoPath}/status`]: "resolvido",
+    [`${publicoPath}/dataResolucao`]: dataResolucao,
     [`${mapaPath}/status`]: "resolvido",
   };
   await exigirTodosOsCaminhos(adminJP, status, [`${relatoPath}/status`, resumoPath, `${mapaPath}/status`]);
@@ -767,15 +839,24 @@ test("edição, votos, status e exclusão exigem todas as projeções na mesma a
   await assertFails(update(ref(cidadao), status));
   await assertSucceeds(update(ref(adminJP), status));
   // A resposta oficial não altera os campos públicos do mapa.
-  await assertSucceeds(update(ref(adminJP, relatoPath), { respostaOficial: "Equipe enviada.", dataResposta: serverTimestamp() }));
+  const dataResposta = serverTimestamp();
+  await assertSucceeds(update(ref(adminJP), {
+    [`${relatoPath}/respostaOficial`]: "Equipe enviada.",
+    [`${relatoPath}/dataResposta`]: dataResposta,
+    [`${publicoPath}/respostaOficial`]: "Equipe enviada.",
+    [`${publicoPath}/dataResposta`]: dataResposta,
+  }));
   await assertSucceeds(update(ref(cidadao), voto));
-  const exclusao = { [relatoPath]: null, [resumoPath]: null, [mapaPath]: null, [`votos/${id}`]: null };
+  const exclusao = { [relatoPath]: null, [resumoPath]: null, [publicoPath]: null, [mapaPath]: null, [`votos/${id}`]: null };
   await exigirTodosOsCaminhos(adminJP, exclusao, Object.keys(exclusao));
   await assertFails(update(ref(adminCG), exclusao));
   await assertSucceeds(update(ref(adminJP), exclusao));
-  for (const caminho of [relatoPath, resumoPath, mapaPath]) {
+  for (const caminho of [resumoPath, publicoPath, mapaPath]) {
     assert.equal((await get(ref(cidadao, caminho))).exists(), false);
   }
+  await ambiente.withSecurityRulesDisabled(async contexto => {
+    assert.equal((await get(ref(contexto.database(), relatoPath))).exists(), false);
+  });
 });
 
 test('reversão para Paraíba permite criar relato de João Pessoa com as demais validações', async () => {
@@ -797,6 +878,7 @@ test('reversão para Paraíba permite criar relato de João Pessoa com as demais
     const payload = {
       'relatos/reversao': relato,
       'relatosResumo/reversao': resumoPublico(relato),
+      'relatosPublicos/reversao': detalhePublico(relato),
       'relatosMapa/2507507/reversao': marcadorPublico(relato),
       'limitesEnvio/cidadao': relato.dataCriacao
     };
@@ -813,12 +895,14 @@ test("legados sem coordenadas continuam votáveis sem permitir coordenadas inven
   delete legado.lng;
   const relatoPath = "relatos/legadoSemCoordenadas";
   const resumoPath = "relatosResumo/legadoSemCoordenadas";
+  const publicoPath = "relatosPublicos/legadoSemCoordenadas";
   const mapaPath = "relatosMapa/2504009/legadoSemCoordenadas";
   const db = ambiente.authenticatedContext("cidadao", { email_verified: true }).database();
   await ambiente.withSecurityRulesDisabled(async contexto => {
     await update(ref(contexto.database()), {
       [relatoPath]: legado,
       [resumoPath]: resumoPublico(legado),
+      [publicoPath]: detalhePublico(legado),
       [mapaPath]: marcadorPublico(legado),
     });
   });
@@ -826,6 +910,7 @@ test("legados sem coordenadas continuam votáveis sem permitir coordenadas inven
     "votos/legadoSemCoordenadas/cidadao": true,
     [`${relatoPath}/votos`]: 3,
     [`${resumoPath}/votos`]: 3,
+    [`${publicoPath}/votos`]: 3,
     [`${mapaPath}/votos`]: 3,
   };
   await assertFails(update(ref(db), { ...voto, [`${mapaPath}/lat`]: -7.12, [`${mapaPath}/lng`]: -35.88 }));

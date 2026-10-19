@@ -7,7 +7,7 @@ const { getDatabase } = require("firebase-admin/database");
 const PROJECT_ID_PADRAO = "pro--povo";
 const DATABASE_URL_PADRAO = "https://pro--povo-default-rtdb.firebaseio.com";
 const TAMANHO_LOTE = 200;
-const CAMPOS = ["titulo", "categoria", "endereco", "cityId", "status", "votos", "autorNome", "dataCriacao"];
+const CAMPOS = ["titulo", "categoria", "endereco", "cityId", "status", "votos", "dataCriacao"];
 const CATEGORIAS = new Set([
   "Buraco / Via danificada", "Iluminação pública", "Lixo / Entulho",
   "Água / Esgoto", "Áreas verdes", "Outros",

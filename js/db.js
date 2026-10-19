@@ -16,6 +16,9 @@ import { resolverCityId } from "./cidades.js";
 import { municipioAceitoParaRelato, MENSAGEM_ABRANGENCIA } from "./abrangencia-relatos.js";
 import { invalidarCacheRelatos, lerCache, salvarCache } from "./cache.js";
 
+export const VERSAO_PRIVACIDADE = "2026-10-18";
+export const VERSAO_TERMOS = "2026-10-18";
+
 // ── Salvar usuário após cadastro ──
 export async function salvarUsuario(uid, dados) {
   if (!auth.currentUser || auth.currentUser.uid !== uid) {
@@ -25,7 +28,10 @@ export async function salvarUsuario(uid, dados) {
     nome:         dados.nome,
     email:        dados.email,
     cidade:       dados.cidade,
-    dataCadastro: serverTimestamp()
+    dataCadastro: serverTimestamp(),
+    versaoPrivacidade: VERSAO_PRIVACIDADE,
+    versaoTermos: VERSAO_TERMOS,
+    aceiteTermosEm: serverTimestamp()
   });
 }
 
@@ -98,12 +104,28 @@ function resumoPublicoRelato(relato) {
     cityId: relato.cityId,
     status: relato.status,
     votos: Number(relato.votos) || 0,
-    autorNome: relato.autorNome,
     dataCriacao: relato.dataCriacao,
     ...filtros
   };
   if (relato.fotoUrl) resumo.fotoUrl = relato.fotoUrl;
   return resumo;
+}
+
+// Detalhes que qualquer visitante pode consultar. Identificadores internos,
+// como autorId, autorNome e fotoPublicId, permanecem exclusivamente em /relatos.
+function detalhePublicoRelato(relato) {
+  const detalhe = {};
+  for (const campo of [
+    'titulo', 'categoria', 'descricao', 'endereco', 'lat', 'lng', 'cidade',
+    'cityId', 'bairro', 'fotoUrl', 'status', 'votos',
+    'dataCriacao', 'dataEdicao', 'dataResolucao', 'respostaOficial',
+    'dataResposta'
+  ]) {
+    if (relato[campo] !== undefined && relato[campo] !== null) {
+      detalhe[campo] = relato[campo];
+    }
+  }
+  return detalhe;
 }
 
 // Marcadores usam apenas os dados mostrados no mapa. Relatos antigos sem
@@ -116,7 +138,6 @@ function marcadorPublicoRelato(relato) {
     cityId: relato.cityId,
     status: relato.status,
     votos: Number(relato.votos) || 0,
-    autorNome: relato.autorNome,
     dataCriacao: relato.dataCriacao
   };
   if (relato.lat != null) marcador.lat = relato.lat;
@@ -229,7 +250,7 @@ export async function criarRelato(dados, fotoFile) {
     if (!tiposPermitidos.has(fotoFile.type) || fotoFile.size > 10 * 1024 * 1024) {
       throw erroEnvio('FOTO_INVALIDA', 'A foto deve ser JPG, PNG, WebP ou HEIC e ter no máximo 10 MB.');
     }
-    foto = await uploadImagem(fotoFile, novoRef.key, dados.autorId);
+    foto = await uploadImagem(fotoFile, novoRef.key);
     if (!foto) {
       throw erroEnvio(
         'ERRO_UPLOAD_IMAGEM',
@@ -277,6 +298,7 @@ export async function criarRelato(dados, fotoFile) {
     await update(ref(db), {
       [`relatos/${novoRef.key}`]: relato,
       [`relatosResumo/${novoRef.key}`]: resumoPublicoRelato(relato),
+      [`relatosPublicos/${novoRef.key}`]: detalhePublicoRelato(relato),
       [`relatosMapa/${cityId}/${novoRef.key}`]: marcadorPublicoRelato(relato),
       [`contatosRelatos/${novoRef.key}`]: contatoRelato,
       [`limitesEnvio/${dados.autorId}`]: agora
@@ -434,6 +456,12 @@ export async function atualizarRelatoDoUsuario(relatoId, dados) {
         categoria: dados.categoria,
         status: relatoAtual.status
       })
+    }),
+    ...atualizacoesPorCampo(`relatosPublicos/${relatoId}`, {
+      titulo: dados.titulo,
+      categoria: dados.categoria,
+      descricao: dados.descricao,
+      dataEdicao: camposAtualizados.dataEdicao
     }),
     ...atualizacoesPorCampo(`relatosMapa/${relatoAtual.cityId}/${relatoId}`, {
       titulo: dados.titulo,
@@ -630,7 +658,7 @@ export async function buscarRelatoPorId(relatoId) {
   if (typeof relatoId !== 'string' || relatoId.length < 1 || relatoId.length > 100) {
     throw new Error('Relato invalido.');
   }
-  const snapshot = await get(ref(db, `relatos/${relatoId}`));
+  const snapshot = await get(ref(db, `relatosPublicos/${relatoId}`));
   return snapshot.exists() ? { id: relatoId, ...snapshot.val() } : null;
 }
 
@@ -654,7 +682,7 @@ export async function votar(relatoId, userId) {
   await usuario.getIdToken(true);
 
   // A cidade é imutável e basta ser lida uma vez, sem baixar o relato completo.
-  const cidadeSnapshot = await get(ref(db, `relatos/${relatoId}/cityId`));
+  const cidadeSnapshot = await get(ref(db, `relatosPublicos/${relatoId}/cityId`));
   if (!cidadeSnapshot.exists()) throw new Error('Relato não encontrado.');
   const cityId = cidadeSnapshot.val();
 
@@ -664,7 +692,7 @@ export async function votar(relatoId, userId) {
   for (let tentativa = 0; tentativa < 3; tentativa += 1) {
     const [votoSnapshot, totalSnapshot] = await Promise.all([
       get(ref(db, `votos/${relatoId}/${userId}`)),
-      get(ref(db, `relatos/${relatoId}/votos`))
+      get(ref(db, `relatosPublicos/${relatoId}/votos`))
     ]);
     if (!totalSnapshot.exists()) throw new Error('Relato não encontrado.');
 
@@ -675,6 +703,7 @@ export async function votar(relatoId, userId) {
       [`votos/${relatoId}/${userId}`]: jaExiste ? null : true,
       [`relatos/${relatoId}/votos`]: novoTotal,
       [`relatosResumo/${relatoId}/votos`]: novoTotal,
+      [`relatosPublicos/${relatoId}/votos`]: novoTotal,
       [`relatosMapa/${cityId}/${relatoId}/votos`]: novoTotal
     };
 
@@ -722,6 +751,10 @@ export async function atualizarStatus(relatoId, novoStatus) {
         status: novoStatus
       })
     }),
+    ...atualizacoesPorCampo(`relatosPublicos/${relatoId}`, {
+      status: novoStatus,
+      dataResolucao: camposAtualizados.dataResolucao
+    }),
     [`relatosMapa/${relatoAtual.cityId}/${relatoId}/status`]: novoStatus
   });
   invalidarCacheRelatos();
@@ -729,9 +762,12 @@ export async function atualizarStatus(relatoId, novoStatus) {
 
 // ── Salvar resposta oficial da prefeitura ──
 export async function salvarResposta(relatoId, resposta) {
-  await update(ref(db, `relatos/${relatoId}`), {
-    respostaOficial: resposta,
-    dataResposta: serverTimestamp()
+  const dataResposta = serverTimestamp();
+  await update(ref(db), {
+    [`relatos/${relatoId}/respostaOficial`]: resposta,
+    [`relatos/${relatoId}/dataResposta`]: dataResposta,
+    [`relatosPublicos/${relatoId}/respostaOficial`]: resposta,
+    [`relatosPublicos/${relatoId}/dataResposta`]: dataResposta
   });
   invalidarCacheRelatos();
 }

@@ -268,6 +268,7 @@ function abrirModalGoogle(user) {
   cancelar.disabled = false;
   continuar.innerHTML = '<i class="ti ti-arrow-right"></i> Continuar';
   carregarCidadesPB(document.getElementById('google-cidade'));
+  document.getElementById('google-aceito-termos').checked = false;
   document.getElementById('modal-google-overlay').classList.add('open');
   document.body.style.overflow = 'hidden';
 
@@ -275,6 +276,10 @@ function abrirModalGoogle(user) {
     if (salvando || saindo || auth.currentUser?.uid !== user.uid) return;
     const cidade = document.getElementById('google-cidade').value;
     if (!cidade) { showToast('⚠️ Selecione sua cidade para continuar.'); return; }
+    if (!document.getElementById('google-aceito-termos').checked) {
+      showToast('⚠️ Aceite os Termos de Uso e confirme a leitura da Política de Privacidade.');
+      return;
+    }
 
     const btn = document.getElementById('google-continuar');
     const textoOriginal = btn.innerHTML;

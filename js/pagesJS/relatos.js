@@ -282,7 +282,6 @@ function preencherDetalhe(r) {
     <span class="status ${st.css}">${st.label}</span>`;
   document.getElementById('detalhe-meta').innerHTML = `
     <span><i class="ti ti-map-pin"></i> ${escapeHTML(r.endereco)}</span>
-    <span><i class="ti ti-user"></i> ${escapeHTML(r.autorNome)}</span>
     <span><i class="ti ti-clock"></i> ${new Date(r.dataCriacao).toLocaleString('pt-BR')}</span>`;
 }
 

@@ -8,7 +8,11 @@
 //      nome e cidade, enviar um e-mail de redefinição de senha, e ver/reenviar a
 //      confirmação de e-mail caso ainda não tenha sido verificado.
 
-import { auth, onAuthStateChanged, signOut, updateProfile, sendPasswordResetEmail, sendEmailVerification } from "./firebase.js";
+import {
+  auth, provider, onAuthStateChanged, signOut, updateProfile,
+  sendPasswordResetEmail, sendEmailVerification, reauthenticateWithPopup,
+  reauthenticateWithCredential, EmailAuthProvider
+} from "./firebase.js";
 import { buscarUsuario, atualizarUsuario } from "./db.js";
 import { carregarCidadesPB } from "./cidades.js";
 import { segundosRestantes, registrarEnvio } from "./cooldown.js";
@@ -41,6 +45,14 @@ const MODAL_HTML = `
           </select>
         </div>
         <p class="form-note"><i class="ti ti-lock"></i> Para trocar sua senha, enviaremos um link de redefinição para o seu e-mail.</p>
+        <div class="perfil-privacidade">
+          <h3>Seus dados</h3>
+          <p>Baixe uma cópia dos dados ligados à sua conta ou exclua a conta. A exclusão remove seus dados pessoais e desvincula seu nome dos relatos preservados como histórico público.</p>
+          <div class="perfil-privacidade-acoes">
+            <button type="button" class="btn-outline" id="perfil-exportar"><i class="ti ti-download"></i> Baixar meus dados</button>
+            <button type="button" class="btn-danger" id="perfil-excluir"><i class="ti ti-trash"></i> Excluir minha conta</button>
+          </div>
+        </div>
       </div>
       <div class="modal-footer">
         <button class="btn-outline" id="perfil-trocar-senha"><i class="ti ti-key"></i> Alterar senha</button>
@@ -193,6 +205,89 @@ async function trocarSenha(user) {
   }
 }
 
+async function chamarApiConta(user, acao) {
+  const token = await user.getIdToken(true);
+  const resposta = await fetch('/api/conta', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ acao })
+  });
+  const corpo = await resposta.json().catch(() => ({}));
+  if (!resposta.ok) {
+    const erro = new Error(corpo.erro || 'Não foi possível concluir a solicitação.');
+    erro.codigo = corpo.codigo;
+    throw erro;
+  }
+  return corpo;
+}
+
+async function exportarDados(user) {
+  const btn = document.getElementById('perfil-exportar');
+  const original = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<i class="ti ti-loader-2" style="animation:spin 0.8s linear infinite"></i> Preparando...';
+  try {
+    const dados = await chamarApiConta(user, 'exportar');
+    const blob = new Blob([JSON.stringify(dados, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `pro-povo-meus-dados-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+    showToast('✅ Seus dados foram preparados para download.');
+  } catch (e) {
+    console.error(e);
+    showToast(`❌ ${e.message}`);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = original;
+  }
+}
+
+async function reautenticarParaExcluir(user) {
+  const usaGoogle = user.providerData?.some(item => item.providerId === 'google.com');
+  if (usaGoogle) {
+    await reauthenticateWithPopup(user, provider);
+    return;
+  }
+  const senha = window.prompt('Digite sua senha atual para confirmar a exclusão:');
+  if (!senha) throw Object.assign(new Error('Exclusão cancelada.'), { codigo: 'CANCELADO' });
+  await reauthenticateWithCredential(user, EmailAuthProvider.credential(user.email, senha));
+}
+
+async function excluirConta(user) {
+  const confirmacao = window.prompt('Esta ação remove sua conta e não pode ser desfeita. Digite EXCLUIR para confirmar:');
+  if (confirmacao !== 'EXCLUIR') {
+    if (confirmacao !== null) showToast('⚠️ Confirmação incorreta. A conta não foi excluída.');
+    return;
+  }
+
+  const btn = document.getElementById('perfil-excluir');
+  const original = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<i class="ti ti-loader-2" style="animation:spin 0.8s linear infinite"></i> Confirmando...';
+  try {
+    await reautenticarParaExcluir(user);
+    btn.innerHTML = '<i class="ti ti-loader-2" style="animation:spin 0.8s linear infinite"></i> Excluindo...';
+    await chamarApiConta(user, 'excluir');
+    await signOut(auth).catch(() => {});
+    window.location.href = '/index.html?conta=excluida';
+  } catch (e) {
+    if (e.codigo !== 'CANCELADO' && e.code !== 'auth/popup-closed-by-user') {
+      console.error(e);
+      const mensagem = e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential'
+        ? 'Senha incorreta. A conta não foi excluída.'
+        : e.message;
+      showToast(`❌ ${mensagem || 'Não foi possível excluir a conta.'}`);
+    }
+    btn.disabled = false;
+    btn.innerHTML = original;
+  }
+}
+
 // ── Atualiza os botões da navbar (desktop e mobile) conforme o login ──
 export function initNavbar() {
   const btnEntrar          = document.getElementById('btn-entrar');
@@ -229,6 +324,8 @@ export function initNavbar() {
       garantirModal();
       document.getElementById('perfil-salvar').onclick    = () => salvarPerfil(user);
       document.getElementById('perfil-trocar-senha').onclick = () => trocarSenha(user);
+      document.getElementById('perfil-exportar').onclick = () => exportarDados(user);
+      document.getElementById('perfil-excluir').onclick = () => excluirConta(user);
 
     } else {
       [btnEntrar, btnEntrarMobile].forEach(b => {

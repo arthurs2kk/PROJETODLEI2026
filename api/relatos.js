@@ -93,7 +93,11 @@ function validarCityIdMapa(cityId) {
   return valor;
 }
 
-function publicIdEsperado(uid, relatoId) {
+function publicIdEsperado(relatoId) {
+  return `pro_povo/relatos/${relatoId}`;
+}
+
+function publicIdLegado(uid, relatoId) {
   return `pro_povo/${uid}/${relatoId}`;
 }
 
@@ -173,7 +177,7 @@ async function assinarUpload(decoded, relatoId) {
 
   const configuracao = obterCloudinary();
   const timestamp = Math.floor(Date.now() / 1000);
-  const publicId = publicIdEsperado(decoded.uid, relatoId);
+  const publicId = publicIdEsperado(relatoId);
   const parametros = {
     overwrite: false,
     public_id: publicId,
@@ -201,7 +205,7 @@ async function cancelarUpload(decoded, relatoId) {
     throw new ErroHttp(409, 'RELATO_JA_EXISTE', 'Use a exclusão normal para remover a imagem deste relato.');
   }
 
-  const publicId = publicIdEsperado(decoded.uid, relatoId);
+  const publicId = publicIdEsperado(relatoId);
   const resultado = await destruirImagem(publicId);
   return { ok: true, imagem: resultado };
 }
@@ -228,13 +232,14 @@ async function excluirRelato(decoded, relatoId) {
   let imagem = 'ausente';
 
   if (relato.fotoUrl) {
-    const esperado = publicIdEsperado(relato.autorId, relatoId);
+    const esperado = publicIdEsperado(relatoId);
+    const legado = publicIdLegado(relato.autorId, relatoId);
 
     if (relato.fotoPublicId) {
-      if (relato.fotoPublicId !== esperado) {
+      if (relato.fotoPublicId !== esperado && relato.fotoPublicId !== legado) {
         throw new ErroHttp(409, 'IMAGEM_INCONSISTENTE', 'O identificador da imagem do relato é inconsistente.');
       }
-      publicId = esperado;
+      publicId = relato.fotoPublicId;
     } else {
       // Compatibilidade com fotos enviadas antes do upload assinado. A imagem só
       // é removida quando nenhum outro relato aponta para a mesma URL.
@@ -265,6 +270,7 @@ async function excluirRelato(decoded, relatoId) {
   await db.ref().update({
     [`relatos/${relatoId}`]: null,
     [`relatosResumo/${relatoId}`]: null,
+    [`relatosPublicos/${relatoId}`]: null,
     [`relatosMapa/${cityIdMapa}/${relatoId}`]: null,
     [`prioridadesMunicipais/${cityIdMapa}/${relatoId}`]: null,
     [`votos/${relatoId}`]: null,

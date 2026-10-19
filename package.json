@@ -6,7 +6,7 @@
   },
   "scripts": {
     "abrangencia:relatos": "node scripts/configurar-abrangencia-relatos.js",
-    "test": "node --test tests/api-relatos.test.js tests/backfill-relatos-mapa.test.js && node --experimental-vm-modules --test tests/cloudinary.test.js tests/endereco.test.js tests/db-mapa.test.js tests/abrangencia-relatos.test.js tests/gestao-modelo.test.js tests/login.test.js",
+    "test": "node --test tests/api-conta.test.js tests/api-relatos.test.js tests/backfill-relatos-mapa.test.js tests/backfill-relatos-publicos.test.js tests/migrar-fotos-sem-uid.test.js tests/seed-relatos-demonstracao.test.js tests/vercel-analytics.test.js && node --experimental-vm-modules --test tests/cloudinary.test.js tests/endereco.test.js tests/db-mapa.test.js tests/abrangencia-relatos.test.js tests/gestao-modelo.test.js tests/login.test.js",
     "test:api": "node --test tests/api-relatos.test.js",
     "test:login": "node --experimental-vm-modules --test tests/login.test.js",
     "test:cloudinary": "node --experimental-vm-modules --test tests/cloudinary.test.js",
@@ -16,7 +16,10 @@
     "test:backfill-mapa": "node --test tests/backfill-relatos-mapa.test.js",
     "migrate:relato-filtros": "node scripts/backfill-relato-filtros.js",
     "migrate:relatos-resumo": "node scripts/backfill-relatos-resumo.js",
-    "migrate:relatos-mapa": "node scripts/backfill-relatos-mapa.js"
+    "migrate:relatos-publicos": "node scripts/backfill-relatos-publicos.js",
+    "migrate:fotos-sem-uid": "node scripts/migrar-fotos-sem-uid.js",
+    "migrate:relatos-mapa": "node scripts/backfill-relatos-mapa.js",
+    "seed:demo": "node scripts/seed-relatos-mapa-calor.js"
   },
   "devDependencies": {
     "@firebase/rules-unit-testing": "5.0.2",
@@ -24,6 +27,6 @@
   },
   "dependencies": {
     "cloudinary": "^2.11.0",
-    "firebase-admin": "13.10.0"
+    "firebase-admin": "14.5.0"
   }
 }
