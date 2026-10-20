@@ -128,7 +128,8 @@ Deleting a report calls the authenticated `/api/relatos` Vercel Function. It
 checks the Firebase ID token and report ownership or administrator scope, removes
 the Cloudinary asset with the server-only API secret, and then removes the report,
 votes and private contact. A failed database creation is compensated immediately
-with the temporary Cloudinary delete token, with the API as fallback.
+through the authenticated API, which removes the pending asset with the server-only
+Cloudinary credentials.
 
 Vercel environment variables for image deletion
 

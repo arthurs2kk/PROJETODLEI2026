@@ -46,7 +46,10 @@ test('administrador municipal respeita o escopo da cidade', () => {
   const relato = { autorId: 'autor', status: 'andamento', cityId: '2507507' };
   const admin = { ativo: true, papel: 'admin', cityId: '2507507' };
   assert.equal(podeExcluirRelato('gestor', relato, admin), true);
+  assert.equal(podeExcluirRelato('gestor', { ...relato, cityId: 2507507 }, admin), true);
+  assert.equal(podeExcluirRelato('gestor', relato, { ...admin, cityId: 2507507 }), true);
   assert.equal(podeExcluirRelato('gestor', relato, { ...admin, cityId: '2513703' }), false);
+  assert.equal(podeExcluirRelato('gestor', { ...relato, cityId: undefined }, { ...admin, cityId: undefined }), false);
 });
 
 test('valida IDs push do Firebase', () => {

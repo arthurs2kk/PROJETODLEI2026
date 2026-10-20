@@ -90,7 +90,7 @@ onAuthStateChanged(auth, async (user) => {
   document.getElementById('verificando').style.display = 'none';
   document.getElementById('painel-conteudo').style.display = 'block';
 
-  await carregarProximaPagina();
+  await carregarCompletos();
 });
 
 function iniciarPrioridades() {
@@ -278,11 +278,11 @@ async function carregarCompletos(forcar = false) {
   state.erroCarga = '';
   const aviso = document.getElementById('admin-dados-aviso');
   aviso.hidden = false;
-  aviso.textContent = 'Consultando todos os relatos do seu escopo…';
+  aviso.textContent = 'Carregando todos os relatos do seu escopo…';
   render();
   try {
     state.completos = await buscarTodosRelatosGestao(state.admin, quantidade => {
-      aviso.textContent = `Carregando os relatos para o mapa e as prioridades… ${quantidade} recebido(s).`;
+      aviso.textContent = `Carregando todos os relatos… ${quantidade} recebido(s).`;
     });
     atualizarFiltros();
     aviso.hidden = true;

@@ -283,6 +283,44 @@ test('paginação pública percorre tipos mistos ou únicos sem saltos, duplica�
   }
 });
 
+test('paginação administrativa regional inclui relatos com cityId numérico e textual', async () => {
+  const dados = { relatos: {}, relatosResumo: {} };
+  for (let i = 0; i < 120; i++) {
+    const id = `relato-${String(i).padStart(3, '0')}`;
+    dados.relatos[id] = {
+      ...relatoBase,
+      cityId: i % 2 ? 2504009 : '2504009',
+      dataCriacao: i + 1
+    };
+    dados.relatosResumo[id] = { ...dados.relatos[id] };
+  }
+  dados.relatos.outraCidade = { ...relatoBase, cityId: '2507507' };
+  dados.relatosResumo.outraCidade = { ...dados.relatos.outraCidade };
+
+  for (const cityIdAdmin of ['2504009', 2504009]) {
+    const ambiente = await carregarDb(dados);
+    const recebidos = await ambiente.db.buscarTodosRelatosGestao(
+      { papel: 'admin', cityId: cityIdAdmin },
+      null,
+      25
+    );
+
+    assert.equal(recebidos.length, 120);
+    assert.equal(recebidos.some(relato => relato.id === 'outraCidade'), false);
+    assert.equal(new Set(recebidos.map(relato => relato.id)).size, 120);
+    const consultas = ambiente.leituras.filter(leitura => leitura.restricoes);
+    assert.ok(consultas.every(leitura => leitura.restricoes.some(item =>
+      item.tipo === 'limitToLast' && item.valor <= 27
+    )));
+    assert.deepEqual(
+      [...new Set(consultas.map(leitura => typeof leitura.restricoes.find(item => item.tipo === 'startAt').valor))].sort(),
+      ['number', 'string']
+    );
+    assert.ok(consultas.every(leitura => leitura.caminho === 'relatosResumo'));
+    assert.equal(ambiente.leituras.some(leitura => leitura.caminho === 'relatos'), false);
+  }
+});
+
 test('filtros compostos incluem legados e mantêm uma única consulta indexada', async () => {
   for (const filtros of [{ categoria: relatoBase.categoria }, { status: 'aberto' }, { categoria: relatoBase.categoria, status: 'aberto' }]) {
     const ambiente = await carregarDb(dadosComTiposDeCidade());

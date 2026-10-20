@@ -276,7 +276,8 @@ body {
 .sidebar .btn-outline,
 .empty-state .btn-outline,
 .modal .btn-outline,
-.privacidade-banner .btn-outline {
+.privacidade-banner .btn-outline,
+.btn-outline.btn-outline-surface {
   border-color: var(--borda);
   color: var(--cinza-5);
 }
@@ -284,7 +285,8 @@ body {
 .sidebar .btn-outline:hover,
 .empty-state .btn-outline:hover,
 .modal .btn-outline:hover,
-.privacidade-banner .btn-outline:hover {
+.privacidade-banner .btn-outline:hover,
+.btn-outline.btn-outline-surface:hover {
   background: var(--cinza-2);
 }
 

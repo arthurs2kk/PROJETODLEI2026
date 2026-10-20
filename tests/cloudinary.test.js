@@ -7,9 +7,9 @@ const path = require("node:path");
 const vm = require("node:vm");
 const { pathToFileURL } = require("node:url");
 
-async function carregarModuloCloudinary() {
+async function carregarModuloCloudinary(globais = {}) {
   const arquivo = path.resolve(__dirname, "..", "js", "cloudinary.js");
-  const contexto = vm.createContext({ console, URL, Error });
+  const contexto = vm.createContext({ console, URL, Error, ...globais });
   const modulo = new vm.SourceTextModule(
     fs.readFileSync(arquivo, "utf8"),
     { context: contexto, identifier: pathToFileURL(arquivo).href }
@@ -60,4 +60,41 @@ test("gera public_id do relato sem expor o UID do usuário", async () => {
     "pro_povo/relatos/-OabcDEF01234567890x"
   );
   assert.throws(() => publicIdImagem("../outro"));
+});
+
+test("upload unsigned envia somente os parâmetros aceitos pelo Cloudinary", async () => {
+  const campos = [];
+  class FormDataTeste {
+    append(nome, valor) {
+      campos.push([nome, valor]);
+    }
+  }
+
+  const relatoId = "-OabcDEF01234567890x";
+  const publicId = `pro_povo/relatos/${relatoId}`;
+  let requisicao = null;
+  const { uploadImagem } = await carregarModuloCloudinary({
+    FormData: FormDataTeste,
+    fetch: async (url, opcoes) => {
+      requisicao = { url, opcoes };
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          public_id: publicId,
+          secure_url: "https://res.cloudinary.com/dk8uky6m/image/upload/foto.jpg"
+        })
+      };
+    }
+  });
+
+  const arquivo = { name: "foto.jpg" };
+  const resultado = await uploadImagem(arquivo, relatoId);
+
+  assert.equal(requisicao.url, "https://api.cloudinary.com/v1_1/dk8uky6m/image/upload");
+  assert.equal(requisicao.opcoes.method, "POST");
+  assert.equal(resultado.publicId, publicId);
+  assert.deepEqual(campos.map(([nome]) => nome), ["file", "upload_preset", "public_id"]);
+  assert.equal(campos.some(([nome]) => nome === "overwrite"), false);
+  assert.equal(campos.some(([nome]) => nome === "return_delete_token"), false);
 });

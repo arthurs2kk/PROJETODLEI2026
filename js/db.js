@@ -784,8 +784,8 @@ export async function excluirRelato(relatoId) {
 }
 
 // Página administrativa. Superadmins usam a ordenação global por data;
-// admins municipais usam cityId e as chaves push, que também são cronológicas.
-// Em ambos os casos apenas um lote é transferido por chamada.
+// admins municipais localizam o lote na projeção por cityId e leem somente
+// os detalhes autorizados daqueles IDs. As chaves push também são cronológicas.
 export async function buscarRelatosGestaoPagina(admin, cursor = null, tamanho = TAMANHO_PAGINA_PADRAO) {
   if (!admin) throw new Error('Administrador não identificado.');
   tamanho = Math.min(Math.max(Number(tamanho) || TAMANHO_PAGINA_PADRAO, 1), 500);
@@ -817,35 +817,48 @@ export async function buscarRelatosGestaoPagina(admin, cursor = null, tamanho = 
     return { itens: lista, temMais };
   }
 
-  if (!admin.cityId) {
+  const cityId = String(admin.cityId || '');
+  if (!/^25\d{5}$/.test(cityId)) {
     throw new Error('Administrador municipal sem cidade vinculada.');
   }
 
-  const consulta = cursor
+  const consultaDaCidade = valor => cursor
     ? query(
-        ref(db, "relatos"),
+        ref(db, "relatosResumo"),
         orderByChild("cityId"),
-        startAt(admin.cityId),
-        endAt(admin.cityId, cursor.id),
+        startAt(valor),
+        endAt(valor, cursor.id),
         limitToLast(tamanho + 2)
       )
     : query(
-        ref(db, "relatos"),
+        ref(db, "relatosResumo"),
         orderByChild("cityId"),
-        startAt(admin.cityId),
-        endAt(admin.cityId),
+        startAt(valor),
+        endAt(valor),
         limitToLast(tamanho + 1)
       );
 
-  const snapshot = await get(consulta);
-  let lista = Object.entries(snapshot.val() || {})
-    .map(([id, relato]) => ({ id, ...relato }));
-  if (cursor) lista = lista.filter(relato => relato.id !== cursor.id);
+  // O RTDB diferencia o código IBGE salvo como texto do mesmo código
+  // salvo como número. Relatos antigos existem nos dois formatos, portanto
+  // a gestão municipal precisa consultar ambos e paginar a união.
+  const valoresCidade = [cityId, Number(cityId)];
+  const snapshots = await Promise.all(valoresCidade.map(valor => get(consultaDaCidade(valor))));
+  const dados = Object.assign({}, ...snapshots.map(snapshot => snapshot.val() || {}));
+  let ids = Object.keys(dados);
+  if (cursor) ids = ids.filter(id => id !== cursor.id);
 
   // Dentro do mesmo cityId, o Realtime Database desempata pela chave.
-  lista.sort((a, b) => b.id.localeCompare(a.id));
-  const temMais = lista.length > tamanho;
-  if (temMais) lista = lista.slice(0, tamanho);
+  ids.sort((a, b) => b.localeCompare(a));
+  const temMais = ids.length > tamanho;
+  if (temMais) ids = ids.slice(0, tamanho);
+
+  // A projeção acima não contém autoria nem os demais campos privados.
+  // Cada detalhe é lido separadamente; as Rules validam o município do
+  // administrador contra o cityId do próprio relato, normalizando os legados.
+  const detalhes = await Promise.all(ids.map(id => get(ref(db, `relatos/${id}`))));
+  const lista = detalhes.flatMap((snapshot, indice) =>
+    snapshot.exists() ? [{ id: ids[indice], ...snapshot.val() }] : []
+  );
   return { itens: lista, temMais };
 }
 

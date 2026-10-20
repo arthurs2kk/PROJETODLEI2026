@@ -82,13 +82,13 @@ async function main() {
     await page.goto(base + 'AdminPage.html');
     await page.locator('.gestao-card').first().waitFor();
     await page.evaluate(() => document.fonts.ready);
-    await conferir('Consulta parcial e filtros identificados', async () => {
-      assert.equal(await page.locator('.gestao-card').count(), 25);
-      assert.match(await page.locator('#admin-resultados-ajuda').textContent(), /parcial/);
+    await conferir('Consulta completa e filtros identificados', async () => {
+      assert.equal(await page.locator('.gestao-card').count(), 32);
+      assert.match(await page.locator('#admin-resultados-ajuda').textContent(), /todos os relatos/i);
       await page.getByLabel('Busca', { exact: true }).fill('demanda municipal 1');
       assert.equal(await page.locator('.gestao-card').count(), 11);
       await page.getByRole('button', { name: 'Limpar filtros' }).click();
-      assert.equal(await page.locator('.gestao-card').count(), 25);
+      assert.equal(await page.locator('.gestao-card').count(), 32);
     });
     await conferir('Rascunho preservado, limite e foco da resposta', async () => {
       await page.locator('#btn-resp-teste-0').click();

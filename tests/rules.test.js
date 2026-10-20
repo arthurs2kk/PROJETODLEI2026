@@ -180,6 +180,7 @@ before(async () => {
       admins: {
         adminJP: { ativo: true, papel: "admin", cityId: "2507507", organizacaoId: "orgJP" },
         adminCG: { ativo: true, papel: "admin", cityId: "2504009", organizacaoId: "orgCG" },
+        adminCGLegado: { ativo: true, papel: "admin", cityId: 2504009, organizacaoId: "orgCG" },
         super: { ativo: true, papel: "superadmin" },
         superLegado: true,
         superInativo: { ativo: false, papel: "superadmin" },
@@ -620,6 +621,41 @@ test("consulta administrativa combina cidade e limite sem trazer outros municíp
   assert.ok(relatosCompostos.every(relato =>
     relato.cityId === "2507507" && relato.status === "aberto"
   ));
+});
+
+test("admin regional acessa a cidade quando cityId legado alterna entre número e texto", async () => {
+  const adminTexto = ambiente.authenticatedContext("adminCG").database();
+  const adminNumero = ambiente.authenticatedContext("adminCGLegado").database();
+
+  for (const db of [adminTexto, adminNumero]) {
+    const numericos = await assertSucceeds(get(query(
+      ref(db, "relatosResumo"),
+      orderByChild("cityId"),
+      startAt(2504009),
+      endAt(2504009),
+      limitToLast(25)
+    )));
+    assert.equal(numericos.val().relatoLegado.cityId, 2504009);
+
+    await assertSucceeds(get(query(
+      ref(db, "relatosResumo"),
+      orderByChild("cityId"),
+      startAt("2504009"),
+      endAt("2504009"),
+      limitToLast(25)
+    )));
+  }
+
+  await assertSucceeds(get(ref(adminTexto, "relatos/relatoLegado")));
+  await assertSucceeds(get(ref(adminNumero, "relatos/pagina-003")));
+  await assertFails(get(ref(adminNumero, "relatos/pagina-001")));
+  const dataResposta = serverTimestamp();
+  await assertSucceeds(update(ref(adminTexto), {
+    "relatos/relatoLegado/respostaOficial": "Equipe acionada.",
+    "relatos/relatoLegado/dataResposta": dataResposta,
+    "relatosPublicos/relatoLegado/respostaOficial": "Equipe acionada.",
+    "relatosPublicos/relatoLegado/dataResposta": dataResposta,
+  }));
 });
 
 test("leituras públicas usam projeções e detalhes; coleções completas exigem escopo autorizado", async () => {

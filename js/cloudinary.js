@@ -120,8 +120,6 @@ export async function uploadImagem(file, relatoId) {
   formData.append("file", file);
   formData.append("upload_preset", UPLOAD_PRESET);
   formData.append("public_id", publicId);
-  formData.append("overwrite", "false");
-  formData.append("return_delete_token", "true");
 
   let resp;
   try {

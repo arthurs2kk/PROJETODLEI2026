@@ -106,7 +106,8 @@ function podeExcluirRelato(uid, relato, admin) {
   if (admin === true) return true;
   if (!admin || admin.ativo !== true) return false;
   if (admin.papel === 'superadmin') return true;
-  return admin.papel === 'admin' && admin.cityId === relato?.cityId;
+  return admin.papel === 'admin' && admin.cityId != null && relato?.cityId != null &&
+    String(admin.cityId) === String(relato.cityId);
 }
 
 function extrairPublicIdCloudinary(url, cloudName = CLOUD_NAME_PADRAO) {
