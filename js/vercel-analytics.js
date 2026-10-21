@@ -14,6 +14,8 @@
   }
 
   function carregarAnalytics() {
+    const urlAtual = new URL(location.href);
+    if (urlAtual.protocol === 'file:' || ['localhost', '127.0.0.1', '[::1]'].includes(urlAtual.hostname)) return;
     if (carregado || document.querySelector('script[data-pro-povo-analytics]')) return;
     carregado = true;
     window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };

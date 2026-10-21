@@ -133,6 +133,16 @@ Cloudinary credentials.
 
 Vercel environment variables for image deletion
 
+Para testar a exclusão localmente, use `npm run dev:vercel` (ou
+`npm.cmd run dev:vercel` no PowerShell) e abra o endereço informado pelo comando.
+Na primeira execução, autentique-se na Vercel e vincule ao projeto existente.
+O Live Server na porta 5500 serve apenas arquivos estáticos e retorna 405 para
+`POST /api/relatos`; ele não executa as funções da pasta `api`.
+Configure as variáveis abaixo também no ambiente **Development** da Vercel,
+que o `vercel dev` carrega automaticamente. A exclusão usa os serviços definidos
+nessas variáveis: se apontarem para produção, ela remove dados reais.
+O script de Analytics fica desativado em localhost para evitar o 404 local.
+
 The browser does not need these variables for unsigned upload. The Vercel Function
 needs them to authenticate requests and delete images:
 

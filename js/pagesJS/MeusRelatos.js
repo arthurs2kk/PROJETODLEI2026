@@ -97,7 +97,8 @@ function render() {
           showToast('🗑️ Relato excluído.');
         } catch (erro) {
           console.error(erro);
-          showToast('⚠️ Não foi possível excluir este relato.');
+          showToast(erro.code === 'API_RELATOS_INDISPONIVEL'
+            ? erro.message : '⚠️ Não foi possível excluir este relato.');
         }
       }
     });

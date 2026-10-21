@@ -21,6 +21,34 @@ async function carregarModuloCloudinary(globais = {}) {
   return modulo.namespace;
 }
 
+test('exclusão identifica servidor estático e não aceita HTML como sucesso', async () => {
+  for (const status of [200, 404, 405]) {
+    const { excluirRelatoNoServidor } = await carregarModuloCloudinary({
+      fetch: async () => ({ ok: status === 200, status, json: async () => { throw new SyntaxError('HTML'); } })
+    });
+    await assert.rejects(excluirRelatoNoServidor('-OabcDEF01234567890x', 'token-teste'),
+      erro => erro.code === 'API_RELATOS_INDISPONIVEL' && erro.status === status);
+  }
+});
+
+test('exclusão mantém os erros JSON e o resultado da API autenticada', async () => {
+  for (const status of [200, 403]) {
+    const corpo = status === 200 ? { ok: true } : { codigo: 'SEM_PERMISSAO', erro: 'Acesso negado.' };
+    const { excluirRelatoNoServidor } = await carregarModuloCloudinary({
+      fetch: async (url, opcoes) => {
+        assert.equal(url, '/api/relatos');
+        assert.equal(opcoes.method, 'POST');
+        assert.equal(opcoes.headers.Authorization, 'Bearer token-teste');
+        assert.equal(JSON.parse(opcoes.body).acao, 'excluir');
+        return { ok: status === 200, status, json: async () => corpo };
+      }
+    });
+    const promessa = excluirRelatoNoServidor('-OabcDEF01234567890x', 'token-teste');
+    if (status === 200) assert.deepEqual(await promessa, corpo);
+    else await assert.rejects(promessa, erro => erro.code === 'SEM_PERMISSAO');
+  }
+});
+
 test("identifica preset de upload inexistente como erro de configuração", async () => {
   const { criarErroUpload, UPLOAD_PRESET } = await carregarModuloCloudinary();
   const erro = criarErroUpload(400, {

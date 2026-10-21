@@ -8,7 +8,7 @@ const vm = require("node:vm");
 
 const source = fs.readFileSync(path.join(__dirname, "..", "js", "vercel-analytics.js"), "utf8");
 
-function executar(escolhaInicial = null) {
+function executar(escolhaInicial = null, href = 'https://propovo.example/index.html') {
   const elementos = new Map();
   const scripts = [];
   let escolha = escolhaInicial;
@@ -58,7 +58,7 @@ function executar(escolhaInicial = null) {
   const context = {
     document,
     window: {},
-    location: { href: "https://propovo.example/index.html", reload: () => { recarregamentos += 1; } },
+    location: { href, reload: () => { recarregamentos += 1; } },
     localStorage: {
       getItem: () => escolha,
       setItem: (_, valor) => { escolha = valor; },
@@ -107,4 +107,13 @@ test("revogar uma permissão anterior recarrega a página para interromper a col
   pagina.elementos.get("privacidade-banner").botoes[0].click();
   assert.equal(pagina.escolha(), "essencial");
   assert.equal(pagina.recarregamentos(), 1);
+});
+
+test('analytics não solicita o endpoint da Vercel em servidores locais, mesmo com consentimento', () => {
+  for (const url of ['http://127.0.0.1:5500/', 'http://localhost:3000/', 'http://[::1]:3000/', 'file:///site/index.html']) {
+    const pagina = executar('permitido', url);
+    pagina.analytics.autorizar();
+    assert.equal(pagina.scripts.length, 0, url);
+    assert.equal(pagina.analytics.escolhaAtual(), 'permitido');
+  }
 });

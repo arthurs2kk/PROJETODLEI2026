@@ -26,6 +26,13 @@ async function chamarApiRelatos(acao, relatoId, idToken) {
   let dados = null;
   try { dados = await resposta.json(); } catch { /* resposta sem corpo JSON */ }
 
+  if (!dados && [200, 404, 405].includes(resposta.status)) {
+    const erro = new Error('O servidor atual não oferece a API de exclusão. Abra o site na Vercel ou use o servidor de desenvolvimento com API.');
+    erro.code = 'API_RELATOS_INDISPONIVEL';
+    erro.status = resposta.status;
+    throw erro;
+  }
+
   if (!resposta.ok) {
     const erro = new Error(dados?.erro || "Não foi possível concluir a operação com a imagem.");
     erro.code = dados?.codigo || "ERRO_API_RELATOS";
