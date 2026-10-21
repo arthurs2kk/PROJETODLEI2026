@@ -164,6 +164,26 @@
 
 .gestao-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
 
+.gestao-card.gestao-card-alvo {
+  animation: none;
+  transform: none;
+}
+
+.gestao-card.gestao-card-localizado {
+  position: relative;
+  z-index: 1;
+  transform-origin: center;
+  animation: gestao-card-pulo .72s ease-in-out both;
+  box-shadow: 0 0 0 4px rgba(255, 205, 7, .48), var(--shadow-md);
+}
+
+@keyframes gestao-card-pulo {
+  0%, 100% { transform: scale(1); }
+  30% { transform: scale(1.025); }
+  55% { transform: scale(.99); }
+  78% { transform: scale(1.01); }
+}
+
 .gestao-card[data-status="aberto"]    { border-left-color: var(--vermelho); }
 .gestao-card[data-status="andamento"] { border-left-color: var(--laranja); }
 .gestao-card[data-status="resolvido"] { border-left-color: var(--verde); }

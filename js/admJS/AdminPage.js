@@ -33,6 +33,7 @@ const state = {
 let mapaGestao;
 let pararPrioridades;
 let localizarPendente;
+let cancelarDestaqueRelato;
 
 function diasEmAberto(r) {
   return Math.floor((Date.now() - r.dataCriacao) / 86400000);
@@ -401,10 +402,49 @@ async function verNoMapa(r) {
 }
 
 function abrirGestao(r) {
+  cancelarDestaqueRelato?.();
   selecionarAba('relatos');
   const card = document.getElementById(`relato-${r.id}`);
-  card?.scrollIntoView({ block: 'center' });
-  card?.focus({ preventScroll: true });
+  if (!card) return;
+
+  // Suprime a animação de entrada antes de medir a rolagem. Esta classe fica
+  // no card para que fadeInUp não reinicie quando o destaque terminar.
+  card.classList.add('gestao-card-alvo');
+  card.focus({ preventScroll: true });
+  card.scrollIntoView({ block: 'center' });
+
+  let frame;
+  let timer;
+  let ultimaPosicao = window.scrollY;
+  let paradoDesde = performance.now();
+  const encerrarDestaque = () => {
+    cancelAnimationFrame(frame);
+    clearTimeout(timer);
+    card.removeEventListener('animationend', aoTerminarAnimacao);
+    card.classList.remove('gestao-card-localizado');
+  };
+  const aoTerminarAnimacao = evento => {
+    if (evento.target === card && evento.animationName === 'gestao-card-pulo') encerrarDestaque();
+  };
+  cancelarDestaqueRelato = encerrarDestaque;
+
+  const aguardarRolagem = agora => {
+    if (!card.isConnected || state.aba !== 'relatos') { encerrarDestaque(); return; }
+    if (window.scrollY !== ultimaPosicao) {
+      ultimaPosicao = window.scrollY;
+      paradoDesde = agora;
+    }
+    // Também funciona quando o card já está centralizado e não há scrollend.
+    if (agora - paradoDesde < 180) {
+      frame = requestAnimationFrame(aguardarRolagem);
+      return;
+    }
+    card.addEventListener('animationend', aoTerminarAnimacao);
+    card.classList.add('gestao-card-localizado');
+    // Com movimento reduzido, mantém apenas o contorno temporário.
+    timer = setTimeout(encerrarDestaque, 1200);
+  };
+  frame = requestAnimationFrame(aguardarRolagem);
 }
 
 function render() {

@@ -16,7 +16,9 @@ export function criarMapaGestao(aoPriorizar, podePriorizar, aoAbrirRelato) {
   let ultimaAssinatura = '';
   let ultimoTipo;
   let relatosAtuais = [];
+  let cancelarDestaque;
   const marcadores = new Map();
+  mapa.on('popupclose', () => cancelarDestaque?.());
   mapa.on('popupopen', evento => {
     evento.popup.getElement()?.querySelector('.leaflet-popup-close-button')?.setAttribute('aria-label', 'Fechar detalhes do relato');
   });
@@ -28,7 +30,52 @@ export function criarMapaGestao(aoPriorizar, podePriorizar, aoAbrirRelato) {
     }
   });
 
+  function destacarLocalizacao(relato) {
+    cancelarDestaque?.();
+    const elemento = document.getElementById('admin-mapa');
+    const reduzirMovimento = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let frame;
+    let halo;
+    let inicio;
+    let ultimaPosicao = '';
+    let paradoDesde = performance.now();
+    cancelarDestaque = () => {
+      cancelAnimationFrame(frame);
+      if (halo) mapa.removeLayer(halo);
+      halo = null;
+    };
+
+    const animar = agora => {
+      if (!elemento.isConnected || !elemento.getClientRects().length) { cancelarDestaque(); return; }
+      if (inicio === undefined) {
+        const ponto = mapa.latLngToContainerPoint([relato.lat, relato.lng]);
+        const posicao = `${elemento.getBoundingClientRect().top}:${ponto.x}:${ponto.y}:${mapa.getZoom()}`;
+        if (posicao !== ultimaPosicao) { ultimaPosicao = posicao; paradoDesde = agora; }
+        // Espera tanto a rolagem da página quanto o enquadramento do mapa.
+        if (agora - paradoDesde >= 180) {
+          inicio = agora;
+          halo = L.circleMarker([relato.lat, relato.lng], {
+            radius: 19, color: '#ffcd07', weight: 4, opacity: 1,
+            fill: false, interactive: false
+          }).addTo(mapa);
+          marcadores.get(relato.id)?.bringToFront();
+        }
+      } else {
+        const decorrido = agora - inicio;
+        if (decorrido >= 1400) { cancelarDestaque(); return; }
+        if (!reduzirMovimento) {
+          const pulso = (1 - Math.cos((decorrido / 700) * Math.PI * 2)) / 2;
+          halo.setRadius(19 + pulso * 15);
+          halo.setStyle({ opacity: 1 - pulso * .65 });
+        }
+      }
+      frame = requestAnimationFrame(animar);
+    };
+    frame = requestAnimationFrame(animar);
+  }
+
   function localizar(id) {
+    cancelarDestaque?.();
     const relato = relatosAtuais.find(r => r.id === id);
     if (!relato || !coordenadasValidas(relato)) {
       document.getElementById('admin-mapa-info').textContent = 'Este relato não possui localização válida. Use Abrir gestão na lista abaixo para consultá-lo.';
@@ -42,9 +89,11 @@ export function criarMapaGestao(aoPriorizar, podePriorizar, aoAbrirRelato) {
       seletor.dispatchEvent(new Event('change'));
     }
     document.getElementById('admin-mapa').scrollIntoView({ block: 'center' });
-    mapa.setView([relato.lat, relato.lng], 17);
+    mapa.stop();
+    mapa.setView([relato.lat, relato.lng], 17, { animate: false });
     marcadores.get(id)?.openPopup();
     document.getElementById('admin-mapa').focus({ preventScroll: true });
+    destacarLocalizacao(relato);
   }
 
   return {
@@ -53,6 +102,7 @@ export function criarMapaGestao(aoPriorizar, podePriorizar, aoAbrirRelato) {
       relatosAtuais = relatos;
       const assinatura = JSON.stringify([tipo, relatos, prioridades, podePriorizar()]);
       if (assinatura === ultimaAssinatura && !ajustar && selecao === ultimaSelecao) return;
+      cancelarDestaque?.();
       const popupAberto = [...marcadores].find(([, marker]) => marker.isPopupOpen())?.[0];
       camada.clearLayers();
       if (camadaCalor) {

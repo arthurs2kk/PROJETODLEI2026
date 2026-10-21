@@ -121,6 +121,7 @@ async function main() {
       assert.match(await page.locator('.leaflet-popup').textContent(), /Demanda municipal 30/);
       await page.getByRole('button', { name: 'Abrir gestão do relato' }).click();
       assert.equal(await page.locator('#relato-teste-30').evaluate(e => e === document.activeElement), true);
+      await page.locator('#relato-teste-30.gestao-card-localizado').waitFor();
       await page.getByRole('tab', { name: /Mapa/ }).click();
       assert.match(await page.locator('#admin-mapa-info').textContent(), /31 de 32/);
       for (const tipo of ['status', 'apoio', 'concentracao', 'categoria']) await page.locator('#admin-mapa-tipo').selectOption(tipo);
