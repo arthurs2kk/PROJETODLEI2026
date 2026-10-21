@@ -620,3 +620,21 @@ Essa correção não exige migração nem alteração das regras do banco. A lei
 continua restrita aos resumos públicos e mantém os tipos originais armazenados.
 Os testes cobrem a correspondência com o mapa, a paginação sem duplicações,
 o isolamento por cidade, os filtros compostos, o cache e falhas de consulta.
+
+### Compatibilidade das APIs com o runtime da Vercel
+
+O `firebase-admin@14.5.0` depende de `jwks-rsa@4.1.0`, que tenta carregar
+`jose@6` (ESM) com `require()`. Em runtimes que desabilitam esse carregamento
+síncrono, as APIs encerram com `ERR_REQUIRE_ESM` antes de executar o handler.
+O problema está registrado em https://github.com/auth0/node-jwks-rsa/issues/507.
+
+O `postinstall` executa `scripts/compat-jwks-rsa.cjs`: aplica uma correção
+restrita ao carregamento de `jose` com `import()` nas duas entradas afetadas.
+As versões e a lógica de verificação criptográfica são preservadas. O script
+confere a versão e o código esperado e interrompe a instalação caso mudem;
+ao atualizar `jwks-rsa`, revise e remova o patch quando a correção oficial existir.
+Não desative scripts de instalação no deploy.
+
+`npm run test:runtime` reproduz a restrição do runtime e verifica a inicialização
+das duas APIs, a resolução de chaves e a rejeição de assinaturas falsas, sem
+rede nem credenciais. Esse teste também faz parte de `npm test`.

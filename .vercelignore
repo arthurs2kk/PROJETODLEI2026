@@ -1,0 +1,12 @@
+# Arquivos locais e credenciais nunca devem acompanhar o deploy pela CLI.
+.env
+.env.*
+*.pem
+*.key
+*service-account*.json
+*serviceAccount*.json
+*-firebase-adminsdk-*.json
+*-debug.log
+.firebase/
+/tmp/
+/output/

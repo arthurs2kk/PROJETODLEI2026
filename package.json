@@ -5,10 +5,12 @@
     "node": "22.x"
   },
   "scripts": {
+    "postinstall": "node scripts/compat-jwks-rsa.cjs",
+    "test:runtime": "node --no-experimental-require-module --test tests/api-runtime.test.cjs",
     "dev:vercel": "npx --yes vercel dev --listen 127.0.0.1:3000",
     "abrangencia:relatos": "node scripts/configurar-abrangencia-relatos.js",
-    "test": "node --test tests/api-conta.test.js tests/api-relatos.test.js tests/backfill-relatos-mapa.test.js tests/backfill-relatos-publicos.test.js tests/migrar-fotos-sem-uid.test.js tests/seed-relatos-demonstracao.test.js tests/vercel-analytics.test.js && node --experimental-vm-modules --test tests/cloudinary.test.js tests/endereco.test.js tests/db-mapa.test.js tests/abrangencia-relatos.test.js tests/gestao-modelo.test.js tests/login.test.js",
-    "test:api": "node --test tests/api-relatos.test.js",
+    "test": "npm run test:runtime && node --test tests/api-conta.test.js tests/api-relatos.test.js tests/backfill-relatos-mapa.test.js tests/backfill-relatos-publicos.test.js tests/migrar-fotos-sem-uid.test.js tests/seed-relatos-demonstracao.test.js tests/vercel-analytics.test.js && node --experimental-vm-modules --test tests/cloudinary.test.js tests/endereco.test.js tests/db-mapa.test.js tests/abrangencia-relatos.test.js tests/gestao-modelo.test.js tests/login.test.js",
+    "test:api": "node --test tests/api-relatos.test.js && npm run test:runtime",
     "test:login": "node --experimental-vm-modules --test tests/login.test.js",
     "test:cloudinary": "node --experimental-vm-modules --test tests/cloudinary.test.js",
     "test:rules": "node --test tests/rules.test.js",
