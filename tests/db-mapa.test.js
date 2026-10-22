@@ -159,7 +159,10 @@ async function carregarDb(iniciais = {}, opcoes = {}) {
       invalidarCacheRelatos: () => { invalidacoes += 1; cache.clear(); }
     }
   };
-  const contexto = vm.createContext({ console, setTimeout, clearTimeout, AbortController });
+  const contexto = vm.createContext({
+    console, setTimeout, clearTimeout, AbortController,
+    __proPovoRelatosPrefetch: opcoes.prefetch
+  });
   const modulo = new vm.SourceTextModule(
     fs.readFileSync(path.join(__dirname, "..", "js", "db.js"), "utf8"),
     { context: contexto }
@@ -508,4 +511,47 @@ test("exclusão delega à API autenticada e invalida cache somente após sucesso
   const falha = await carregarDb({}, { erroExclusao: new Error("API indisponível") });
   await assert.rejects(falha.db.excluirRelato(RELATO_ID), /API indisponível/);
   assert.equal(falha.invalidacoes, 0);
+});
+
+test("listagem publica consome a leitura antecipada sem repetir a consulta no SDK", async () => {
+  const dados = dadosComTiposDeCidade();
+  const relatosDaCidade = Object.fromEntries(
+    Object.entries(dados.relatosResumo).filter(([, relato]) => String(relato.cityId) === "2504009")
+  );
+  const ambiente = await carregarDb(dados, {
+    prefetch: {
+      tipo: "lista",
+      tamanho: 25,
+      cidade: "2504009",
+      promise: Promise.resolve(copiar(relatosDaCidade))
+    }
+  });
+
+  const pagina = await ambiente.db.buscarRelatosPagina(null, 25, {
+    cidade: "2504009",
+    usarCache: true
+  });
+
+  assert.equal(pagina.itens.length, 7);
+  assert.equal(pagina.itens.some(relato => relato.id === "outraCidade"), false);
+  assert.equal(ambiente.leituras.length, 0);
+  assert.equal(ambiente.cache.size, 1);
+});
+
+test("home consome a leitura antecipada dos destaques sem repetir a consulta no SDK", async () => {
+  const dados = dadosComTiposDeCidade();
+  const ambiente = await carregarDb(dados, {
+    prefetch: {
+      tipo: "destaque",
+      tamanho: 20,
+      cidade: "",
+      promise: Promise.resolve(copiar(dados.relatosResumo))
+    }
+  });
+
+  const relatos = await ambiente.db.buscarRelatosDestaque(20, true);
+
+  assert.equal(relatos.length, 8);
+  assert.equal(ambiente.leituras.length, 0);
+  assert.equal(ambiente.cache.size, 1);
 });

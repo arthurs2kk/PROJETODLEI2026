@@ -519,9 +519,14 @@ export async function buscarRelatosDestaque(tamanho = 50, usarCache = true) {
     if (cache !== undefined) return cache;
   }
 
-  const consulta = query(ref(db, "relatosResumo"), orderByChild("votos"), limitToLast(limite));
-  const snapshot = await get(consulta);
-  const lista = Object.entries(snapshot.val() || {}).map(([id, r]) => ({ id, ...r }));
+  const dadosAntecipados = await consumirPrefetchRelatos('destaque', limite);
+  let dados = dadosAntecipados;
+  if (!dados) {
+    const consulta = query(ref(db, "relatosResumo"), orderByChild("votos"), limitToLast(limite));
+    const snapshot = await get(consulta);
+    dados = snapshot.val() || {};
+  }
+  const lista = Object.entries(dados).map(([id, r]) => ({ id, ...r }));
   lista.sort((a, b) => (b.votos || 0) - (a.votos || 0));
   salvarCache(chaveCache, lista);
   return lista;
@@ -545,6 +550,26 @@ export async function buscarRelatosRecentes(tamanho = 50, usarCache = true) {
 }
 
 const TAMANHO_PAGINA_PADRAO = 30;
+
+// As telas publicas podem iniciar a primeira leitura via REST ainda no <head>,
+// em paralelo ao download dos modulos do Firebase. Cada prefetch e consumido
+// uma unica vez; se ele falhar ou nao corresponder a consulta, o SDK assume.
+async function consumirPrefetchRelatos(tipo, tamanho, cidade = '') {
+  const prefetch = globalThis.__proPovoRelatosPrefetch;
+  if (!prefetch || prefetch.consumido || prefetch.tipo !== tipo ||
+      prefetch.tamanho !== tamanho || (tipo === 'lista' && prefetch.cidade !== cidade)) {
+    return null;
+  }
+
+  prefetch.consumido = true;
+  try {
+    const dados = await prefetch.promise;
+    return dados && typeof dados === 'object' && !Array.isArray(dados) ? dados : null;
+  } catch (erro) {
+    console.warn('A leitura antecipada dos relatos falhou; usando a consulta normal.', erro);
+    return null;
+  }
+}
 
 // ── Página de relatos ordenados por data (mais recentes primeiro) ──
 // Usada pela tela "Todos os relatos" (relatos.js), que precisa listar tudo mas
@@ -630,8 +655,14 @@ export async function buscarRelatosPagina(cursor = null, tamanho = TAMANHO_PAGIN
       : [valorFiltro];
     consultas = valores.map(consultaFiltrada);
   }
-  const snapshots = await Promise.all(consultas.map(consulta => get(consulta)));
-  const dados = Object.assign({}, ...snapshots.map(snapshot => snapshot.val() || {}));
+  const dadosAntecipados = !cursor && campoOrdenacao === 'cityId'
+    ? await consumirPrefetchRelatos('lista', tamanho, String(valorFiltro))
+    : null;
+  let dados = dadosAntecipados;
+  if (!dados) {
+    const snapshots = await Promise.all(consultas.map(consulta => get(consulta)));
+    dados = Object.assign({}, ...snapshots.map(snapshot => snapshot.val() || {}));
+  }
   if (!Object.keys(dados).length) {
     const resultadoVazio = { itens: [], temMais: false };
     if (usarCache && chaveCache) salvarCache(chaveCache, resultadoVazio);
