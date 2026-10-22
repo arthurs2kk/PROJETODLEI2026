@@ -1324,6 +1324,51 @@ body {
   color: var(--cinza-5); box-shadow: var(--sombra-sm); font: 600 12px var(--font); cursor: pointer;
 }
 
+/* Instalação e estado de conexão da PWA */
+.pwa-install-button {
+  position: fixed;
+  z-index: 191;
+  right: 12px;
+  bottom: 54px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 40px;
+  padding: 9px 14px;
+  border: 1px solid var(--azul);
+  border-radius: 99px;
+  background: var(--azul);
+  color: #fff;
+  box-shadow: var(--shadow-md);
+  font: 700 13px var(--font);
+  cursor: pointer;
+}
+
+.pwa-install-button:hover { background: var(--azul-hover); }
+.pwa-install-button:focus-visible { outline: 3px solid var(--amarelo); outline-offset: 3px; }
+
+.pwa-notice {
+  position: fixed;
+  z-index: 1100;
+  left: 50%;
+  bottom: 24px;
+  width: max-content;
+  max-width: calc(100vw - 32px);
+  padding: 11px 18px;
+  border-radius: 99px;
+  background: var(--azul-escuro);
+  color: #fff;
+  box-shadow: var(--shadow-md);
+  font: 600 13px/1.4 var(--font);
+  text-align: center;
+  opacity: 0;
+  transform: translate(-50%, 18px);
+  transition: opacity .2s ease, transform .2s ease;
+}
+
+.pwa-notice.show { opacity: 1; transform: translate(-50%, 0); }
+
 @media (max-width: 700px) {
   .privacidade-banner { align-items: stretch; flex-direction: column; gap: 14px; }
   .privacidade-banner-acoes { flex-direction: column; }

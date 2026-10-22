@@ -91,6 +91,24 @@ Tabler Icons - Minimalist icon library for consistent visual design
 Leaflet - Lightweight open-source library for interactive mapping
 Chart.js - Powerful charting library for generating analytics graphics (bar, pie, line, doughnut charts)
 
+Progressive Web App (PWA)
+
+O Pro Povo pode ser instalado pelo navegador no Android, desktop e iOS. O
+manifesto fica em `manifest.webmanifest`, o registro e a interface de instalação
+em `js/pwa.js`, e o service worker na raiz em `sw.js` para controlar todo o site.
+As chamadas `/api`, os endpoints da Vercel e recursos externos não entram no
+cache. Quando uma navegação não pode ser atendida pela rede nem pelo cache, o
+aplicativo mostra `offline.html` em vez de simular dados atualizados.
+
+Ao alterar arquivos pré-carregados ou a estratégia de cache, incremente
+`CACHE_VERSION` em `sw.js`. Para testar localmente, use um servidor HTTP em
+`localhost` (abrir os arquivos diretamente com `file://` não registra service
+workers). Em produção, mantenha HTTPS; a Vercel já oferece esse requisito.
+
+No Android/Chrome, a opção de instalação aparece quando o navegador conclui os
+critérios de instalação. No Safari do iPhone/iPad, use **Compartilhar > Adicionar
+à Tela de Início**. O botão exibido pelo site explica esse caminho no iOS.
+
 Backend & Data Management
 Firebase Authentication - Secure user login with email/password and Google OAuth
 Firebase Realtime Database - Real-time NoSQL database for instant data synchronization across users, with security rules enforcing per-city write permissions for admins

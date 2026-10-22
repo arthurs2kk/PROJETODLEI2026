@@ -134,6 +134,12 @@ function closeModal() {
 
 document.getElementById('btn-relatar')?.addEventListener('click', openModal);
 document.getElementById('btn-relatar-side')?.addEventListener('click', openModal);
+
+// Atalho do aplicativo: abre diretamente o fluxo de criação de relato.
+if (new URLSearchParams(window.location.search).get('acao') === 'relatar') {
+  openModal({ currentTarget: document.getElementById('btn-relatar') });
+}
+
 document.getElementById('modal-close')?.addEventListener('click', closeModal);
 document.getElementById('btn-cancelar')?.addEventListener('click', closeModal);
 document.getElementById('modal-overlay')?.addEventListener('click', (e) => {
