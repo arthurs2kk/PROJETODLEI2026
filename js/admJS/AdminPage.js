@@ -611,7 +611,7 @@ function render() {
           showToast('🗑️ Relato excluído.');
         } catch (erro) {
           console.error(erro);
-          showToast(erro.code === 'API_RELATOS_INDISPONIVEL'
+          showToast(['API_RELATOS_INDISPONIVEL', 'CLOUDINARY_INDISPONIVEL', 'CLOUDINARY_SEM_PERMISSAO'].includes(erro.code)
             ? erro.message : '⚠️ Não foi possível excluir este relato.');
         } finally { state.pendentes.delete(r.id); render(); }
       }

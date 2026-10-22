@@ -143,14 +143,36 @@ async function autenticar(req) {
 }
 
 async function destruirImagem(publicId) {
-  obterCloudinary();
-  const resultado = await cloudinary.uploader.destroy(publicId, {
-    resource_type: 'image',
-    invalidate: true
-  });
-
-  if (!['ok', 'not found'].includes(resultado?.result)) {
-    throw new Error(`O Cloudinary não confirmou a exclusão: ${resultado?.result || 'sem resposta'}`);
+  const { cloudName, apiKey, apiSecret } = obterCloudinary();
+  const parametros = { public_id: publicId, invalidate: true, timestamp: Math.floor(Date.now() / 1000) };
+  const signature = cloudinary.utils.api_sign_request(parametros, apiSecret);
+  // O uploader do SDK descarta o corpo de respostas 403. A chamada REST mantém
+  // a mesma assinatura e permite diagnosticar a recusa sem expor segredos.
+  let resposta;
+  let resultado;
+  try {
+    resposta = await fetch(`https://api.cloudinary.com/v1_1/${encodeURIComponent(cloudName)}/image/destroy`, {
+      method: 'POST',
+      body: new URLSearchParams({ ...parametros, api_key: apiKey, signature }),
+      redirect: 'error',
+      signal: AbortSignal.timeout(20000)
+    });
+    try { resultado = await resposta.json(); } catch { /* HTML ou corpo inválido */ }
+  } catch {
+    throw new ErroHttp(502, 'CLOUDINARY_INDISPONIVEL', 'Não foi possível confirmar a exclusão da foto. Tente novamente mais tarde.');
+  }
+  if (!resposta.ok || !['ok', 'not found'].includes(resultado?.result)) {
+    let detalhe = typeof resultado?.error?.message === 'string' ? resultado.error.message : 'Resposta sem confirmação de exclusão';
+    for (const segredo of [apiSecret, apiKey, signature, publicId]) {
+      detalhe = detalhe.split(segredo).join('[omitido]').split(encodeURIComponent(segredo)).join('[omitido]');
+    }
+    console.error('Cloudinary recusou exclusão:', {
+      status: resposta.status, requestId: resposta.headers.get('x-request-id'), detalhe: detalhe.slice(0, 500)
+    });
+    if (resposta.status === 403 && /missing permissions/i.test(detalhe)) {
+      throw new ErroHttp(502, 'CLOUDINARY_SEM_PERMISSAO', 'A exclusão de fotos está bloqueada por uma permissão do serviço de imagens. O responsável pelo site precisa ajustar essa configuração.');
+    }
+    throw new ErroHttp(502, 'CLOUDINARY_INDISPONIVEL', 'O serviço de imagens não confirmou a exclusão da foto. Tente novamente mais tarde.');
   }
   return resultado.result;
 }
@@ -307,7 +329,7 @@ async function handler(req, res) {
     if (status >= 500) console.error('Erro na API de relatos:', erro);
     return res.status(status).json({
       codigo,
-      erro: status >= 500 ? 'Não foi possível concluir a operação.' : erro.message
+      erro: erro instanceof ErroHttp ? erro.message : 'Não foi possível concluir a operação.'
     });
   }
 }

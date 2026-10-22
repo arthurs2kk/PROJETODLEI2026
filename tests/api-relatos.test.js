@@ -64,8 +64,10 @@ test('valida o cityId usado no caminho do marcador', () => {
 });
 
 // Executa o handler real com os SDKs isolados, sem rede ou credenciais.
-function apiIsolada({ uid = 'autor', relato, admin = null, falharGravacao = false }) {
+function apiIsolada({ uid = 'autor', relato, admin = null, falharGravacao = false, imagemStatus = 200, imagemResultado = { result: 'ok' } }) {
   const atualizacoes = [];
+  const chamadasImagem = [];
+  const logs = [];
   const db = {
     ref(caminho) {
       return {
@@ -84,7 +86,11 @@ function apiIsolada({ uid = 'autor', relato, admin = null, falharGravacao = fals
     'firebase-admin/app': { getApps: () => [{}] },
     'firebase-admin/auth': { getAuth: () => ({ verifyIdToken: async () => ({ uid }) }) },
     'firebase-admin/database': { getDatabase: () => db },
-    cloudinary: { v2: {} }
+    cloudinary: { v2: { config() {}, utils: { api_sign_request(params, secret) {
+      assert.equal(secret, 'segredo-teste');
+      assert.equal(params.invalidate, true);
+      return 'assinatura-teste';
+    } } } }
   };
   const contexto = vm.createContext({
     module: { exports: {} },
@@ -92,13 +98,19 @@ function apiIsolada({ uid = 'autor', relato, admin = null, falharGravacao = fals
       assert.ok(Object.hasOwn(dependencias, nome), `Dependência inesperada: ${nome}`);
       return dependencias[nome];
     },
-    process: { env: {} },
-    console: { error() {} },
-    Buffer, URL
+    process: { env: { CLOUDINARY_API_KEY: 'chave-teste', CLOUDINARY_API_SECRET: 'segredo-teste' } },
+    console: { error(...args) { logs.push(args); } },
+    fetch: async (url, options) => {
+      chamadasImagem.push({ url, options });
+      return { ok: imagemStatus === 200, status: imagemStatus, headers: new Map([['x-request-id', 'request-teste']]), json: async () => imagemResultado };
+    },
+    Buffer, URL, URLSearchParams, AbortSignal
   });
   vm.runInContext(fs.readFileSync(path.join(__dirname, '../api/relatos.js'), 'utf8'), contexto);
   return {
     atualizacoes,
+    chamadasImagem,
+    logs,
     async excluir() {
       const resposta = { setHeader() {}, status(valor) { this.codigo = valor; return this; }, json(valor) { this.corpo = valor; } };
       await contexto.module.exports({
@@ -154,4 +166,57 @@ test('API preserva exclusão idempotente e informa falha no update atômico', as
   });
   assert.equal((await falha.excluir()).codigo, 500);
   assert.equal(falha.atualizacoes.length, 1);
+});
+
+const relatoComFoto = {
+  autorId: 'autor', status: 'aberto', cityId: '2504009',
+  fotoUrl: 'https://res.cloudinary.com/dk8uky6m/image/upload/v1/pro_povo/relatos/-OabcDEF01234567890x.jpg',
+  fotoPublicId: 'pro_povo/relatos/-OabcDEF01234567890x'
+};
+
+test('exclusão assina somente a imagem autorizada e aguarda confirmação do Cloudinary', async () => {
+  for (const result of ['ok', 'not found']) {
+    const api = apiIsolada({ relato: relatoComFoto, imagemResultado: { result } });
+    const resposta = await api.excluir();
+    assert.equal(resposta.codigo, 200);
+    assert.equal(api.atualizacoes.length, 1);
+    assert.equal(api.chamadasImagem.length, 1);
+    const { url, options } = api.chamadasImagem[0];
+    assert.equal(url, 'https://api.cloudinary.com/v1_1/dk8uky6m/image/destroy');
+    assert.equal(options.method, 'POST');
+    assert.equal(options.redirect, 'error');
+    assert.equal(options.body.get('public_id'), relatoComFoto.fotoPublicId);
+    assert.equal(options.body.get('invalidate'), 'true');
+    assert.equal(options.body.get('signature'), 'assinatura-teste');
+    assert.equal(options.body.has('api_secret'), false);
+  }
+});
+
+test('recusa 403 do Cloudinary preserva o relato e não expõe credenciais', async () => {
+  const api = apiIsolada({ relato: relatoComFoto, imagemStatus: 403,
+    imagemResultado: { error: { message: 'Denied segredo-teste chave-teste assinatura-teste' } } });
+  const resposta = await api.excluir();
+  assert.equal(resposta.codigo, 502);
+  assert.equal(resposta.corpo.codigo, 'CLOUDINARY_INDISPONIVEL');
+  assert.deepEqual(api.atualizacoes, []);
+  assert.doesNotMatch(JSON.stringify([resposta.corpo, api.logs]), /segredo-teste|chave-teste|assinatura-teste/);
+  assert.match(JSON.stringify(api.logs), /request-teste/);
+});
+
+test('resposta sem confirmação não apaga os dados e permissão é verificada antes da imagem', async () => {
+  const semConfirmacao = apiIsolada({ relato: relatoComFoto, imagemResultado: { result: 'unexpected' } });
+  assert.equal((await semConfirmacao.excluir()).codigo, 502);
+  assert.deepEqual(semConfirmacao.atualizacoes, []);
+  const semPermissao = apiIsolada({ uid: 'outro', relato: relatoComFoto });
+  assert.equal((await semPermissao.excluir()).codigo, 403);
+  assert.deepEqual(semPermissao.chamadasImagem, []);
+});
+
+test('permissão insuficiente na chave do Cloudinary gera aviso específico e preserva o relato', async () => {
+  const api = apiIsolada({ relato: relatoComFoto, imagemStatus: 403,
+    imagemResultado: { error: { message: 'Request forbidden due to missing permissions (actions=["delete"])' } } });
+  const resposta = await api.excluir();
+  assert.equal(resposta.codigo, 502);
+  assert.equal(resposta.corpo.codigo, 'CLOUDINARY_SEM_PERMISSAO');
+  assert.deepEqual(api.atualizacoes, []);
 });
