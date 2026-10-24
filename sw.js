@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v1';
+const CACHE_VERSION = 'v2';
 const STATIC_CACHE = `pro-povo-static-${CACHE_VERSION}`;
 const PAGE_CACHE = `pro-povo-pages-${CACHE_VERSION}`;
 const APP_CACHES = [STATIC_CACHE, PAGE_CACHE];

@@ -198,6 +198,43 @@ after(async () => {
   await ambiente?.cleanup();
 });
 
+test('denúncias são únicas, privadas e visíveis somente à prefeitura responsável', async () => {
+  const caminho = 'denunciasRelatos/2507507/relatoA/denunciante';
+  const denunciante = ambiente.authenticatedContext('denunciante', {
+    email: 'denunciante@example.com',
+    email_verified: true,
+  }).database();
+  const naoVerificado = ambiente.authenticatedContext('denunciantePendente', {
+    email: 'pendente@example.com',
+    email_verified: false,
+  }).database();
+  const autor = ambiente.authenticatedContext('cidadao', {
+    email: 'cidadao@example.com',
+    email_verified: true,
+  }).database();
+  const publico = ambiente.unauthenticatedContext().database();
+  const adminJP = ambiente.authenticatedContext('adminJP').database();
+  const adminCG = ambiente.authenticatedContext('adminCG').database();
+  const superadmin = ambiente.authenticatedContext('super').database();
+  const denuncia = { motivo: 'conteudo_suspeito', dataCriacao: serverTimestamp() };
+
+  await assertFails(set(ref(publico, caminho), denuncia));
+  await assertFails(set(ref(naoVerificado, 'denunciasRelatos/2507507/relatoA/denunciantePendente'), denuncia));
+  await assertFails(set(ref(autor, 'denunciasRelatos/2507507/relatoA/cidadao'), denuncia));
+  await assertFails(set(ref(denunciante, 'denunciasRelatos/2504009/relatoA/denunciante'), denuncia));
+  await assertFails(set(ref(denunciante, caminho), { ...denuncia, autorNome: 'Não deve ser salvo' }));
+  await assertSucceeds(set(ref(denunciante, caminho), denuncia));
+  await assertFails(set(ref(denunciante, caminho), denuncia));
+  await assertFails(set(ref(denunciante, caminho), null));
+
+  await assertSucceeds(get(ref(denunciante, caminho)));
+  await assertFails(get(ref(denunciante, 'denunciasRelatos/2507507')));
+  await assertFails(get(ref(publico, caminho)));
+  await assertSucceeds(get(ref(adminJP, 'denunciasRelatos/2507507')));
+  await assertFails(get(ref(adminCG, 'denunciasRelatos/2507507')));
+  await assertSucceeds(get(ref(superadmin, 'denunciasRelatos')));
+});
+
 test('prioridades são internas, compartilhadas por município e preservam autoria ao reordenar', async () => {
   const jp = ambiente.authenticatedContext('adminJP').database();
   const cg = ambiente.authenticatedContext('adminCG').database();

@@ -693,6 +693,40 @@ export async function buscarRelatoPorId(relatoId) {
   return snapshot.exists() ? { id: relatoId, ...snapshot.val() } : null;
 }
 
+// Sinaliza um relato para análise da prefeitura. A chave do usuário impede
+// denúncias repetidas sem expor sua identidade na interface administrativa.
+export async function denunciarRelato(relatoId, cityId) {
+  const usuario = auth.currentUser;
+  if (!usuario) throw erroEnvio('DENUNCIA_LOGIN', 'Faça login para denunciar um relato.');
+  if (!usuario.emailVerified) {
+    throw erroEnvio('DENUNCIA_EMAIL_NAO_VERIFICADO', 'Confirme seu e-mail antes de denunciar um relato.');
+  }
+
+  const id = String(relatoId || '');
+  const cidade = String(cityId || '');
+  if (!/^[A-Za-z0-9_-]{1,160}$/.test(id) || !/^25\d{5}$/.test(cidade)) {
+    throw erroEnvio('DENUNCIA_INVALIDA', 'Não foi possível identificar este relato.');
+  }
+
+  await usuario.getIdToken(true);
+  const caminho = ref(db, `denunciasRelatos/${cidade}/${id}/${usuario.uid}`);
+  const existente = await get(caminho);
+  if (existente.exists()) return { jaDenunciado: true };
+
+  try {
+    await set(caminho, {
+      motivo: 'conteudo_suspeito',
+      dataCriacao: serverTimestamp()
+    });
+    return { jaDenunciado: false };
+  } catch (erro) {
+    if (ehErroPermissao(erro)) {
+      throw erroEnvio('DENUNCIA_NAO_PERMITIDA', 'Não foi possível denunciar este relato. Relatos da própria autoria não podem ser denunciados.');
+    }
+    throw erro;
+  }
+}
+
 // ── Votar num relato (sem voto duplo) ──
 export async function votar(relatoId, userId) {
   const usuario = auth.currentUser;
@@ -920,4 +954,35 @@ export async function buscarTodosRelatosGestao(admin, onProgresso = null, tamanh
   return [...relatosPorId.values()].sort((a, b) =>
     ((b.dataCriacao || 0) - (a.dataCriacao || 0)) || b.id.localeCompare(a.id)
   );
+}
+
+// Retorna somente contagens e datas agregadas. Os IDs dos cidadãos que
+// denunciaram nunca são repassados para a camada visual.
+export async function buscarDenunciasRelatos(admin) {
+  if (!admin) throw new Error('Administrador não identificado.');
+  const superadmin = admin === true || admin.papel === 'superadmin';
+  const cityId = String(admin.cityId || '');
+  if (!superadmin && !/^25\d{5}$/.test(cityId)) {
+    throw new Error('Administrador municipal sem cidade vinculada.');
+  }
+
+  const snapshot = await get(ref(db, superadmin ? 'denunciasRelatos' : `denunciasRelatos/${cityId}`));
+  const cidades = superadmin ? Object.values(snapshot.val() || {}) : [snapshot.val() || {}];
+  const agregadas = {};
+
+  for (const denunciasDaCidade of cidades) {
+    for (const [relatoId, denuncias] of Object.entries(denunciasDaCidade || {})) {
+      const datas = Object.values(denuncias || {})
+        .map(denuncia => Number(denuncia?.dataCriacao))
+        .filter(Number.isFinite);
+      if (!datas.length) continue;
+      agregadas[relatoId] = {
+        quantidade: datas.length,
+        primeiraDenuncia: Math.min(...datas),
+        ultimaDenuncia: Math.max(...datas)
+      };
+    }
+  }
+
+  return agregadas;
 }

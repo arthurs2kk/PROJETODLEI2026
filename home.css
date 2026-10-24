@@ -1305,6 +1305,12 @@ body {
 }
 .btn-danger:hover { background: #fff1f0; }
 .btn-danger:disabled { opacity: .6; cursor: wait; }
+.modal-footer .btn-denunciar { margin-right: auto; }
+
+@media (max-width: 520px) {
+  .modal-footer { flex-wrap: wrap; }
+  .modal-footer .btn-denunciar { width: 100%; margin-right: 0; }
+}
 
 .privacidade-banner {
   position: fixed; z-index: 1000; right: 18px; bottom: 18px; left: 18px;

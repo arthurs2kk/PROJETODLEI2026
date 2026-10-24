@@ -351,6 +351,28 @@
         ".validate": "newData.hasChildren(['nome','cityId','cidadeNome','ativo'])"
       }
     },
+    "denunciasRelatos": {
+      ".read": "auth != null && (root.child('admins').child(auth.uid).val() === true || (root.child('admins').child(auth.uid).child('ativo').val() === true && root.child('admins').child(auth.uid).child('papel').val() === 'superadmin'))",
+      "$cityId": {
+        ".read": "auth != null && (root.child('admins').child(auth.uid).val() === true || (root.child('admins').child(auth.uid).child('ativo').val() === true && (root.child('admins').child(auth.uid).child('papel').val() === 'superadmin' || (root.child('admins').child(auth.uid).child('papel').val() === 'admin' && root.child('admins').child(auth.uid).child('cityId').val() + '' === $cityId))))",
+        "$relatoId": {
+          "$uid": {
+            ".read": "auth != null && (auth.uid === $uid || root.child('admins').child(auth.uid).val() === true || (root.child('admins').child(auth.uid).child('ativo').val() === true && (root.child('admins').child(auth.uid).child('papel').val() === 'superadmin' || (root.child('admins').child(auth.uid).child('papel').val() === 'admin' && root.child('admins').child(auth.uid).child('cityId').val() + '' === $cityId))))",
+            ".write": "auth != null && auth.uid === $uid && auth.token.email_verified === true && !data.exists() && newData.exists() && root.child('relatos').child($relatoId).exists() && root.child('relatos').child($relatoId).child('cityId').val() + '' === $cityId && root.child('relatos').child($relatoId).child('autorId').val() !== auth.uid",
+            ".validate": "newData.hasChildren(['motivo','dataCriacao'])",
+            "motivo": {
+              ".validate": "newData.val() === 'conteudo_suspeito'"
+            },
+            "dataCriacao": {
+              ".validate": "newData.isNumber() && newData.val() > now - 120000 && newData.val() <= now + 120000"
+            },
+            "$other": {
+              ".validate": false
+            }
+          }
+        }
+      }
+    },
     "prioridadesMunicipais": {
       ".read": "auth != null && (root.child('admins').child(auth.uid).val() === true || (root.child('admins').child(auth.uid).child('ativo').val() === true && root.child('admins').child(auth.uid).child('papel').val() === 'superadmin'))",
       "$cityId": {

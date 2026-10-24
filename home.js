@@ -1,6 +1,6 @@
 // ── Pro Povo — app.js ──
 import { auth, onAuthStateChanged } from "./js/firebase.js";
-import { criarRelato, buscarRelatosDestaque, buscarRelatosRecentes, buscarRelatoPorId, votar, jaVotou, tempoRestanteParaEnviar } from "./js/db.js";
+import { criarRelato, buscarRelatosDestaque, buscarRelatosRecentes, buscarRelatoPorId, denunciarRelato, votar, jaVotou, tempoRestanteParaEnviar } from "./js/db.js";
 import {
   buscarSugestoesEndereco,
   buscarEnderecoPorCoordenadas,
@@ -498,6 +498,8 @@ async function renderCards() {
 
 const detalhesRelatos = new Map();
 let detalheSolicitacao = 0;
+let relatoDetalhado = null;
+const relatosDenunciados = new Set();
 
 async function abrirDetalhe(resumo) {
   const solicitacao = ++detalheSolicitacao;
@@ -523,6 +525,7 @@ async function abrirDetalhe(resumo) {
 }
 
 function preencherDetalhe(r) {
+  relatoDetalhado = r;
   const badgeClass = BADGE_BY_CATEGORY[r.categoria] || BADGE_BY_CATEGORY.Outros;
   document.getElementById('detalhe-titulo').textContent = r.titulo;
   document.getElementById('detalhe-desc').textContent   = r.descricao;
@@ -537,7 +540,40 @@ function preencherDetalhe(r) {
     <span><i class="ti ti-map-pin"></i> ${escapeHTML(r.endereco)}</span>
     <span><i class="ti ti-user"></i> ${escapeHTML(r.autorNome)}</span>
     <span><i class="ti ti-clock"></i> ${tempoRelativo(r.dataCriacao)}</span>`;
+  const botaoDenunciar = document.getElementById('detalhe-denunciar-btn');
+  if (botaoDenunciar) {
+    const denunciado = relatosDenunciados.has(r.id);
+    botaoDenunciar.disabled = denunciado;
+    botaoDenunciar.innerHTML = denunciado
+      ? '<i class="ti ti-check"></i> Denúncia enviada'
+      : '<i class="ti ti-flag"></i> Denunciar relato';
+  }
 }
+
+document.getElementById('detalhe-denunciar-btn')?.addEventListener('click', async (evento) => {
+  const relato = relatoDetalhado;
+  if (!relato?.id || !relato?.cityId) {
+    showToast('⚠️ Aguarde os detalhes do relato carregarem.');
+    return;
+  }
+  if (!confirm('Denunciar este relato como suspeito para análise da prefeitura?')) return;
+
+  const botao = evento.currentTarget;
+  botao.disabled = true;
+  botao.innerHTML = '<i class="ti ti-loader-2"></i> Enviando...';
+  try {
+    const resultado = await denunciarRelato(relato.id, relato.cityId);
+    relatosDenunciados.add(relato.id);
+    botao.innerHTML = '<i class="ti ti-check"></i> Denúncia enviada';
+    showToast(resultado.jaDenunciado
+      ? 'ℹ️ Você já denunciou este relato.'
+      : '✅ Denúncia enviada para análise da prefeitura.');
+  } catch (erro) {
+    botao.disabled = false;
+    botao.innerHTML = '<i class="ti ti-flag"></i> Denunciar relato';
+    showToast(`⚠️ ${erro.message || 'Não foi possível enviar a denúncia.'}`);
+  }
+});
 
 function fecharDetalhe() {
   ++detalheSolicitacao;

@@ -29,7 +29,7 @@ const modulos = {
   '/fixture.js': fixture,
   '/js/firebase.js': `export const auth={currentUser:{uid:'gestor-teste'}}; export const onAuthStateChanged=(_,cb)=>{setTimeout(()=>cb({uid:'gestor-teste',displayName:'Gestor de exemplo',email:'gestor@example.invalid'}),0);return()=>{}}; export const signOut=async()=>{}; export const signInWithEmailAndPassword=async()=>{throw {code:'auth/invalid-credential'}};`,
   '/js/admJS/adminAuth.js': `export const buscarAdmin=async()=>{if(sessionStorage.getItem('falharAcesso'))throw Error('offline');return {papel:sessionStorage.getItem('superadmin')?'superadmin':'admin',cityId:'2504009',organizacaoId:'prefeitura-teste'}}; export const ehSuperAdmin=a=>a?.papel==='superadmin';`,
-  '/js/db.js': `import {relatos,esperar,verificar} from '/fixture.js'; export const buscarOrganizacao=async()=>({nome:'Prefeitura de exemplo',cidadeNome:'Campina Grande'}); export const buscarRelatosGestaoPagina=async(_,cursor)=>{await esperar();verificar();return {itens:relatos.slice(cursor?25:0,cursor?32:25).map(r=>({...r})),temMais:!cursor}}; export const buscarTodosRelatosGestao=async(_,progresso)=>{await esperar();verificar();progresso?.(32);return relatos.map(r=>({...r}))}; export const buscarContatoRelato=async()=>null; export const atualizarStatus=async(id,status)=>{await esperar();verificar();Object.assign(relatos.find(r=>r.id===id),{status})}; export const salvarResposta=async(id,respostaOficial)=>{await esperar();verificar();Object.assign(relatos.find(r=>r.id===id),{respostaOficial})}; export const excluirRelato=async id=>{await esperar();verificar();relatos.splice(relatos.findIndex(r=>r.id===id),1)};`,
+  '/js/db.js': `import {relatos,esperar,verificar} from '/fixture.js'; export const buscarOrganizacao=async()=>({nome:'Prefeitura de exemplo',cidadeNome:'Campina Grande'}); export const buscarRelatosGestaoPagina=async(_,cursor)=>{await esperar();verificar();return {itens:relatos.slice(cursor?25:0,cursor?32:25).map(r=>({...r})),temMais:!cursor}}; export const buscarTodosRelatosGestao=async(_,progresso)=>{await esperar();verificar();progresso?.(32);return relatos.map(r=>({...r}))}; export const buscarDenunciasRelatos=async()=>({'teste-2':{quantidade:2,primeiraDenuncia:Date.now()-2000,ultimaDenuncia:Date.now()-1000}}); export const buscarContatoRelato=async()=>null; export const atualizarStatus=async(id,status)=>{await esperar();verificar();Object.assign(relatos.find(r=>r.id===id),{status})}; export const salvarResposta=async(id,respostaOficial)=>{await esperar();verificar();Object.assign(relatos.find(r=>r.id===id),{respostaOficial})}; export const excluirRelato=async id=>{await esperar();verificar();relatos.splice(relatos.findIndex(r=>r.id===id),1)};`,
   '/js/admJS/prioridades.js': `import {prioridades,esperar,verificar,avisar} from '/fixture.js'; export const ouvirPrioridades=(_,cb,erro)=>{const fn=()=>window.__falharPrioridades?erro(Error('offline')):cb({...prioridades});queueMicrotask(fn);window.addEventListener('prioridades-teste',fn);return()=>window.removeEventListener('prioridades-teste',fn)}; export const salvarPrioridade=async(r,_,ordem)=>{await esperar();verificar();prioridades[r.cityId+'/'+r.id]={ordem};avisar()}; export const removerPrioridade=async r=>{await esperar();verificar();delete prioridades[r.cityId+'/'+r.id];avisar()}; export const definirOrdemPrioridades=async lista=>{await esperar();verificar();lista.forEach((r,i)=>prioridades[r.cityId+'/'+r.id].ordem=i);avisar()};`,
   '/js/notificacoes.js': `export const notificarMudancaStatus=async()=>true;export const notificarNovaResposta=async()=>true;`,
   '/js/populacao.js': `export const normalizar=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase(); export const obterPopulacaoPB=async()=>{await new Promise(r=>setTimeout(r,100));return new Map([['campina grande',400000]])};`
@@ -156,6 +156,13 @@ async function main() {
       assert.equal(await page.locator('#btn-subir-teste-0').isDisabled(), true);
       await page.locator('#btn-limpar-filtros').click();
     });
+    await conferir('Relatos suspeitos exibem contagem e sinalização sem expor denunciantes', async () => {
+      await page.getByRole('tab', { name: /Relatos suspeitos/ }).click();
+      assert.equal(await page.locator('.gestao-card').count(), 1);
+      assert.match(await page.locator('.badge-suspeito').textContent(), /2 denúncias/);
+      assert.equal((await page.locator('#painel-lista').textContent()).includes('usuario'), false);
+      await page.getByRole('tab', { name: /Prioridades/ }).click();
+    });
     await conferir('Falha ao atualizar mantém dados e permite nova tentativa', async () => {
       await page.evaluate(() => { window.__falhar = true; });
       await page.locator('#btn-atualizar-relatos').click();
@@ -179,7 +186,7 @@ async function main() {
     await conferir('Abas acessíveis por setas e menu móvel por Escape', async () => {
       await page.locator('#aba-relatos').focus();
       await page.keyboard.press('End');
-      assert.equal(await page.locator('#aba-prioridades').getAttribute('aria-selected'), 'true');
+      assert.equal(await page.locator('#aba-suspeitos').getAttribute('aria-selected'), 'true');
       await page.keyboard.press('Home');
       await page.setViewportSize({ width: 390, height: 844 });
       await page.locator('#hamburger').click();

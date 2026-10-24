@@ -1,6 +1,6 @@
 // ── Pro Povo — admin-painel.js ──
 import { auth, onAuthStateChanged, signOut } from "../firebase.js";
-import { buscarRelatosGestaoPagina, buscarTodosRelatosGestao, buscarOrganizacao, buscarContatoRelato, atualizarStatus, salvarResposta, excluirRelato } from "../db.js";
+import { buscarRelatosGestaoPagina, buscarTodosRelatosGestao, buscarDenunciasRelatos, buscarOrganizacao, buscarContatoRelato, atualizarStatus, salvarResposta, excluirRelato } from "../db.js";
 import { buscarAdmin, ehSuperAdmin } from "./adminAuth.js";
 import { otimizarImagem } from "../cloudinary.js";
 import { escapeHTML } from "../escapeHtml.js";
@@ -24,6 +24,8 @@ const state = {
   carregandoCompletos: false,
   prioridades: {},
   prioridadesProntas: false,
+  denuncias: {},
+  denunciasProntas: false,
   salvandoPrioridade: false,
   rascunhos: new Map(),
   respostasAbertas: new Set(),
@@ -91,8 +93,24 @@ onAuthStateChanged(auth, async (user) => {
   document.getElementById('verificando').style.display = 'none';
   document.getElementById('painel-conteudo').style.display = 'block';
 
-  await carregarCompletos();
+  await Promise.all([carregarCompletos(), carregarDenuncias()]);
 });
+
+async function carregarDenuncias() {
+  if (!state.admin) return;
+  try {
+    state.denuncias = await buscarDenunciasRelatos(state.admin);
+    state.denunciasProntas = true;
+  } catch (erro) {
+    console.warn('Não foi possível carregar os relatos suspeitos:', erro);
+    state.denunciasProntas = false;
+    if (state.aba === 'suspeitos') {
+      state.erroCarga = 'Não foi possível consultar as denúncias. Use Atualizar para tentar novamente.';
+    }
+  } finally {
+    render();
+  }
+}
 
 function iniciarPrioridades() {
   pararPrioridades?.();
@@ -153,7 +171,7 @@ async function carregarProximaPagina() {
 async function recarregarRelatos() {
   if (state.carregando || state.carregandoCompletos) return;
   if (!state.prioridadesProntas) iniciarPrioridades();
-  if (state.completos || state.aba !== 'relatos') await carregarCompletos(true);
+  if (state.completos || state.aba !== 'relatos') await Promise.all([carregarCompletos(true), carregarDenuncias()]);
   else {
     state.carregando = true;
     state.erroCarga = '';
@@ -167,6 +185,7 @@ async function recarregarRelatos() {
       console.warn(erro);
       state.erroCarga = 'Não foi possível atualizar. Os dados anteriores foram mantidos. Tente novamente.';
     } finally { state.carregando = false; render(); }
+    await carregarDenuncias();
   }
 }
 
@@ -304,11 +323,12 @@ async function selecionarAba(aba) {
     botao.tabIndex = ativo ? 0 : -1;
   });
   document.getElementById('painel-lista').hidden = aba === 'mapa';
-  document.getElementById('painel-lista').setAttribute('aria-labelledby', `aba-${aba === 'prioridades' ? 'prioridades' : 'relatos'}`);
+  document.getElementById('painel-lista').setAttribute('aria-labelledby', `aba-${['prioridades', 'suspeitos'].includes(aba) ? aba : 'relatos'}`);
   document.getElementById('painel-mapa').hidden = aba !== 'mapa';
   document.getElementById('prioridades-intro').hidden = aba !== 'prioridades';
+  document.getElementById('suspeitos-intro').hidden = aba !== 'suspeitos';
   render();
-  if (aba !== 'relatos') await carregarCompletos();
+  if (aba !== 'relatos') await Promise.all([carregarCompletos(), carregarDenuncias()]);
 }
 
 document.querySelectorAll('[data-aba]').forEach(botao => {
@@ -450,17 +470,26 @@ function abrirGestao(r) {
 function render() {
   const base = state.completos || (state.aba === 'relatos' ? state.todos : []);
   let lista = filtrarRelatos(base, state);
-  lista = state.aba === 'prioridades' ? ordenarPrioridades(lista, state.prioridades) : lista.sort((a, b) => state.ordenacao === 'antigos' ? a.dataCriacao - b.dataCriacao : state.ordenacao === 'apoios' ? (b.votos || 0) - (a.votos || 0) || b.dataCriacao - a.dataCriacao : b.dataCriacao - a.dataCriacao);
+  if (state.aba === 'suspeitos') {
+    lista = lista.filter(relato => state.denuncias[relato.id]).sort((a, b) =>
+      state.denuncias[b.id].quantidade - state.denuncias[a.id].quantidade ||
+      state.denuncias[b.id].ultimaDenuncia - state.denuncias[a.id].ultimaDenuncia
+    );
+  } else {
+    lista = state.aba === 'prioridades' ? ordenarPrioridades(lista, state.prioridades) : lista.sort((a, b) => state.ordenacao === 'antigos' ? a.dataCriacao - b.dataCriacao : state.ordenacao === 'apoios' ? (b.votos || 0) - (a.votos || 0) || b.dataCriacao - a.dataCriacao : b.dataCriacao - a.dataCriacao);
+  }
   const parcial = !state.completos && state.temMais;
   document.getElementById('btn-limpar-filtros').hidden = !temFiltros();
   const consultar = document.getElementById('btn-consultar-todos');
   consultar.hidden = state.aba !== 'relatos' || !parcial;
   consultar.disabled = state.carregando || state.carregandoCompletos;
-  document.getElementById('admin-resultados').textContent = state.carregandoCompletos ? 'Consultando todos os relatos…' : state.carregando ? 'Carregando relatos…' : `${lista.length} ${state.aba === 'prioridades' ? 'prioridade(s)' : 'relato(s)'} ${temFiltros() ? 'com os filtros atuais' : 'nesta visualização'}`;
+  const rotuloLista = state.aba === 'prioridades' ? 'prioridade(s)' : state.aba === 'suspeitos' ? 'relato(s) suspeito(s)' : 'relato(s)';
+  document.getElementById('admin-resultados').textContent = state.carregandoCompletos ? 'Consultando todos os relatos…' : state.carregando ? 'Carregando relatos…' : `${lista.length} ${rotuloLista} ${temFiltros() ? 'com os filtros atuais' : 'nesta visualização'}`;
   document.getElementById('admin-resultados-ajuda').textContent = parcial ? 'Resultado parcial: a busca e os filtros consideram os relatos já carregados. Consulte todos para incluir os mais antigos.' : 'Busca e filtros aplicados a todos os relatos consultados. Mantidos ao trocar de aba.';
   document.getElementById('admin-resumo-escopo').textContent = `Indicadores antes dos filtros · ${parcial ? 'Consulta parcial; há relatos mais antigos.' : 'Todos os relatos do escopo consultados.'} Atrasados: não resolvidos há mais de 10 dias. Tempo médio: apenas resolvidos com data de resolução.`;
   document.getElementById('prioridades-ordem-ajuda').textContent = !state.prioridadesProntas ? 'Aguarde a conexão com as prioridades para organizar a lista.' : state.salvandoPrioridade ? 'Salvando a organização das prioridades…' : podeReordenar() ? 'Use as setas para subir ou descer cada prioridade. A ordem é salva automaticamente.' : 'Para reordenar, limpe a busca e os filtros de bairro, categoria, situação e período. Na visão de todas as cidades, selecione uma cidade.';
   document.getElementById('prioridades-contagem').textContent = state.prioridadesProntas ? Object.keys(state.prioridades).length : '—';
+  document.getElementById('suspeitos-contagem').textContent = state.denunciasProntas ? Object.keys(state.denuncias).length : '—';
   if (state.aba === 'mapa' && state.completos) {
     try {
       mapaGestao ||= criarMapaGestao(alternarPrioridade, () => state.prioridadesProntas && !state.salvandoPrioridade, abrirGestao);
@@ -492,6 +521,8 @@ function render() {
   empty.style.display = !state.carregando && !state.carregandoCompletos && lista.length === 0 && (state.aba === 'relatos' || !!state.completos) ? 'block' : 'none';
   empty.querySelector('p').textContent = state.erroCarga && !base.length ? 'Os relatos ainda não puderam ser consultados. Use Atualizar para tentar novamente.' : state.aba === 'prioridades'
     ? state.prioridadesProntas ? 'Nenhuma prioridade neste filtro. Adicione relatos pela lista ou pelo mapa.' : 'As prioridades estão indisponíveis. Confira o aviso acima.'
+    : state.aba === 'suspeitos'
+      ? state.denunciasProntas ? 'Nenhum relato foi denunciado neste filtro.' : 'As denúncias estão indisponíveis. Use Atualizar para tentar novamente.'
     : 'Nenhum relato encontrado neste filtro.';
 
   const foco = document.activeElement;
@@ -607,6 +638,7 @@ function render() {
           if (state.completos) state.completos = state.completos.filter(relato => relato.id !== r.id);
           state.rascunhos.delete(r.id);
           state.respostasAbertas.delete(r.id);
+          delete state.denuncias[r.id];
           render();
           showToast('🗑️ Relato excluído.');
         } catch (erro) {
@@ -627,6 +659,7 @@ function cardHTML(r) {
   const data = new Date(r.dataCriacao).toLocaleDateString('pt-BR');
   const atrasado = estaAtrasado(r);
   const prioridade = state.prioridades[chavePrioridade(r)];
+  const denuncia = state.denuncias[r.id];
   const listaOrdenada = state.aba === 'prioridades' ? ordenarPrioridades((state.completos || []).filter(item => String(item.cityId) === String(r.cityId)), state.prioridades) : [];
   const posicao = listaOrdenada.findIndex(item => item.id === r.id);
   const fotoUrl = otimizarImagem(r.fotoUrl, 700);
@@ -637,11 +670,12 @@ function cardHTML(r) {
     : '';
 
   return `
-    <article class="gestao-card ${atrasado ? 'gestao-card-atrasado' : ''}" data-status="${status}" id="relato-${relatoId}" tabindex="-1" aria-labelledby="titulo-${relatoId}" aria-busy="${!!pendente}">
+    <article class="gestao-card ${atrasado ? 'gestao-card-atrasado' : ''} ${denuncia ? 'gestao-card-suspeito' : ''}" data-status="${status}" id="relato-${relatoId}" tabindex="-1" aria-labelledby="titulo-${relatoId}" aria-busy="${!!pendente}">
       <div class="gestao-top">
         <h2 class="gestao-titulo" id="titulo-${relatoId}">${escapeHTML(r.titulo)}</h2>
         <div class="gestao-top-badges">
           ${prioridade ? '<span class="badge-prioridade"><i class="ti ti-star-filled" aria-hidden="true"></i> Prioridade interna</span>' : ''}
+          ${denuncia ? `<span class="badge-suspeito"><i class="ti ti-flag-filled" aria-hidden="true"></i> ${denuncia.quantidade} ${denuncia.quantidade === 1 ? 'denúncia' : 'denúncias'} · última em ${new Date(denuncia.ultimaDenuncia).toLocaleDateString('pt-BR')}</span>` : ''}
           ${atrasado ? `<span class="badge-atrasado"><i class="ti ti-alert-triangle"></i> Atrasado · ${diasEmAberto(r)}d</span>` : ''}
           <span class="status status-${status}">${STATUS_LABEL[status]}</span>
         </div>

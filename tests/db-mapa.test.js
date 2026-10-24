@@ -103,7 +103,9 @@ async function carregarDb(iniciais = {}, opcoes = {}) {
     endAt: (valor, chave) => ({ tipo: "endAt", valor, chave }),
     serverTimestamp: () => copiar(timestamp),
     push: referencia => ({ caminho: `${referencia.caminho}/${RELATO_ID}`, key: RELATO_ID }),
-    set: async () => { throw new Error("set inesperado"); },
+    async set(referencia, valor) {
+      gravar(referencia.caminho, valor);
+    },
     onValue: () => { throw new Error("onValue inesperado"); },
     async get(referencia) {
       leituras.push(copiar(referencia));
@@ -322,6 +324,50 @@ test('paginação administrativa regional inclui relatos com cityId numérico e 
     assert.ok(consultas.every(leitura => leitura.caminho === 'relatosResumo'));
     assert.equal(ambiente.leituras.some(leitura => leitura.caminho === 'relatos'), false);
   }
+});
+
+test('denúncias administrativas são agregadas sem expor os denunciantes', async () => {
+  const ambiente = await carregarDb({
+    denunciasRelatos: {
+      '2504009': {
+        relatoA: {
+          usuario1: { motivo: 'conteudo_suspeito', dataCriacao: 100 },
+          usuario2: { motivo: 'conteudo_suspeito', dataCriacao: 300 },
+        },
+      },
+      '2507507': {
+        relatoB: {
+          usuario3: { motivo: 'conteudo_suspeito', dataCriacao: 200 },
+        },
+      },
+    },
+  });
+
+  const municipal = await ambiente.db.buscarDenunciasRelatos({ papel: 'admin', cityId: '2504009' });
+  assert.deepEqual(copiar(municipal), {
+    relatoA: { quantidade: 2, primeiraDenuncia: 100, ultimaDenuncia: 300 },
+  });
+  assert.equal(JSON.stringify(municipal).includes('usuario1'), false);
+
+  const global = await ambiente.db.buscarDenunciasRelatos({ papel: 'superadmin' });
+  assert.equal(global.relatoA.quantidade, 2);
+  assert.equal(global.relatoB.quantidade, 1);
+});
+
+test('denúncia do cidadão grava uma única sinalização com relógio do servidor', async () => {
+  const ambiente = await carregarDb();
+  const primeira = await ambiente.db.denunciarRelato(RELATO_ID, CITY_ID);
+  assert.deepEqual(copiar(primeira), { jaDenunciado: false });
+  assert.deepEqual(
+    ambiente.dados.denunciasRelatos[CITY_ID][RELATO_ID].cidadao,
+    { motivo: 'conteudo_suspeito', dataCriacao: timestamp }
+  );
+  assert.equal(ambiente.tokens, 1);
+
+  const repetida = await ambiente.db.denunciarRelato(RELATO_ID, CITY_ID);
+  assert.deepEqual(copiar(repetida), { jaDenunciado: true });
+  assert.equal(ambiente.tokens, 2);
+  await assert.rejects(ambiente.db.denunciarRelato(RELATO_ID, '../outra-cidade'), /identificar este relato/);
 });
 
 test('filtros compostos incluem legados e mantêm uma única consulta indexada', async () => {

@@ -27,6 +27,7 @@
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="apple-touch-icon" href="/Images/icons/apple-touch-icon.png">
   <meta name="theme-color" content="#0C326F">
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Pro Povo">
@@ -143,6 +144,7 @@
       <button type="button" id="aba-relatos" role="tab" aria-controls="painel-lista" aria-selected="true" tabindex="0" data-aba="relatos"><i class="ti ti-list-details" aria-hidden="true"></i> Todos os relatos</button>
       <button type="button" id="aba-mapa" role="tab" aria-controls="painel-mapa" aria-selected="false" tabindex="-1" data-aba="mapa"><i class="ti ti-map-2" aria-hidden="true"></i> Mapa de gestão</button>
       <button type="button" id="aba-prioridades" role="tab" aria-controls="painel-lista" aria-selected="false" tabindex="-1" data-aba="prioridades"><i class="ti ti-star" aria-hidden="true"></i> Prioridades <span id="prioridades-contagem">0</span></button>
+      <button type="button" id="aba-suspeitos" role="tab" aria-controls="painel-lista" aria-selected="false" tabindex="-1" data-aba="suspeitos"><i class="ti ti-flag" aria-hidden="true"></i> Relatos suspeitos <span id="suspeitos-contagem">0</span></button>
     </div>
     <p class="admin-aviso" id="prioridades-aviso" role="status" hidden></p>
     <p class="admin-aviso" id="admin-dados-aviso" role="status" hidden></p>
@@ -232,6 +234,10 @@
         <h2>Prioridades da prefeitura</h2>
         <p>Uma lista compartilhada pela equipe. Use as setas para mudar a ordem. A seleção é interna e não altera o status nem os apoios públicos.</p>
         <p id="prioridades-ordem-ajuda" role="status"></p>
+      </div>
+      <div class="suspeitos-intro" id="suspeitos-intro" hidden>
+        <h2>Relatos suspeitos</h2>
+        <p>Relatos sinalizados pela população para análise. Uma denúncia não remove o conteúdo automaticamente; confira as informações antes de tomar qualquer medida.</p>
       </div>
       <div id="admin-lista"></div>
       <div class="relatos-loader" id="relatos-loader-admin" role="status" aria-live="polite">

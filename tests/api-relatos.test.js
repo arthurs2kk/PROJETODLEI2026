@@ -123,7 +123,7 @@ function apiIsolada({ uid = 'autor', relato, admin = null, falharGravacao = fals
   };
 }
 
-test('API exclui relato, resumo, marcador, prioridade, votos e contato em um único update', async () => {
+test('API exclui relato, resumo, marcador, prioridade, denúncias, votos e contato em um único update', async () => {
   for (const cityId of ['2507507', 2504009]) {
     const api = apiIsolada({ relato: { autorId: 'autor', status: 'aberto', cityId } });
     const resposta = await api.excluir();
@@ -133,7 +133,8 @@ test('API exclui relato, resumo, marcador, prioridade, votos e contato em um ún
       'relatosResumo/-OabcDEF01234567890x': null,
       'relatosPublicos/-OabcDEF01234567890x': null,
       [`relatosMapa/${cityId}/-OabcDEF01234567890x`]: null,
-        [`prioridadesMunicipais/${cityId}/-OabcDEF01234567890x`]: null,
+      [`prioridadesMunicipais/${cityId}/-OabcDEF01234567890x`]: null,
+      [`denunciasRelatos/${cityId}/-OabcDEF01234567890x`]: null,
       'votos/-OabcDEF01234567890x': null,
       'contatosRelatos/-OabcDEF01234567890x': null
     }]);

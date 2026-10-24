@@ -1,5 +1,5 @@
 // ── Pro Povo — relatos.js ──
-import { buscarRelatosPagina, buscarRelatoPorId } from "../db.js";
+import { buscarRelatosPagina, buscarRelatoPorId, denunciarRelato } from "../db.js";
 import { obterMunicipiosPB } from "../cidades.js";
 import { CIDADES_ATIVAS_RELATOS } from "../abrangencia-relatos.js";
 import { initNavbar } from "../navbar.js";
@@ -243,6 +243,8 @@ function linhaHTML(r) {
 // ── Modal de detalhes (mesmo padrão da home) ──
 const detalhesRelatos = new Map();
 let detalheSolicitacao = 0;
+let relatoDetalhado = null;
+const relatosDenunciados = new Set();
 
 async function abrirDetalhe(resumo) {
   const solicitacao = ++detalheSolicitacao;
@@ -268,6 +270,7 @@ async function abrirDetalhe(resumo) {
 }
 
 function preencherDetalhe(r) {
+  relatoDetalhado = r;
   const cat = CATS[r.categoria] || CATS['Outros'];
   const st  = STATUS[r.status]  || STATUS.aberto;
 
@@ -283,7 +286,40 @@ function preencherDetalhe(r) {
   document.getElementById('detalhe-meta').innerHTML = `
     <span><i class="ti ti-map-pin"></i> ${escapeHTML(r.endereco)}</span>
     <span><i class="ti ti-clock"></i> ${new Date(r.dataCriacao).toLocaleString('pt-BR')}</span>`;
+  const botaoDenunciar = document.getElementById('detalhe-denunciar-btn');
+  if (botaoDenunciar) {
+    const denunciado = relatosDenunciados.has(r.id);
+    botaoDenunciar.disabled = denunciado;
+    botaoDenunciar.innerHTML = denunciado
+      ? '<i class="ti ti-check"></i> Denúncia enviada'
+      : '<i class="ti ti-flag"></i> Denunciar relato';
+  }
 }
+
+document.getElementById('detalhe-denunciar-btn')?.addEventListener('click', async (evento) => {
+  const relato = relatoDetalhado;
+  if (!relato?.id || !relato?.cityId) {
+    showToast('⚠️ Aguarde os detalhes do relato carregarem.');
+    return;
+  }
+  if (!confirm('Denunciar este relato como suspeito para análise da prefeitura?')) return;
+
+  const botao = evento.currentTarget;
+  botao.disabled = true;
+  botao.innerHTML = '<i class="ti ti-loader-2"></i> Enviando...';
+  try {
+    const resultado = await denunciarRelato(relato.id, relato.cityId);
+    relatosDenunciados.add(relato.id);
+    botao.innerHTML = '<i class="ti ti-check"></i> Denúncia enviada';
+    showToast(resultado.jaDenunciado
+      ? 'ℹ️ Você já denunciou este relato.'
+      : '✅ Denúncia enviada para análise da prefeitura.');
+  } catch (erro) {
+    botao.disabled = false;
+    botao.innerHTML = '<i class="ti ti-flag"></i> Denunciar relato';
+    showToast(`⚠️ ${erro.message || 'Não foi possível enviar a denúncia.'}`);
+  }
+});
 
 document.getElementById('detalhe-close')?.addEventListener('click', fecharDetalhe);
 document.getElementById('detalhe-fechar-btn')?.addEventListener('click', fecharDetalhe);
@@ -297,6 +333,15 @@ document.getElementById('modal-detalhe-overlay')?.addEventListener('click', (e) 
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') fecharDetalhe();
 });
+
+function showToast(mensagem) {
+  const toast = document.getElementById('toast');
+  if (!toast) return;
+  toast.textContent = mensagem;
+  toast.classList.add('show');
+  clearTimeout(showToast.timer);
+  showToast.timer = setTimeout(() => toast.classList.remove('show'), 3500);
+}
 
 // ── Spinner (usado no botão "Carregar mais") ──
 const s = document.createElement('style');
