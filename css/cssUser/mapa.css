@@ -187,6 +187,12 @@
 }
 
 /* ── Responsivo ── */
+@media (max-width: 900px) {
+  .mapa-header { padding: 28px 20px 22px; }
+  .mapa-wrapper { margin-top: 16px; }
+  #mapa-container { height: clamp(440px, 58dvh, 560px); }
+}
+
 @media (max-width: 640px) {
   .mapa-header { padding: 24px 16px 20px; }
   .mapa-title { font-size: 21px; }

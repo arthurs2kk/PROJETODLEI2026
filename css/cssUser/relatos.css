@@ -220,9 +220,20 @@
 
 .ver-todos-link:hover { text-decoration: underline; gap: 8px; }
 
-/* ── Responsivo: vira cards empilhados no mobile ── */
-@media (max-width: 760px) {
+/* ── Responsivo: vira cards antes de a tabela apertar no tablet ── */
+@media (max-width: 900px) {
   .relatos-controls { margin-top: -14px; }
+
+  .busca-wrap { flex-basis: 100%; }
+
+  .filtro-select {
+    flex: 1 1 200px;
+    min-width: 0;
+  }
+
+  .relatos-wrapper {
+    padding-inline: 16px;
+  }
 
   .tabela-relatos thead { display: none; }
   .tabela-relatos, .tabela-relatos tbody, .tabela-relatos tr, .tabela-relatos td {
